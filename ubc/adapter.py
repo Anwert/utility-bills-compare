@@ -31,6 +31,8 @@ ADAPTER_MODULES: tuple[str, ...] = (
     "ubc.adapters.fx_nbs",
     "ubc.adapters.open_meteo_hdd",
     "ubc.adapters.yerevan",
+    "ubc.adapters.myrealty",
+    "ubc.adapters.real_estate_am",
 )
 
 

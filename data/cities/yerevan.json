@@ -139,7 +139,20 @@
       ]
     }
   ],
-  "listing_sites": [],
+  "listing_sites": [
+    {
+      "id": "myrealty",
+      "adapter": "myrealty",
+      "enabled": true,
+      "url": "https://myrealty.am/en/apartments-for-sale/yerevan"
+    },
+    {
+      "id": "real_estate_am",
+      "adapter": "real_estate_am",
+      "enabled": true,
+      "url": "https://www.real-estate.am/en"
+    }
+  ],
   "fx_sources": [
     {
       "id": "fx_amd_cba",
