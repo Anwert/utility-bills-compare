@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "city": "yerevan",
+  "period": "2026-10",
+  "houses": [
+    {
+      "id": "real-estate-415249",
+      "city": "yerevan",
+      "house_class": "soviet_panel",
+      "heating": "gas_boiler",
+      "housing_fees": [],
+      "listing_url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/erebuni/khaghagh-doni-street/2-room/415249",
+      "address": "Khaghagh Doni street, Erebuni, Yerevan",
+      "latitude": 40.126955,
+      "longitude": 44.52873,
+      "first_seen": "2026-11-02",
+      "last_seen": "2026-11-02",
+      "note": ""
+    },
+    {
+      "id": "real-estate-427630",
+      "city": "yerevan",
+      "house_class": "typical_newbuild",
+      "heating": "gas_boiler",
+      "housing_fees": [],
+      "listing_url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/center/antarayin-street/2-room/427630",
+      "address": "Antarayin street, Center, Yerevan",
+      "latitude": 40.193239,
+      "longitude": 44.515034,
+      "first_seen": "2026-11-21",
+      "last_seen": "2026-11-21",
+      "note": ""
+    },
+    {
+      "id": "real-estate-425338",
+      "city": "yerevan",
+      "house_class": "business",
+      "heating": "gas_boiler",
+      "housing_fees": [],
+      "listing_url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/nor-nork/lvovyan-street/2-room/425338",
+      "address": "Lvovyan street, Nor-Nork, Yerevan",
+      "latitude": 40.199394,
+      "longitude": 44.556112,
+      "first_seen": "2026-11-12",
+      "last_seen": "2026-11-12",
+      "note": ""
+    }
+  ],
+  "empty": [
+    {
+      "house_class": "soviet_panel",
+      "heating": "district",
+      "reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется"
+    },
+    {
+      "house_class": "soviet_panel",
+      "heating": "electric",
+      "reason": "дом такого класса с таким отоплением автоматически не найден"
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "district",
+      "reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется"
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "electric",
+      "reason": "дом такого класса с таким отоплением автоматически не найден"
+    },
+    {
+      "house_class": "business",
+      "heating": "district",
+      "reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется"
+    },
+    {
+      "house_class": "business",
+      "heating": "electric",
+      "reason": "дом такого класса с таким отоплением автоматически не найден"
+    }
+  ]
+}

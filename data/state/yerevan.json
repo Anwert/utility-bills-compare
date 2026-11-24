@@ -1,0 +1,410 @@
+{
+  "schema_version": 1,
+  "city": "yerevan",
+  "articles": [
+    {
+      "item": "maintenance",
+      "acting": {
+        "record": {
+          "city": "yerevan",
+          "item": "maintenance",
+          "category": "housing",
+          "value": 25.0,
+          "unit": "AMD/m2/month",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": "2026-12-31",
+          "source": {
+            "kind": "official",
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "fetched_at": "2026-11-24T22:46:07.541378Z",
+            "name": "yerevan_maintenance_arlis"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "п.22 решения о местных платежах 2026 года, жилое помещение, 25 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        },
+        "period": "2026-10",
+        "source_id": "yerevan_maintenance_arlis",
+        "pending_record": null,
+        "pending_period": null,
+        "pending_source_id": null
+      },
+      "checked": "2026-10",
+      "stale": false,
+      "note": "",
+      "history": [
+        {
+          "period": "2026-10",
+          "source_id": "yerevan_maintenance_arlis",
+          "records": [
+            {
+              "city": "yerevan",
+              "item": "maintenance",
+              "category": "housing",
+              "value": 25.0,
+              "unit": "AMD/m2/month",
+              "currency": "AMD",
+              "tiers": [],
+              "valid_from": "2026-01-01",
+              "valid_to": "2026-12-31",
+              "source": {
+                "kind": "official",
+                "url": "https://www.arlis.am/hy/acts/219208",
+                "fetched_at": "2026-11-24T22:46:07.541378Z",
+                "name": "yerevan_maintenance_arlis"
+              },
+              "method": "regex",
+              "reliability": "official",
+              "note": "п.22 решения о местных платежах 2026 года, жилое помещение, 25 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item": "electricity",
+      "acting": {
+        "record": {
+          "city": "yerevan",
+          "item": "electricity",
+          "category": "utility",
+          "value": 46.48,
+          "unit": "AMD/kWh",
+          "currency": "AMD",
+          "tiers": [
+            {
+              "up_to": 201.0,
+              "value": 46.48,
+              "unit": null,
+              "label": "day, up to 200 kWh/month"
+            },
+            {
+              "up_to": 401.0,
+              "value": 48.48,
+              "unit": null,
+              "label": "day, 201-400 kWh/month"
+            },
+            {
+              "up_to": null,
+              "value": 53.48,
+              "unit": null,
+              "label": "day, above 400 kWh/month"
+            }
+          ],
+          "valid_from": "2026-01-26",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+            "fetched_at": "2026-11-24T22:46:26.390410Z",
+            "name": "yerevan_electricity_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26."
+        },
+        "period": "2026-10",
+        "source_id": "yerevan_electricity_psrc",
+        "pending_record": null,
+        "pending_period": null,
+        "pending_source_id": null
+      },
+      "checked": "2026-10",
+      "stale": false,
+      "note": "",
+      "history": [
+        {
+          "period": "2026-10",
+          "source_id": "yerevan_electricity_psrc",
+          "records": [
+            {
+              "city": "yerevan",
+              "item": "electricity",
+              "category": "utility",
+              "value": 46.48,
+              "unit": "AMD/kWh",
+              "currency": "AMD",
+              "tiers": [
+                {
+                  "up_to": 201.0,
+                  "value": 46.48,
+                  "unit": null,
+                  "label": "day, up to 200 kWh/month"
+                },
+                {
+                  "up_to": 401.0,
+                  "value": 48.48,
+                  "unit": null,
+                  "label": "day, 201-400 kWh/month"
+                },
+                {
+                  "up_to": null,
+                  "value": 53.48,
+                  "unit": null,
+                  "label": "day, above 400 kWh/month"
+                }
+              ],
+              "valid_from": "2026-01-26",
+              "valid_to": null,
+              "source": {
+                "kind": "official",
+                "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+                "fetched_at": "2026-11-24T22:46:26.390410Z",
+                "name": "yerevan_electricity_psrc"
+              },
+              "method": "regex",
+              "reliability": "official",
+              "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item": "gas",
+      "acting": {
+        "record": {
+          "city": "yerevan",
+          "item": "gas",
+          "category": "utility",
+          "value": 143.7,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-10-06",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+            "fetched_at": "2026-11-24T22:46:45.299052Z",
+            "name": "yerevan_gas_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06."
+        },
+        "period": "2026-10",
+        "source_id": "yerevan_gas_psrc",
+        "pending_record": null,
+        "pending_period": null,
+        "pending_source_id": null
+      },
+      "checked": "2026-10",
+      "stale": false,
+      "note": "",
+      "history": [
+        {
+          "period": "2026-10",
+          "source_id": "yerevan_gas_psrc",
+          "records": [
+            {
+              "city": "yerevan",
+              "item": "gas",
+              "category": "utility",
+              "value": 143.7,
+              "unit": "AMD/m3",
+              "currency": "AMD",
+              "tiers": [],
+              "valid_from": "2026-10-06",
+              "valid_to": null,
+              "source": {
+                "kind": "official",
+                "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+                "fetched_at": "2026-11-24T22:46:45.299052Z",
+                "name": "yerevan_gas_psrc"
+              },
+              "method": "regex",
+              "reliability": "official",
+              "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item": "water",
+      "acting": {
+        "record": {
+          "city": "yerevan",
+          "item": "water",
+          "category": "utility",
+          "value": 170.36,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": null,
+          "source": {
+            "kind": "statistics",
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "fetched_at": "2026-11-24T22:46:45.360313Z",
+            "name": "yerevan_water_last_official"
+          },
+          "method": "regex",
+          "reliability": "statistics",
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+        },
+        "period": "2026-10",
+        "source_id": "yerevan_water_last_official",
+        "pending_record": null,
+        "pending_period": null,
+        "pending_source_id": null
+      },
+      "checked": "2026-10",
+      "stale": false,
+      "note": "",
+      "history": [
+        {
+          "period": "2026-10",
+          "source_id": "yerevan_water_last_official",
+          "records": [
+            {
+              "city": "yerevan",
+              "item": "water",
+              "category": "utility",
+              "value": 170.36,
+              "unit": "AMD/m3",
+              "currency": "AMD",
+              "tiers": [],
+              "valid_from": "2026-01-01",
+              "valid_to": null,
+              "source": {
+                "kind": "statistics",
+                "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+                "fetched_at": "2026-11-24T22:46:45.360313Z",
+                "name": "yerevan_water_last_official"
+              },
+              "method": "regex",
+              "reliability": "statistics",
+              "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item": "sewage",
+      "acting": {
+        "record": {
+          "city": "yerevan",
+          "item": "sewage",
+          "category": "utility",
+          "value": 30.06,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": null,
+          "source": {
+            "kind": "statistics",
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "fetched_at": "2026-11-24T22:46:45.360696Z",
+            "name": "yerevan_sewage_last_official"
+          },
+          "method": "regex",
+          "reliability": "statistics",
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+        },
+        "period": "2026-10",
+        "source_id": "yerevan_sewage_last_official",
+        "pending_record": null,
+        "pending_period": null,
+        "pending_source_id": null
+      },
+      "checked": "2026-10",
+      "stale": false,
+      "note": "",
+      "history": [
+        {
+          "period": "2026-10",
+          "source_id": "yerevan_sewage_last_official",
+          "records": [
+            {
+              "city": "yerevan",
+              "item": "sewage",
+              "category": "utility",
+              "value": 30.06,
+              "unit": "AMD/m3",
+              "currency": "AMD",
+              "tiers": [],
+              "valid_from": "2026-01-01",
+              "valid_to": null,
+              "source": {
+                "kind": "statistics",
+                "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+                "fetched_at": "2026-11-24T22:46:45.360696Z",
+                "name": "yerevan_sewage_last_official"
+              },
+              "method": "regex",
+              "reliability": "statistics",
+              "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "item": "waste",
+      "acting": {
+        "record": {
+          "city": "yerevan",
+          "item": "waste",
+          "category": "utility",
+          "value": 13.0,
+          "unit": "AMD/m2/month",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": "2026-12-31",
+          "source": {
+            "kind": "official",
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "fetched_at": "2026-11-24T22:46:45.666608Z",
+            "name": "yerevan_waste_arlis"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "п.20 решения о местных платежах 2026 года, жилое помещение, 13 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        },
+        "period": "2026-10",
+        "source_id": "yerevan_waste_arlis",
+        "pending_record": null,
+        "pending_period": null,
+        "pending_source_id": null
+      },
+      "checked": "2026-10",
+      "stale": false,
+      "note": "",
+      "history": [
+        {
+          "period": "2026-10",
+          "source_id": "yerevan_waste_arlis",
+          "records": [
+            {
+              "city": "yerevan",
+              "item": "waste",
+              "category": "utility",
+              "value": 13.0,
+              "unit": "AMD/m2/month",
+              "currency": "AMD",
+              "tiers": [],
+              "valid_from": "2026-01-01",
+              "valid_to": "2026-12-31",
+              "source": {
+                "kind": "official",
+                "url": "https://www.arlis.am/hy/acts/219208",
+                "fetched_at": "2026-11-24T22:46:45.666608Z",
+                "name": "yerevan_waste_arlis"
+              },
+              "method": "regex",
+              "reliability": "official",
+              "note": "п.20 решения о местных платежах 2026 года, жилое помещение, 13 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

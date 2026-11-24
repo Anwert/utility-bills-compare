@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "city": "tbilisi",
+  "month": "2026-10",
+  "updated_at": "2026-11-24T22:45:53.618921Z",
+  "apartment": {
+    "rooms": 2,
+    "area_m2": 60,
+    "occupants": 2
+  },
+  "exchange_rate": {
+    "currency": "GEL",
+    "per_eur": 2.9155,
+    "month": "2026-10",
+    "source_url": "https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/en/json/?currencies=EUR&date=",
+    "source_name": "National Bank of Georgia"
+  },
+  "paid_data_note": "оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)",
+  "cells": [
+    {
+      "house_class": "soviet_panel",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "soviet_panel",
+      "heating": "gas_boiler",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "soviet_panel",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "gas_boiler",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "business",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "business",
+      "heating": "gas_boiler",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "business",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "источники тарифов для города ещё не подключены",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    }
+  ]
+}

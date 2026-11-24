@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "city": "warsaw",
+  "period": "2026-10",
+  "collected_at": "2026-11-24T22:45:53.618921+00:00",
+  "sources": [
+    {
+      "source_id": "fx_pln_ecb",
+      "item": "fx",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "all",
+          "item": "fx",
+          "category": "context",
+          "value": 4.381268181818182,
+          "unit": "PLN/EUR",
+          "currency": "PLN",
+          "tiers": [],
+          "valid_from": "2026-10-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://data-api.ecb.europa.eu/service/data/EXR/M.PLN.EUR.SP00.A?startPeriod=2026-10&endPeriod=2026-10&format=csvdata",
+            "fetched_at": "2026-11-24T22:46:07.388357Z",
+            "name": "ECB"
+          },
+          "method": "api",
+          "reliability": "official",
+          "note": "ECB monthly average"
+        }
+      ]
+    }
+  ],
+  "acting": {},
+  "listings": []
+}

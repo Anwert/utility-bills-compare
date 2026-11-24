@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "city": "tbilisi",
+  "period": "2026-10",
+  "collected_at": "2026-11-24T22:45:53.618921+00:00",
+  "sources": [
+    {
+      "source_id": "fx_gel_nbg",
+      "item": "fx",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "all",
+          "item": "fx",
+          "category": "context",
+          "value": 2.9155,
+          "unit": "GEL/EUR",
+          "currency": "GEL",
+          "tiers": [],
+          "valid_from": "2026-10-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/en/json/?currencies=EUR&date=",
+            "fetched_at": "2026-11-24T22:46:06.395649Z",
+            "name": "National Bank of Georgia"
+          },
+          "method": "api",
+          "reliability": "official",
+          "note": "NBG mean of 31 days"
+        }
+      ]
+    }
+  ],
+  "acting": {},
+  "listings": []
+}

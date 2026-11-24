@@ -2,8 +2,28 @@
   "schema_version": 1,
   "files": [
     {
-      "path": "examples/yerevan-2026-10.json",
-      "example": true
+      "path": "yerevan-2026-10.json",
+      "example": false
+    },
+    {
+      "path": "tbilisi-2026-10.json",
+      "example": false
+    },
+    {
+      "path": "belgrade-2026-10.json",
+      "example": false
+    },
+    {
+      "path": "warsaw-2026-10.json",
+      "example": false
+    },
+    {
+      "path": "lisbon-2026-10.json",
+      "example": false
+    },
+    {
+      "path": "berlin-2026-10.json",
+      "example": false
     }
   ]
 }
