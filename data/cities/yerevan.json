@@ -211,27 +211,87 @@
     "price_references": [
       {
         "district": "Center",
-        "amount": 2743,
+        "amount": 2671,
         "currency": "USD",
-        "source": "Кадастровый комитет Армении, средняя цена квартир, август 2026: 993 000 AMD/м² (https://internationalinvestment.biz/en/real-estate/9054-yerevan-real-estate-rising-prices-and-the-risk-of-overheating.html); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 966.9 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
       },
       {
         "district": "Arabkir",
-        "amount": 2032,
+        "amount": 1942,
         "currency": "USD",
-        "source": "Кадастровый комитет Армении, средняя цена квартир, август 2026: 735 700 AMD/м² (https://internationalinvestment.biz/en/real-estate/9054-yerevan-real-estate-rising-prices-and-the-risk-of-overheating.html); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
-      },
-      {
-        "district": "Shengavit",
-        "amount": 1395,
-        "currency": "USD",
-        "source": "Кадастровый комитет Армении, средняя цена квартир, август 2026: 505 000 AMD/м² (https://internationalinvestment.biz/en/real-estate/9054-yerevan-real-estate-rising-prices-and-the-risk-of-overheating.html); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 703 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
       },
       {
         "district": "Nork-Marash",
-        "amount": 1527,
+        "amount": 1552,
         "currency": "USD",
-        "source": "Кадастровый комитет Армении, средняя цена квартир, II квартал 2026: 553 000 AMD/м² (https://jam-news.net/property-prices-in-armenia-rise-again-new-wave-of-emigration-from-russia-and-other-factors/); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 562 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Davtashen",
+        "amount": 1533,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 555 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Kanaker-Zeytun",
+        "amount": 1461,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 529 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Kanaqer-Zeytun",
+        "amount": 1461,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 529 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Ajapnyak",
+        "amount": 1356,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 491 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Malatia-Sebastia",
+        "amount": 1331,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 482 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Shengavit",
+        "amount": 1334,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Nor-Nork",
+        "amount": 1334,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Nor Nork",
+        "amount": 1334,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Erebuni",
+        "amount": 1329,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 481 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Avan",
+        "amount": 1307,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 473 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Nubarashen",
+        "amount": 749,
+        "currency": "USD",
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 271 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
       }
     ],
     "unavailable_heating": {
