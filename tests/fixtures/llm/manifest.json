@@ -1,0 +1,17 @@
+{
+  "https://regulator.example/yerevan-electricity.txt": "page.txt",
+  "https://regulator.example/accepted.json": "accepted.json",
+  "https://regulator.example/bad_unit.json": "bad_unit.json",
+  "https://regulator.example/out_of_range.json": "out_of_range.json",
+  "https://regulator.example/missing_quote.json": "missing_quote.json",
+  "https://regulator.example/future_date.json": "future_date.json",
+  "https://regulator.example/date_on_limit.json": "date_on_limit.json",
+  "https://regulator.example/date_past_limit.json": "date_past_limit.json",
+  "https://regulator.example/commercial.json": "commercial.json",
+  "https://regulator.example/decreasing_tiers.json": "decreasing_tiers.json",
+  "https://regulator.example/rising_tiers.json": "rising_tiers.json",
+  "https://regulator.example/unordered_tiers.json": "unordered_tiers.json",
+  "https://regulator.example/extra_field.json": "extra_field.json",
+  "https://regulator.example/scan.bin": "scan.bin",
+  "https://regulator.example/household_ru.json": "household_ru.json"
+}

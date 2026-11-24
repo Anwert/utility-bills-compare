@@ -1,0 +1,12 @@
+{
+  "value": 6.267,
+  "unit": "AMD/kWh",
+  "valid_from": "2026-01-26",
+  "consumer_category": "household",
+  "quote": "6.267 up to 101",
+  "tiers": [
+    {"up_to": 101, "value": 6.267},
+    {"up_to": 301, "value": 9.667},
+    {"up_to": null, "value": 13.467}
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "value": 10,
+  "unit": "AMD/kWh",
+  "valid_from": "2026-01-26",
+  "consumer_category": "household",
+  "quote": "46.48 AMD/kWh",
+  "tiers": [
+    {"up_to": 100, "value": 10},
+    {"up_to": null, "value": 4}
+  ]
+}
