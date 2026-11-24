@@ -6,7 +6,8 @@ Two implementations share one interface:
 - ``HttpFetcher`` does the live request: HTTP, with curl only when the
   failure is a TLS handshake or a connection refusal (not an HTTP status
   and not an arbitrary exception), headless Chrome for pages that are empty
-  without JS, and pdftotext for PDF bytes.
+  without JS, and pdftotext for PDF bytes. ``post_bytes`` is the same HTTP
+  path with a request body (the Armenian central-bank SOAP call).
 
 Neither implementation disables TLS verification or tries to pass an anti-bot
 challenge. A blocked response is a failed source; the selection policy moves on.
@@ -53,6 +54,8 @@ class ContentFetcher(Protocol):
 
     def fetch_text(self, url: str) -> str: ...
 
+    def post_bytes(self, url: str, body: bytes, headers: dict[str, str] | None = None) -> bytes: ...
+
     def render_html(self, url: str, *, budget_ms: int = 15000) -> str: ...
 
     def pdf_to_text(self, url: str, *, layout: bool = True) -> str: ...
@@ -73,6 +76,8 @@ class FixtureFetcher:
     ``render_html`` returns the saved file. For a JS page, save the DOM after
     rendering. ``pdf_to_text`` prefers a sibling ``.txt`` of the same stem so
     tests do not need poppler; otherwise it runs pdftotext on the local file.
+    ``post_bytes`` resolves the URL and ignores the body: put the month in the
+    URL so two periods do not share one fixture.
     """
 
     def __init__(self, root: Path, manifest: dict[str, str] | None = None) -> None:
@@ -107,6 +112,10 @@ class FixtureFetcher:
 
     def fetch_text(self, url: str) -> str:
         return self.resolve(url).read_text(encoding="utf-8")
+
+    def post_bytes(self, url: str, body: bytes, headers: dict[str, str] | None = None) -> bytes:
+        del body, headers
+        return self.fetch_bytes(url)
 
     def render_html(self, url: str, *, budget_ms: int = 15000) -> str:
         del budget_ms
@@ -167,6 +176,20 @@ class HttpFetcher:
     def fetch_text(self, url: str) -> str:
         return _decode(self.fetch_bytes(url))
 
+    def post_bytes(self, url: str, body: bytes, headers: dict[str, str] | None = None) -> bytes:
+        try:
+            return self.opener(_post_request(url, body, headers, self.user_agent), self.timeout)
+        except Exception as exc:
+            if not _connection_failure(exc):
+                raise FetchError(url, f"HTTP failed ({exc})") from exc
+            try:
+                curl_result = _curl(self, url, body=body, headers=headers)
+            except Exception as curl_exc:
+                raise FetchError(url, f"HTTP failed ({exc}); curl failed ({curl_exc})") from exc
+            if isinstance(curl_result, bytes):
+                return curl_result
+            raise FetchError(url, f"HTTP failed ({exc}); curl failed ({curl_result})") from exc
+
     def render_html(self, url: str, *, budget_ms: int = 15000) -> str:
         binary = _chrome_binary(self.chrome_bin, url)
         result = self.command(
@@ -204,13 +227,23 @@ class Opener(Protocol):
 def _request(url: str, user_agent: str) -> object:
     from urllib.request import Request
 
-    return Request(
-        url,
-        headers={
-            "User-Agent": user_agent,
-            "Accept-Language": "en,ru;q=0.8",
-        },
-    )
+    return Request(url, headers=_headers(user_agent, None))
+
+
+def _post_request(url: str, body: bytes, headers: dict[str, str] | None, user_agent: str) -> object:
+    from urllib.request import Request
+
+    return Request(url, data=body, headers=_headers(user_agent, headers), method="POST")
+
+
+def _headers(user_agent: str, extra: dict[str, str] | None) -> dict[str, str]:
+    headers = {
+        "User-Agent": user_agent,
+        "Accept-Language": "en,ru;q=0.8",
+    }
+    if extra:
+        headers.update(extra)
+    return headers
 
 
 def _default_opener(request: object, timeout: float) -> bytes:
@@ -248,19 +281,28 @@ def _connection_failure(exc: BaseException) -> bool:
     )
 
 
-def _curl(fetcher: HttpFetcher, url: str) -> bytes | str:
-    result = fetcher.command(
-        [
-            fetcher.curl_bin,
-            "-fsSL",
-            "--compressed",
-            "-m",
-            str(int(fetcher.timeout)),
-            "-A",
-            fetcher.user_agent,
-            url,
-        ]
-    )
+def _curl(
+    fetcher: HttpFetcher,
+    url: str,
+    *,
+    body: bytes | None = None,
+    headers: dict[str, str] | None = None,
+) -> bytes | str:
+    argv = [
+        fetcher.curl_bin,
+        "-fsSL",
+        "--compressed",
+        "-m",
+        str(int(fetcher.timeout)),
+        "-A",
+        fetcher.user_agent,
+    ]
+    for key, value in (headers or {}).items():
+        argv.extend(["-H", f"{key}: {value}"])
+    if body is not None:
+        argv.extend(["--data-binary", "@-"])
+    argv.append(url)
+    result = fetcher.command(argv, stdin=body)
     if result.returncode != 0 or not result.stdout:
         detail = result.stderr.decode("utf-8", "replace").strip() or f"exit {result.returncode}"
         return detail

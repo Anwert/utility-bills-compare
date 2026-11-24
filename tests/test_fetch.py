@@ -61,6 +61,38 @@ def test_http_success_does_not_call_curl() -> None:
     assert body == b"ok"
 
 
+def test_post_sends_the_body_and_curl_fallback_keeps_tls() -> None:
+    seen: dict[str, object] = {}
+
+    def opener(request: object, timeout: float) -> bytes:
+        del timeout
+        seen["data"] = getattr(request, "data", None)
+        seen["method"] = request.get_method()  # type: ignore[attr-defined]
+        raise ssl.SSLError("tls handshake rejected")
+
+    def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        seen["argv"] = argv
+        seen["stdin"] = stdin
+        return CommandResult(0, b"<ok/>", b"")
+
+    body = HttpFetcher(opener=opener, command=command).post_bytes(
+        "https://api.cba.am/exchangerates.asmx",
+        b"<soap/>",
+        {"Content-Type": "text/xml; charset=utf-8"},
+    )
+
+    assert body == b"<ok/>"
+    assert seen["data"] == b"<soap/>"
+    assert seen["method"] == "POST"
+    assert seen["stdin"] == b"<soap/>"
+    argv = seen["argv"]
+    assert isinstance(argv, list)
+    assert "-k" not in argv
+    assert "--insecure" not in argv
+    assert "--data-binary" in argv
+    assert "https://api.cba.am/exchangerates.asmx" in argv
+
+
 def test_curl_fallback_keeps_tls_verification() -> None:
     seen: dict[str, list[str]] = {}
 

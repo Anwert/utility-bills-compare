@@ -1,4 +1,4 @@
-"""The six city files are valid and still have empty source lists."""
+"""The six city files are valid. Article lists are still empty."""
 
 from __future__ import annotations
 
@@ -32,7 +32,6 @@ def test_six_cities_match_the_agreed_currencies_and_coordinates() -> None:
         assert [article.item for article in city.articles] == list(CHARGE_ITEMS)
         assert all(article.sources == [] for article in city.articles)
         assert city.listing_sites == []
-        assert city.fx_sources == []
         assert city.hdd_sources == []
 
 

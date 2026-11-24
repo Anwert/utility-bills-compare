@@ -42,6 +42,31 @@
     }
   ],
   "listing_sites": [],
-  "fx_sources": [],
+  "fx_sources": [
+    {
+      "id": "fx_rsd_eurostat",
+      "adapter": "fx_eurostat",
+      "kind": "official",
+      "priority": 0,
+      "enabled": true,
+      "reliability": "official",
+      "settings": {
+        "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ert_bil_eur_m",
+        "currency": "RSD"
+      }
+    },
+    {
+      "id": "fx_rsd_nbs",
+      "adapter": "fx_nbs",
+      "kind": "official",
+      "priority": 1,
+      "enabled": true,
+      "reliability": "official",
+      "settings": {
+        "url": "https://webappcenter.nbs.rs/ExchangeRateWebApp/ExchangeRate/CurrentMiddleRate",
+        "currency": "RSD"
+      }
+    }
+  ],
   "hdd_sources": []
 }
