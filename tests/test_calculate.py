@@ -142,6 +142,59 @@ def line(cell, item: Item):
     return found[0]
 
 
+def test_missing_house_can_carry_its_own_reason() -> None:
+    cell = bill(house=None, empty_reason="в городе нет тарифа центрального отопления")
+
+    assert cell.status is CellStatus.empty
+    assert cell.empty_reason == "в городе нет тарифа центрального отопления"
+
+
+@pytest.mark.parametrize(
+    ("listing_fee", "official_rate", "expected"),
+    [
+        # 900 PLN a month for the flat, 4 PLN for 1 EUR.
+        (True, True, [(225.0, "https://example.test/listing")]),
+        # 10 PLN/m2 for 60 m2.
+        (False, True, [(150.0, "https://example.test/maintenance")]),
+        (False, False, []),
+    ],
+)
+def test_housing_fee_comes_from_the_listing_then_the_official_rate_then_is_absent(
+    listing_fee: bool, official_rate: bool, expected: list
+) -> None:
+    fee = HousingFee(amount=900, currency="PLN", period="month", per="per_dwelling")
+    records = [
+        record(city="warsaw", currency="PLN", unit="PLN/month", value=400),
+        fx(4, "PLN"),
+    ]
+    if official_rate:
+        records.append(
+            record(
+                city="warsaw",
+                item="maintenance",
+                category="housing",
+                value=10,
+                unit="PLN/m2/month",
+                currency="PLN",
+                source={
+                    "kind": "official",
+                    "url": "https://example.test/maintenance",
+                    "fetched_at": "2026-11-24T00:00:00+00:00",
+                    "name": "official",
+                },
+            )
+        )
+
+    cell = bill(
+        city=CityId.warsaw,
+        house=house(city="warsaw", housing_fees=[fee] if listing_fee else []),
+        records=records,
+    )
+
+    lines = [line for line in cell.lines if line.category is Category.housing]
+    assert [(line.amount_eur, line.source_url) for line in lines] == expected
+
+
 def test_missing_house_is_an_empty_cell_even_when_tariffs_exist() -> None:
     cell = bill(
         house=None,

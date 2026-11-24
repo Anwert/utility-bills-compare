@@ -27,6 +27,7 @@ _REAL_ESTATE_LISTINGS = {
         "heating_raw": "heating | gas",
         "floors": 14,
         "area_m2": 55,
+        "price_per_m2": 3054.55,
     },
     "real-estate-427503": {
         "url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/arabkir/n-zaryan-street/3-room/427503",
@@ -36,6 +37,7 @@ _REAL_ESTATE_LISTINGS = {
         "heating_raw": "heating",
         "floors": 18,
         "area_m2": 80,
+        "price_per_m2": 4500,
     },
     "real-estate-416126": {
         "url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/arabkir/vratsakan-street/2-room/416126",
@@ -45,6 +47,7 @@ _REAL_ESTATE_LISTINGS = {
         "heating_raw": None,
         "floors": 14,
         "area_m2": 66,
+        "price_per_m2": 3181.82,
     },
 }
 
@@ -79,9 +82,32 @@ def test_myrealty_returns_the_khorenatsi_listing() -> None:
     assert candidate.year_built is None
     assert candidate.is_newbuild is None
     assert candidate.housing_fee is None
+    assert (candidate.price_per_m2.amount, candidate.price_per_m2.currency) == (1929, "USD")
     assert candidate.url == _MYREALTY_LISTING
     assert candidate.seen_at.isoformat() == "2026-11-23"
     assert candidate.note == ""
+
+
+def test_myrealty_keeps_the_central_heating_facility(tmp_path) -> None:
+    for saved in _MYREALTY.iterdir():
+        text = saved.read_text(encoding="utf-8")
+        changed = text.replace("<label>Air-conditioner</label>", "<label>Central heating</label>")
+        (tmp_path / saved.name).write_text(changed, encoding="utf-8")
+
+    [candidate] = _collect("myrealty", _MYREALTY_SEARCH, tmp_path).candidates
+
+    assert candidate.heating_raw == "Heating | Central heating | Gas"
+
+
+def test_listing_without_a_price_is_still_a_candidate(tmp_path) -> None:
+    for saved in _REAL_ESTATE.iterdir():
+        text = saved.read_text(encoding="utf-8")
+        changed = text.replace('rice\\":', 'riceless\\":')
+        (tmp_path / saved.name).write_text(changed, encoding="utf-8")
+
+    output = _collect("real_estate_am", _REAL_ESTATE_SEARCH, tmp_path)
+
+    assert [item.price_per_m2 for item in output.candidates] == [None, None, None]
 
 
 def test_real_estate_am_returns_the_saved_listings() -> None:
@@ -103,6 +129,8 @@ def test_real_estate_am_returns_the_saved_listings() -> None:
         assert candidate.is_newbuild is True
         assert candidate.area_m2 == expected["area_m2"]
         assert candidate.floors == expected["floors"]
+        assert candidate.price_per_m2.amount == expected["price_per_m2"]
+        assert candidate.price_per_m2.currency == "USD"
         assert candidate.heating_raw == expected["heating_raw"]
         assert candidate.heating is None
         assert candidate.year_built is None

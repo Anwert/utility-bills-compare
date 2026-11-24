@@ -15,7 +15,7 @@ import io
 import json
 import lzma
 import tarfile
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
 from ubc.fetch import ContentFetcher
@@ -116,7 +116,9 @@ class RecordingFetcher:
                 tar.addfile(info, io.BytesIO(body))
         return lzma.compress(packed.getvalue(), preset=6)
 
-    def _keep[T: (str, bytes)](self, method: str, url: str, call, request: str = "") -> T:
+    def _keep[T: (str, bytes)](
+        self, method: str, url: str, call: Callable[[], T], request: str = ""
+    ) -> T:
         hidden_url = self._redactor.text(url)
         hidden_request = self._redactor.text(request)
         try:

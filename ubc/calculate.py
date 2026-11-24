@@ -97,7 +97,7 @@ def calculate_cell(
 
     ``extra_marks`` carries badges the source-selection policy already decided
     (``stale``). Fixed, norm-based, statistics, third-party, and model-extracted
-    badges are derived here.
+    badges are derived here. ``empty_reason`` is shown when there is no house.
     """
 
     city_id = CityId(city)

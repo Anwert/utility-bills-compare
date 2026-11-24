@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
+import time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
@@ -26,7 +27,7 @@ from ubc.adapter import AdapterOutput, CollectContext, get_adapter
 from ubc.alerts import AlertDeliveryError, GitHubIssues, sync_alerts
 from ubc.articles import ArticleOutcome, Reading, decide_article, keep_article
 from ubc.calculate import CalculationError, calculate_cell
-from ubc.fetch import ContentFetcher
+from ubc.fetch import ContentFetcher, FetchError
 from ubc.houses import CellKey, PinResult, enrich_candidates, pin_houses
 from ubc.load import ConfigError
 from ubc.policy import AlertAction, AlertReason, AttemptStatus, DataAlert
@@ -66,7 +67,6 @@ from ubc.state import (
 )
 
 NOT_CONNECTED = "источники тарифов для города ещё не подключены"
-LISTINGS_FAILED = "сайты объявлений в этом месяце не отдали данные"
 _DEGREE_DAYS = frozenset({Item.hdd, Item.hdd_annual})
 OPEN_DATA_ID = "house_open_data"
 
@@ -115,8 +115,43 @@ def enrich_and_pin(
 ) -> PinResult:
     """The classifier of #36."""
 
-    enriched = enrich_candidates(city, candidates, fetcher)
-    return pin_houses(city=city, candidates=enriched, previous=previous, period=period)
+    return pin_houses(
+        city=city,
+        candidates=enrich_candidates(city, candidates, fetcher),
+        previous=previous,
+        period=period,
+    )
+
+
+class _OpenDataFetcher(RecordingFetcher):
+    """Open data only adds facts, so it may neither break nor stall the run.
+
+    Whatever goes wrong is the ``FetchError`` the enrichment already expects, and
+    once the time is spent every further request fails at once.
+    """
+
+    def __init__(self, inner: ContentFetcher, redactor: Redactor, budget_s: float) -> None:
+        super().__init__(inner, redactor)
+        self._deadline = time.monotonic() + budget_s
+        self.problems: list[str] = []
+
+    def _keep[T: (str, bytes)](
+        self, method: str, url: str, call: Callable[[], T], request: str = ""
+    ) -> T:
+        try:
+            if time.monotonic() >= self._deadline:
+                raise FetchError(url, "время на открытые данные вышло")
+            return super()._keep(method, url, call, request)
+        except FetchError as exc:
+            self._note(str(exc))
+            raise
+        except Exception as exc:
+            self._note(f"{url}: {exc}")
+            raise FetchError(url, str(exc)) from exc
+
+    def _note(self, problem: str) -> None:
+        if problem not in self.problems:
+            self.problems.append(problem)
 
 
 @dataclass(frozen=True)
@@ -124,7 +159,8 @@ class MonthOptions:
     """What to run. ``item`` collects one article and takes the rest from ``data/state``.
 
     ``issues`` is ``None`` when alerts are not to be sent. ``dry_run`` calculates
-    everything, sends nothing, and writes nothing. ``hide`` adds secret values
+    everything, sends nothing, and writes nothing. ``open_data_budget_s`` caps the
+    time one city spends on open data about houses. ``hide`` adds secret values
     to blank in stored answers on top of the ones in ``secrets``.
     """
 
@@ -138,6 +174,7 @@ class MonthOptions:
     secrets: SecretConfig = field(default_factory=SecretConfig)
     transport: ProxyTransport | None = None
     house_step: HouseStep = enrich_and_pin
+    open_data_budget_s: float = 300.0
     dry_run: bool = False
     now: datetime | None = None
     hide: Sequence[str] = ()
@@ -434,7 +471,9 @@ class _Run:
                     (cell.house_class, cell.heating): cell.reason for cell in saved.empty
                 },
             )
-        recorder = RecordingFetcher(self.options.fetcher, self.redactor)
+        recorder = _OpenDataFetcher(
+            self.options.fetcher, self.redactor, self.options.open_data_budget_s
+        )
         try:
             pins = self.options.house_step(
                 city=run.city,
@@ -450,16 +489,15 @@ class _Run:
             return None
         finally:
             self._keep_raw(run, OPEN_DATA_ID, recorder)
+            for problem in recorder.problems:
+                self._warn(
+                    f"{run.city.id.value}: открытые данные о домах: {self.redactor.text(problem)}"
+                )
         if set(pins.houses) | set(pins.empty_reasons) != set(_ALL_CELLS) or (
             set(pins.houses) & set(pins.empty_reasons)
         ):
             run.problems.append("закрепление домов не покрыло девять ячеек ровно по одному разу")
             return None
-        if run.listings and all(reading.status is not AttemptStatus.ok for reading in run.listings):
-            pins = PinResult(
-                houses=pins.houses,
-                empty_reasons=dict.fromkeys(pins.empty_reasons, LISTINGS_FAILED),
-            )
         run.houses = CityHouses(
             city=run.city.id,
             period=str(self.period),

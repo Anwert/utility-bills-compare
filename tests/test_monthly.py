@@ -19,7 +19,13 @@ from ubc.alerts import IssueSnapshot
 from ubc.fetch import FetchError, FixtureFetcher
 from ubc.houses import PinResult
 from ubc.load import ConfigError, load_city, load_reference
-from ubc.monthly import MonthOptions, MonthReport, PublicationError, run_month
+from ubc.monthly import (
+    MonthOptions,
+    MonthReport,
+    PublicationError,
+    enrich_and_pin,
+    run_month,
+)
 from ubc.paths import REPO_ROOT
 from ubc.schemas import (
     CityConfig,
@@ -185,6 +191,16 @@ REFERENCE = ReferenceData.model_validate(
             norm("water", 12, "m3/person/year", "per_person"),
             norm("gas", 300, "m3/dwelling/year", "per_dwelling", heating="gas_boiler"),
         ],
+    }
+)
+ANY_HOUSE_REFERENCE = ReferenceData.model_validate(
+    REFERENCE.model_dump(mode="json")
+    | {
+        "norms": [
+            item.model_dump(mode="json") | {"house_class": row.value}
+            for item in REFERENCE.norms
+            for row in HouseClass
+        ]
     }
 )
 BOILER = (HouseClass.soviet_panel, HeatingType.gas_boiler)
@@ -464,15 +480,59 @@ def test_dry_run_writes_nothing_and_sends_nothing(tmp_path: Path) -> None:
     assert [month.city for month in report.months] == [CityId.yerevan]
 
 
-def test_dead_listing_sites_are_the_reason_of_the_empty_cells(tmp_path: Path) -> None:
+def test_dead_listing_sites_are_a_warning_and_the_reason_of_the_empty_cells(
+    tmp_path: Path,
+) -> None:
     pages = SavedPages("yerevan", "fx_cba", "open_meteo")
-    report = run_yerevan(tmp_path, fetcher=pages, house_step=Houses())
+    report = run_yerevan(tmp_path, fetcher=pages, house_step=enrich_and_pin)
 
     cells = published(tmp_path, "yerevan-2026-10.json")["cells"]
-    assert {cell["empty_reason"] for cell in cells} == {
-        "сайты объявлений в этом месяце не отдали данные"
+    assert {cell["empty_reason"] for cell in cells if cell["heating"] == "gas_boiler"} == {
+        "сайты объявлений в этом месяце не дали ни одного дома"
     }
     assert any("myrealty" in warning for warning in report.warnings)
+
+
+OVERPASS = "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+
+
+class BrokenOpenData(SavedPages):
+    """A listing without storeys sends the run to Overpass, which breaks in a new way."""
+
+    def fetch_text(self, url: str) -> str:
+        return super().fetch_text(url).replace("Floor/Storeys", "Something else")
+
+    def post_text(self, url: str, body: str, *, headers: dict[str, str] | None = None) -> str:
+        if url == OVERPASS:
+            self.asked.append(url)
+            raise RuntimeError("the mirror answered with something unheard of")
+        return super().post_text(url, body, headers=headers)
+
+
+def test_real_classifier_runs_by_default_when_open_data_is_dead(tmp_path: Path) -> None:
+    pages = BrokenOpenData(*YEREVAN_PAGES)
+    report = run(tmp_path, [load_city("yerevan")], pages, reference=ANY_HOUSE_REFERENCE)
+
+    assert OVERPASS in pages.asked
+    assert any("открытые данные" in warning for warning in report.warnings)
+    cells = published(tmp_path, "yerevan-2026-10.json")["cells"]
+    assert len(cells) == 9
+    (reason,) = {cell["empty_reason"] for cell in cells if cell["heating"] == "district"}
+    assert reason != "дом такого класса с таким отоплением автоматически не найден"
+
+
+def test_slow_open_data_stops_being_asked_once_its_time_is_spent(tmp_path: Path) -> None:
+    pages = BrokenOpenData(*YEREVAN_PAGES)
+    run(
+        tmp_path,
+        [load_city("yerevan")],
+        pages,
+        reference=ANY_HOUSE_REFERENCE,
+        open_data_budget_s=0,
+    )
+
+    assert OVERPASS not in pages.asked
+    assert (tmp_path / "yerevan-2026-10.json").is_file()
 
 
 def test_one_article_run_takes_the_rest_from_the_saved_state(tmp_path: Path) -> None:
