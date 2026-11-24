@@ -10,7 +10,20 @@
   "articles": [
     {
       "item": "maintenance",
-      "sources": []
+      "sources": [
+        {
+          "id": "yerevan_maintenance_arlis",
+          "adapter": "yerevan_arlis",
+          "kind": "official",
+          "priority": 0,
+          "enabled": true,
+          "reliability": "official",
+          "settings": {
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "item": "maintenance"
+          }
+        }
+      ]
     },
     {
       "item": "heating",
@@ -18,15 +31,63 @@
     },
     {
       "item": "electricity",
-      "sources": []
+      "sources": [
+        {
+          "id": "yerevan_electricity_psrc",
+          "adapter": "yerevan_psrc_electricity",
+          "kind": "official",
+          "priority": 0,
+          "enabled": true,
+          "reliability": "official",
+          "settings": {
+            "url": "https://www.psrc.am/contents/fields/electric_energy/el_energy_tariffs"
+          }
+        }
+      ]
     },
     {
       "item": "gas",
-      "sources": []
+      "sources": [
+        {
+          "id": "yerevan_gas_psrc",
+          "adapter": "yerevan_psrc_gas",
+          "kind": "official",
+          "priority": 0,
+          "enabled": true,
+          "reliability": "official",
+          "settings": {
+            "url": "https://www.psrc.am/contents/fields/gas/gas_tariffs"
+          }
+        }
+      ]
     },
     {
       "item": "water",
-      "sources": []
+      "sources": [
+        {
+          "id": "yerevan_water_psrc_scan",
+          "adapter": "yerevan_psrc_scan",
+          "kind": "official",
+          "priority": 0,
+          "enabled": false,
+          "reliability": "official",
+          "settings": {
+            "url": "https://www.psrc.am/contents/fields/water/water_tariffs"
+          }
+        },
+        {
+          "id": "yerevan_water_last_official",
+          "adapter": "yerevan_water_stat",
+          "kind": "statistics",
+          "priority": 0,
+          "enabled": true,
+          "reliability": "statistics",
+          "settings": {
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "component": "water"
+          }
+        }
+      ]
     },
     {
       "item": "hot_water",
@@ -34,11 +95,48 @@
     },
     {
       "item": "sewage",
-      "sources": []
+      "sources": [
+        {
+          "id": "yerevan_sewage_psrc_scan",
+          "adapter": "yerevan_psrc_scan",
+          "kind": "official",
+          "priority": 0,
+          "enabled": false,
+          "reliability": "official",
+          "settings": {
+            "url": "https://www.psrc.am/contents/fields/water/water_tariffs"
+          }
+        },
+        {
+          "id": "yerevan_sewage_last_official",
+          "adapter": "yerevan_water_stat",
+          "kind": "statistics",
+          "priority": 0,
+          "enabled": true,
+          "reliability": "statistics",
+          "settings": {
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "component": "sewage"
+          }
+        }
+      ]
     },
     {
       "item": "waste",
-      "sources": []
+      "sources": [
+        {
+          "id": "yerevan_waste_arlis",
+          "adapter": "yerevan_arlis",
+          "kind": "official",
+          "priority": 0,
+          "enabled": true,
+          "reliability": "official",
+          "settings": {
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "item": "waste"
+          }
+        }
+      ]
     }
   ],
   "listing_sites": [],
