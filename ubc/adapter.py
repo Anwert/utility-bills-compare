@@ -22,7 +22,10 @@ from ubc.schemas import (
 )
 
 # Add a module here when you add an adapter. Importing it must register one instance.
-ADAPTER_MODULES: tuple[str, ...] = ("ubc.adapters.example_html",)
+ADAPTER_MODULES: tuple[str, ...] = (
+    "ubc.adapters.example_html",
+    "ubc.adapters.yerevan",
+)
 
 
 @dataclass(frozen=True)
