@@ -1,0 +1,66 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вариант 3 — сетка класс × отопление</title><style>*{box-sizing:border-box}body{margin:0;font:15px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif;color:#1d2330;background:#f5f6f8}
+.ex{background:#fff3cd;color:#7a5a00;font-size:12px;text-align:center;padding:6px 10px;font-weight:600}
+h1{font-size:19px;margin:0}.muted{color:#6b7280;font-size:12px}
+select{font:inherit;padding:8px 10px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;width:100%}
+.vlabel{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#111;color:#fff;font-size:12px;padding:6px 12px;border-radius:20px;opacity:.85}
+
+body{background:#fff}.tabs{display:flex;overflow-x:auto;border-bottom:2px solid #e5e7eb;position:sticky;top:0;background:#fff}
+.tab{padding:12px 14px;font-weight:600;color:#6b7280;flex:none}.tab.on{color:#065f46;border-bottom:3px solid #10b981}
+.wrap{padding:12px 14px}.mrow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:76px repeat(3,1fr);gap:4px;font-size:12px}
+.hd{font-weight:700;color:#374151;padding:4px;text-align:center;font-size:11px}
+.rh{font-weight:600;font-size:11px;display:flex;align-items:center;color:#374151}
+.cell{border-radius:10px;padding:8px 4px;text-align:center;background:#ecfdf5;border:2px solid transparent}
+.cell b{display:block;font-size:17px}.cell span{font-size:10px;color:#047857}
+.cell.sel{border-color:#10b981}.cell.no{background:#f3f4f6;color:#9ca3af}
+.sheet{margin-top:14px;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden}
+.sh{background:#065f46;color:#fff;padding:10px 12px}.sec{font-size:11px;font-weight:700;text-transform:uppercase;color:#065f46;padding:8px 12px 2px}
+.li{display:flex;justify-content:space-between;padding:6px 12px;border-bottom:1px solid #f3f4f6;font-size:13px}.li small{display:block;color:#6b7280;font-size:11px}
+.sum{display:flex;justify-content:space-between;padding:8px 12px;font-weight:700;background:#f9fafb}
+</style></head><body><div class="ex">ПРИМЕР ДАННЫХ — цифры выдуманы</div>
+<div class="tabs" id="t"></div>
+<div class="wrap"><div class="mrow"><select id="m"></select></div>
+<div class="muted" style="margin-bottom:8px">Итого в евро за месяц, 2 комн. ~60 м². Нажми на ячейку — внизу разбивка.</div>
+<div class="grid" id="g"></div><div id="s"></div></div><div style="height:50px"></div>
+<div class="vlabel">Вариант 3 · Сетка класс × отопление</div>
+<script>// ПРИМЕР: все цифры выдуманы для прототипа, это не реальные тарифы.
+const CITIES=["Ереван","Тбилиси","Белград","Варшава","Лиссабон","Берлин"];
+const CLASSES=["Советский / панель","Новостройка 2000–2010-х","Бизнес-класс"];
+const HEAT=["Центральное","Газовый котёл","Электрическое"];
+const MONTHS=["Ноябрь 2026","Декабрь 2026"];
+// какие ячейки пустые (нет реального дома): [город][отопление]
+const NOHOUSE={"Ереван":["Центральное"],"Тбилиси":["Центральное"],"Лиссабон":["Центральное"],"Берлин":["Электрическое"],"Варшава":["Электрическое"],"Белград":[]};
+const BASE={"Ереван":0.55,"Тбилиси":0.5,"Белград":0.7,"Варшава":1.0,"Лиссабон":1.05,"Берлин":1.6};
+const SRC={"Ереван":"psrc.am","Тбилиси":"gnerc.org","Белград":"infostan.rs","Варшава":"ure.gov.pl","Лиссабон":"erse.pt","Берлин":"berlin.de"};
+function seed(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%9973;return h/9973}
+function figure(city,cls,heat,month){
+  if((NOHOUSE[city]||[]).includes(heat))return null;
+  const b=BASE[city],ci=CLASSES.indexOf(cls),mi=MONTHS.indexOf(month),r=seed(city+cls+heat);
+  const k=1+mi*0.25;
+  const heatAmt=Math.round((heat==="Центральное"?55:heat==="Газовый котёл"?45:60)*b*k*(1.25-ci*0.15)*(0.9+r*0.2));
+  const util=[
+    {name:"Отопление",eur:heatAmt,date:"01.07.2026",src:SRC[city]},
+    {name:"Электричество",eur:Math.round(28*b*(0.9+r*0.2)),date:"01.01.2026",src:SRC[city]},
+    {name:"Вода и канализация",eur:Math.round(14*b),date:"01.03.2026",src:SRC[city]},
+    {name:"Вывоз мусора",eur:Math.round(5*b+2),date:"01.01.2026",src:SRC[city]},
+  ];
+  const hs=[{name:"Обслуживание дома",eur:Math.round([0.4,0.8,1.9][ci]*60*b*0.6*(0.9+r*0.2)),date:"объявление, 10.2026",src:"пример-объявление"},
+    ...(ci===2?[{name:"Консьерж / охрана",eur:Math.round(25*b),date:"объявление, 10.2026",src:"пример-объявление"}]:[])];
+  const sum=a=>a.reduce((s,x)=>s+x.eur,0);
+  return {util,hs,utilSum:sum(util),hsSum:sum(hs),total:sum(util)+sum(hs),house:`Пример: ${city}, ул. Условная ${1+Math.floor(r*90)}`,rate:"курс EUR за "+month.toLowerCase()};
+}
+
+const st={city:"Белград",ci:1,hi:1};const m=document.getElementById('m');MONTHS.forEach(x=>m.add(new Option(x)));m.onchange=r;
+function r(){document.getElementById('t').innerHTML=CITIES.map(c=>`<div class="tab ${c===st.city?'on':''}" onclick="st.city='${c}';r()">${c}</div>`).join('');
+let g='<div></div>'+HEAT.map(h=>`<div class="hd">${h}</div>`).join('');
+CLASSES.forEach((c,ci)=>{g+=`<div class="rh">${c}</div>`;HEAT.forEach((h,hi)=>{const f=figure(st.city,c,h,m.value);const sel=ci===st.ci&&hi===st.hi;
+g+=f?`<div class="cell ${sel?'sel':''}" onclick="st.ci=${ci};st.hi=${hi};r()"><b>€${f.total}</b><span>ж ${f.hsSum} · к ${f.utilSum}</span></div>`:`<div class="cell no">—<br><span style="color:#9ca3af">нет дома</span></div>`})});
+document.getElementById('g').innerHTML=g;
+const f=figure(st.city,CLASSES[st.ci],HEAT[st.hi],m.value);
+document.getElementById('s').innerHTML=!f?'':`<div class="sheet"><div class="sh"><b>${st.city}</b> · ${CLASSES[st.ci]} · ${HEAT[st.hi]}<br><small>${f.house} · ${f.rate}</small></div>
+<div class="sec">Жилищные услуги</div>${f.hs.map(x=>`<div class="li"><span>${x.name}<small>${x.src} · ${x.date}</small></span><span>€${x.eur}</span></div>`).join('')}<div class="sum"><span>Жилищные</span><span>€${f.hsSum}</span></div>
+<div class="sec">Коммунальные услуги</div>${f.util.map(x=>`<div class="li"><span>${x.name}<small>${x.src} · тариф с ${x.date}</small></span><span>€${x.eur}</span></div>`).join('')}<div class="sum"><span>Коммунальные</span><span>€${f.utilSum}</span></div>
+<div class="sum" style="background:#ecfdf5"><span>Итого</span><span>€${f.total}</span></div></div>`}
+r();
+</script></body></html>
