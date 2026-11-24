@@ -386,3 +386,46 @@ def test_yerevan_config_enables_the_fallbacks_and_leaves_the_scan_off() -> None:
         assert [source.adapter for source in ordered_enabled_sources(sources)] == [
             "yerevan_water_stat"
         ]
+
+
+class _SlowPage(FixtureFetcher):
+    """The PSRC page whose links appear only when Chrome is given more time."""
+
+    def __init__(self, ready_at_ms: int) -> None:
+        super().__init__(FIXTURES)
+        self.ready_at_ms = ready_at_ms
+        self.renders = 0
+
+    def render_html(self, url: str, *, budget_ms: int = 15000) -> str:
+        self.renders += 1
+        if budget_ms < self.ready_at_ms:
+            return "<html><body>Loading</body></html>"
+        return super().render_html(url, budget_ms=budget_ms)
+
+
+def test_psrc_page_without_links_yet_is_rendered_again_with_more_time() -> None:
+    (record,) = _collect(
+        "yerevan_psrc_gas",
+        "yerevan_gas_psrc",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": GAS_PAGE},
+        fetcher=_SlowPage(ready_at_ms=60_000),
+    ).records
+
+    assert record.value == 143.7
+
+
+def test_psrc_page_that_never_shows_the_link_is_a_failed_source() -> None:
+    fetcher = _SlowPage(ready_at_ms=10**9)
+    with pytest.raises(ValueError, match="no consumer tariff PDF"):
+        _collect(
+            "yerevan_psrc_gas",
+            "yerevan_gas_psrc",
+            kind=SourceKind.official,
+            reliability=Reliability.official,
+            settings={"url": GAS_PAGE},
+            fetcher=fetcher,
+        )
+
+    assert fetcher.renders == 3
