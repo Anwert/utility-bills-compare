@@ -48,7 +48,7 @@ python -m ubc.pipeline --city yerevan --period 2026-10
 ## Где лежат договорённости
 
 - `data/cities/` — валюта, координаты и статьи каждого города
-- `data/reference.json` — эталонная квартира и заглушки норм расхода
+- `data/reference.json` — эталонная квартира и нормы расхода с источниками
 - `data/examples/yerevan-2026-10.json` — пример данных, которые читает сайт (цифры примерные)
 - `ubc/schemas.py` — проверка этих документов
 - `ubc/adapters/example_html.py` — образец адаптера на фикстуре
