@@ -27,6 +27,8 @@
 | `data/cities/*.json` | Шесть городов. Списки источников пока пустые — их заполняют тикеты адаптеров |
 | `data/reference.json` | Эталонная квартира и заглушки норм расхода |
 | `data/examples/yerevan-2026-10.json` | Пример контракта сайта, цифры выдуманы |
+| `data/site-index.json` | Список `CityMonth`, который читает статический сайт |
+| `index.html`, `site/` | Сайт варианта 3: вкладки, сетка, разбивка. Без сборки |
 | `tests/` | Поведение через публичные функции. Сеть выключена фикстурой в `conftest.py` |
 
 ## Стабильные имена
@@ -43,6 +45,7 @@
 - `ubc.pipeline.collect_contexts`
 - `ubc.fetch.ContentFetcher`, `FixtureFetcher`, `HttpFetcher`, `FetchError`
 - `ubc.load.load_cities`, `load_city`, `load_reference`, `load_example_city_month`
+- `ubc.site_index.build_site_index`, `write_site_index`
 
 Адаптер тарифа, курса или градусо-суток заполняет `AdapterOutput.records`. Адаптер объявлений заполняет `AdapterOutput.candidates` (`BuildingCandidate`), а не нормализованные записи. Классификатор потом пишет `PinnedHouse`. Адаптер не знает про ячейки и расчёт.
 
@@ -130,3 +133,5 @@ python -m ubc.pipeline --city yerevan --period 2026-10
 ```
 
 `python -m ubc.pipeline --period YYYY-MM` проверяет JSON, печатает включённые источники и передаёт месяц в `collect_contexts`. Он не открывает сеть, не считает ячейки и не публикует сайт.
+
+Сайт — `index.html` и `site/`. Он сам не обходит каталог: читает `data/site-index.json`, затем каждый путь из него. В индекс входят `data/examples/<city>-<YYYY-MM>.json` (пометка «пример») и `data/<city>-<YYYY-MM>.json`, которые позже пишет конвейер. Файл конвейера заменяет пример того же города и месяца. После нового снимка индекс пересобирается командой `python -m ubc.site_index`. `reference.json` и `data/cities/` в индекс не входят.
