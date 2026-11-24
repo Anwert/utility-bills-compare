@@ -1,7 +1,7 @@
 """Yerevan 2-room sale listings from myrealty.am.
 
 The search page links the ads. Each ad is HTML: building type, area,
-floor/storeys, facilities, map point, and an edit date. Year and the
+floor/storeys, facilities, price per m², map point, and an edit date. Year and the
 maintenance fee are not on the page. Heating stays unmapped.
 """
 
@@ -12,7 +12,7 @@ from datetime import date
 from urllib.parse import unquote, urlparse
 
 from ubc.adapter import AdapterOutput, CollectContext, register_adapter, require_listing
-from ubc.schemas import BuildingCandidate
+from ubc.schemas import BuildingCandidate, SalePrice
 
 _LISTING_HREF = re.compile(
     r'href="((?:https://myrealty\.am)?/(?:hy|en)/bnakaran/2-senyakanoc/[^"]+)"'
@@ -23,7 +23,12 @@ _FACILITIES = re.compile(
     r'<h4 class="item-view-block-title">Facilities</h4>(.*?)</ul>',
     re.DOTALL,
 )
-_HEAT_WORDS = frozenset({"Heating", "Gas"})
+_HEAT_WORDS = frozenset({"Heating", "Gas", "Central heating"})
+_PRICE = re.compile(
+    r"<label>\s*Price \(SQ\. M\.\)\s*</label>(?:(?!<label>).)*?"
+    r'<span>\s*<i class="icon-([a-z]{3})-syb"></i>\s*([\d,]+)\s*</span>',
+    re.DOTALL,
+)
 _ORIGIN = "https://myrealty.am"
 
 
@@ -84,6 +89,7 @@ def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | 
         building_type=building_type,
         floors=_storeys(_span(html, "Floor/Storeys")),
         area_m2=_number(area_text),
+        price_per_m2=_price(html),
         url=url,
         seen_at=seen,
     )
@@ -105,6 +111,13 @@ def _facility_names(html: str) -> list[str]:
     if block is None:
         return []
     return [name.strip() for name in re.findall(r"<label>([^<]+)</label>", block.group(1))]
+
+
+def _price(html: str) -> SalePrice | None:
+    found = _PRICE.search(html)
+    if found is None:
+        return None
+    return SalePrice(amount=float(found.group(2).replace(",", "")), currency=found.group(1).upper())
 
 
 def _storeys(text: str | None) -> int | None:
