@@ -15,6 +15,9 @@ _BLOCKED_BINARIES = frozenset(
         "google-chrome-stable",
         "chromium",
         "chromium-browser",
+        "curl.exe",
+        "chrome",
+        "chrome.exe",
     }
 )
 

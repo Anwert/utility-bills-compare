@@ -9,11 +9,15 @@ from __future__ import annotations
 import pytest
 
 from ubc.adapter import CollectContext, get_adapter
+from ubc.calculate import calculate_cell
 from ubc.fetch import FixtureFetcher
 from ubc.load import load_city
 from ubc.paths import REPO_ROOT
 from ubc.schemas import (
+    ConsumptionNorm,
     Item,
+    NormalizedRecord,
+    PinnedHouse,
     Reliability,
     SourceConfig,
     SourceKind,
@@ -52,12 +56,13 @@ def _collect(
     reliability: Reliability,
     settings: dict,
     period: str = "2026-10",
+    fetcher: FixtureFetcher | None = None,
 ):
     return get_adapter(adapter).collect(
         CollectContext(
             city=load_city("yerevan"),
             period=YearMonth.parse(period),
-            fetcher=FixtureFetcher(FIXTURES),
+            fetcher=fetcher or FixtureFetcher(FIXTURES),
             source=SourceConfig(
                 id=source_id,
                 adapter=adapter,
@@ -88,7 +93,9 @@ def test_psrc_gas_is_the_vat_price_per_cubic_metre() -> None:
     assert record.unit == "AMD/m3"
     assert record.currency is not None and record.currency.value == "AMD"
     assert record.tiers == []
-    assert record.valid_from.isoformat() == "2026-10-06"
+    # The PDF was created on 6 October; the price on it covers the whole month.
+    assert record.valid_from.isoformat() == "2026-10-01"
+    assert "2026-10-06" in record.note
     assert record.valid_to is None
     assert record.method.value == "regex"
     assert record.reliability is Reliability.official
@@ -96,6 +103,67 @@ def test_psrc_gas_is_the_vat_price_per_cubic_metre() -> None:
     assert record.source.url == GAS_PDF
     assert record.source.fetched_at.tzinfo is not None
     assert "1.2" in record.note
+
+
+def test_psrc_gas_keeps_the_pdf_date_when_the_pdf_is_older_than_the_month() -> None:
+    (record,) = _collect(
+        "yerevan_psrc_gas",
+        "yerevan_gas_psrc",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": GAS_PAGE},
+        period="2026-11",
+    ).records
+
+    assert record.valid_from.isoformat() == "2026-10-06"
+
+
+class _GasText(FixtureFetcher):
+    """The saved PSRC pages, with another text layer for the gas PDF."""
+
+    def __init__(self, text: str) -> None:
+        super().__init__(FIXTURES)
+        self.text = text
+
+    def pdf_to_text(self, url: str, *, layout: bool = True) -> str:
+        del layout
+        assert url == GAS_PDF
+        return self.text
+
+
+def test_psrc_gas_reads_the_same_price_when_xpdf_shifts_the_row_labels() -> None:
+    (record,) = _collect(
+        "yerevan_psrc_gas",
+        "yerevan_gas_psrc",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": GAS_PAGE},
+        fetcher=_GasText((FIXTURES / "gas_xpdf.txt").read_text(encoding="utf-8")),
+    ).records
+
+    assert record.value == 143.7
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "1.1 83,333.33 100,000.00\n1.2 194.92 233.90\n",
+        "1.1 83,333.33 100,000.00\n1.2 119,750.00 150,000.00\n",
+        "1.1 83,333.33 100,000.00\n",
+        "1.1 83,333.33 100,000.00\n119,750.00 143,700.00\n",
+    ],
+    ids=["dollars for 1.2", "not 20% VAT", "one row", "no label 1.2"],
+)
+def test_psrc_gas_refuses_a_table_that_is_not_the_household_one(text: str) -> None:
+    with pytest.raises(ValueError, match="1.2"):
+        _collect(
+            "yerevan_psrc_gas",
+            "yerevan_gas_psrc",
+            kind=SourceKind.official,
+            reliability=Reliability.official,
+            settings={"url": GAS_PAGE},
+            fetcher=_GasText(text),
+        )
 
 
 def test_psrc_electricity_splits_day_and_night_household_steps() -> None:
@@ -133,9 +201,84 @@ def test_psrc_electricity_splits_day_and_night_household_steps() -> None:
     assert day.reliability is Reliability.official
     assert day.source.url == ELECTRICITY_PDF
     assert night.source.url == ELECTRICITY_PDF
-    assert day.note.startswith("day")
-    assert night.note.startswith("night")
+    assert day.note.startswith("дневной")
+    assert night.note.startswith("ночной")
     assert "29.99" in day.note
+
+
+def test_a_cell_is_billed_at_the_day_price_not_the_night_one() -> None:
+    records = _collect(
+        "yerevan_psrc_electricity",
+        "yerevan_electricity_psrc",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": ELECTRICITY_PAGE},
+    ).records
+    fx = NormalizedRecord.model_validate(
+        {
+            "city": "all",
+            "item": "fx",
+            "category": "context",
+            "value": 400,
+            "unit": "AMD/EUR",
+            "currency": "AMD",
+            "valid_from": "2026-10-01",
+            "source": {
+                "kind": "official",
+                "url": "https://example.test/fx",
+                "fetched_at": "2026-11-01T00:00:00Z",
+            },
+            "method": "api",
+            "reliability": "official",
+        }
+    )
+    hdd = [
+        fx.model_copy(
+            update={
+                "city": "yerevan",
+                "item": item,
+                "value": value,
+                "unit": "K*day",
+                "currency": None,
+            }
+        )
+        for item, value in ((Item.hdd, 0), (Item.hdd_annual, 2500))
+    ]
+    house = PinnedHouse(
+        id="house",
+        city="yerevan",
+        house_class="business",
+        heating="electric",
+        listing_url="https://example.test/house",
+        first_seen="2026-10-01",
+        last_seen="2026-10-01",
+    )
+    norms = [
+        ConsumptionNorm(
+            city="yerevan",
+            house_class="business",
+            item=item,
+            annual_value=1200,
+            unit="kWh/dwelling/year",
+            basis="per_dwelling",
+            source="test",
+        )
+        for item in (Item.electricity, Item.heating)
+    ]
+
+    cell = calculate_cell(
+        period=YearMonth.parse("2026-10"),
+        city="yerevan",
+        house_class="business",
+        heating="electric",
+        house=house,
+        records=[*records, fx, *hdd],
+        norms=norms,
+    )
+
+    electricity = [line for line in cell.lines if line.item is Item.electricity]
+    # 100 kWh x 46.48 AMD / 400 AMD per euro.
+    assert [line.amount_eur for line in electricity] == [11.62]
 
 
 def test_arlis_waste_and_maintenance_fees_for_2026() -> None:
