@@ -1,0 +1,14 @@
+{
+  "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "yerevan-2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "yerevan-2025-11_2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=41.72&longitude=44.79&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "tbilisi-2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=41.72&longitude=44.79&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "tbilisi-2025-11_2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=44.82&longitude=20.46&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "belgrade-2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=44.82&longitude=20.46&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "belgrade-2025-11_2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=52.23&longitude=21.01&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "warsaw-2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=52.23&longitude=21.01&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "warsaw-2025-11_2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=38.72&longitude=-9.14&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "lisbon-2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=38.72&longitude=-9.14&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "lisbon-2025-11_2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.4&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "berlin-2026-10.json",
+  "https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.4&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto": "berlin-2025-11_2026-10.json"
+}

@@ -1,4 +1,4 @@
-"""The six city files are valid and still have empty source lists."""
+"""The six city files are valid. Tariff, listing, and FX lists stay empty."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ def test_six_cities_match_the_agreed_currencies_and_coordinates() -> None:
         assert all(article.sources == [] for article in city.articles)
         assert city.listing_sites == []
         assert city.fx_sources == []
-        assert city.hdd_sources == []
+        assert [source.adapter for source in city.hdd_sources] == ["open_meteo_hdd"]
 
 
 def test_unknown_city_file_is_an_error() -> None:
