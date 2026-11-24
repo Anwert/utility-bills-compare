@@ -149,18 +149,13 @@ def _created_on(pdf: bytes) -> date:
     return date(year, month, day)
 
 
-def _in_force(created: date, ctx: CollectContext) -> tuple[date, str]:
-    """``valid_from`` for a PDF that prints no effective date, and the note about it.
+def _dated(created: date) -> str:
+    """Note for a PDF that prints no effective date: its creation date stands in.
 
-    The file is replaced from time to time with the same prices. One created
-    after the month began still covers that whole month, not only its tail.
+    The pipeline prorates by it, and stretches a first-known price to the 1st.
     """
 
-    note = f"Дата действия в тексте PDF не указана, PDF создан {created.isoformat()}."
-    first = ctx.period.first_day
-    if created <= first:
-        return created, note
-    return first, f"{note} Цена принята с начала месяца."
+    return f"Дата действия в тексте PDF не указана, PDF создан {created.isoformat()}."
 
 
 def _household_gas(text: str) -> float:
@@ -262,11 +257,12 @@ class YerevanPsrcGas:
         page = _require_url(source)
         pdf_url = _pick_pdf(ctx.fetcher.render_html(page), page, _is_gas_tariff)
         per_thousand = _household_gas(ctx.fetcher.pdf_to_text(pdf_url))
-        valid_from, dated = _in_force(_created_on(ctx.fetcher.fetch_bytes(pdf_url)), ctx)
+        valid_from = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
         value = per_thousand / 1000
         note = (
             f"строка 1.2, столбец с НДС: {per_thousand:.0f} AMD за 1000 м³ "
-            f"({value} AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. {dated}"
+            f"({value} AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. "
+            f"{_dated(valid_from)}"
         )
         record = _record(
             ctx,
@@ -296,7 +292,7 @@ class YerevanPsrcElectricity:
             night_prices = [rows[row][1] for row in (2, 3, 4)]
         except (KeyError, IndexError) as exc:
             raise ValueError("electricity PDF has no household day/night steps") from exc
-        valid_from, dated = _in_force(_created_on(ctx.fetcher.fetch_bytes(pdf_url)), ctx)
+        valid_from = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
         # One timestamp: of two records equally fresh the calculation takes the
         # first, so a cell is billed at the day price on every machine.
         fetched_at = datetime.now(UTC)
@@ -315,7 +311,7 @@ class YerevanPsrcElectricity:
                 f"больше 400 кВт·ч в месяц: {_slashed(day_prices)}. Строка 1 (29.99/19.99) — "
                 "льготная для социально уязвимых, не этот тариф. Счёт считается по дневной "
                 "цене на весь расход: для доли ночного расхода источника нет. Подписей в "
-                f"текстовом слое нет. {dated}"
+                f"текстовом слое нет. {_dated(valid_from)}"
             ),
         )
         night = _record(

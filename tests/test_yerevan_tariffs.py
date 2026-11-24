@@ -93,8 +93,8 @@ def test_psrc_gas_is_the_vat_price_per_cubic_metre() -> None:
     assert record.unit == "AMD/m3"
     assert record.currency is not None and record.currency.value == "AMD"
     assert record.tiers == []
-    # The PDF was created on 6 October; the price on it covers the whole month.
-    assert record.valid_from.isoformat() == "2026-10-01"
+    # The PDF prints no effective date; its creation date stands in.
+    assert record.valid_from.isoformat() == "2026-10-06"
     assert "2026-10-06" in record.note
     assert record.valid_to is None
     assert record.method.value == "regex"
