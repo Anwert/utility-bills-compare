@@ -1,0 +1,2 @@
+Household electricity tariff 46.48 AMD/kWh from 2026-01-26.
+Steps: 6.267 up to 101, then 9.667 up to 301, then 13.467.
