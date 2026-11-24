@@ -21,7 +21,11 @@
 | `ubc/schemas.py` | Контракты: запись, кандидат дома, город, эталонная квартира, JSON сайта |
 | `ubc/adapter.py` | Интерфейс адаптера, реестр, `ADAPTER_MODULES` |
 | `ubc/adapters/example_html.py` | Пустышка-образец, не источник тарифа |
+| `ubc/adapters/llm_extract.py` | Заготовка ИИ-разбора. Без ключа и клиента сеть не открывает |
 | `ubc/fetch.py` | Слой получения содержимого: HTTP / Chrome / pdftotext / фикстура |
+| `ubc/proxy.py` | Транспорт `proxy_direct`. Встроенный вариант соединение не открывает |
+| `ubc/secrets.py` | Секреты прокси и ИИ; `eligible_sources` убирает источники без них |
+| `ubc/notes.py` | Пометка о доплате из `CityConfig.paid_data_note` |
 | `ubc/load.py` | Чтение `data/` с падением на неверной схеме |
 | `ubc/pipeline.py` | Локальная проверка файлов. Сбор и публикация — отдельные тикеты |
 | `ubc/calculate.py` | Месячная плата одной ячейки из нормализованных записей |
@@ -45,6 +49,9 @@
 - `ubc.adapter.get_adapter`, `ADAPTER_MODULES`
 - `ubc.pipeline.collect_contexts`
 - `ubc.fetch.ContentFetcher`, `FixtureFetcher`, `HttpFetcher`, `FetchError`
+- `ubc.secrets.SecretConfig`, `eligible_sources`, `LLM_ADAPTER_NAME`, `SourceUnavailable`
+- `ubc.proxy.fetcher_for_source`, `ProxyFetcher`, `ProxyTransport`, `ProxyEndpoint`
+- `ubc.notes.paid_data_note`
 - `ubc.load.load_cities`, `load_city`, `load_reference`, `load_example_city_month`
 - `ubc.calculate.calculate_cell`, `CalculationError`
 - `ubc.site_index.build_site_index`, `write_site_index`
@@ -121,7 +128,51 @@
 
 Защиту от роботов не обходить (Cloudflare-челлендж, сайты, которые прямо запрещают сбор). Такой источник — отказ, дальше идёт следующий по приоритету.
 
-Прямой сбор через прокси и ИИ-разбор в MVP выключены. В схеме уже есть вид `proxy_direct` и способы `llm_text` / `llm_vision`, чтобы их можно было включить конфигурацией позже. Заготовки с секретами и правилами проверки ответа модели — отдельный тикет; без секретов этих источников нет и политика их не вызывает.
+Прямой сбор через прокси и ИИ-разбор в MVP выключены и в сеть не ходят. Вид `proxy_direct` и способы `llm_text` / `llm_vision` уже есть в схеме. Политика выбора (шов (c)) берёт список из `eligible_sources`: без секретов эти источники выпадают, даже если в JSON стоит `enabled: true`, и опрос идёт дальше. `ordered_enabled_sources` по-прежнему смотрит только на флаг `enabled`.
+
+### Как включить прокси
+
+Секреты процесса: `PROXY_HOST`, `PROXY_LOGIN`, `PROXY_PASSWORD`, `PROXY_COUNTRY`. Пустая строка считается отсутствием секрета. Пароль не попадает в текст ошибок.
+
+Источник — тот же `adapter`, что у страницы, вид `proxy_direct`. Надёжность берётся у страницы: прокси её не меняет. `settings.country` перекрывает `PROXY_COUNTRY`.
+
+```json
+{
+  "id": "lisbon_sewage_proxy",
+  "adapter": "lisbon_sewage",
+  "kind": "proxy_direct",
+  "priority": 0,
+  "enabled": true,
+  "reliability": "official",
+  "settings": {"url": "https://example.pt/tariff", "country": "pt"}
+}
+```
+
+Перед `collect` подставить транспорт: `fetcher_for_source(source, direct, SecretConfig.from_env(), transport)`. `transport` — объект с `fetch_bytes(url, *, proxy, user_agent)`. Без секретов функция бросает `SourceUnavailable`. Если транспорт не передан, встроенная заготовка бросает `FetchError` и соединение не открывает. `render_html` через прокси заготовка не делает. `pdf_to_text` забирает байты у транспорта и снимает текст локальным pdftotext.
+
+### Как включить ИИ-разбор
+
+Адаптер реестра — `llm_extract`. Секрет `LLM_API_KEY`. Без ключа, без сохранённого ответа и без переданного клиента `collect` бросает `SourceUnavailable`.
+
+Настройки источника: `url` документа, `item` статьи, `mode` = `text` или `vision`. Ответ модели — JSON без лишних полей: `value`, `unit`, `valid_from`, `valid_to`, `consumer_category` (`household` или `бытовые`), `quote`, `tiers` (`up_to`, `value`).
+
+Проверки. Провал — `ExtractionRejected`, поле `rule`:
+
+| `rule` | Условие |
+| --- | --- |
+| `unit` | Единица не из списка «валюта, `local` или `tetri` / мера» (`kWh`, `m3`, `m2/month`, …) |
+| `range` | Значение (и цена ступени) вне широкого диапазона города. Это отсев мусора, не тариф |
+| `date` | `valid_from` позже чем на 3 календарных месяца после последнего дня месяца сбора (`ctx.period`) |
+| `category` | Категория потребителя не бытовая |
+| `quote` | Цитата пустая. В режиме `text` её нет в тексте страницы. Для скана (`vision`) достаточно непустой цитаты |
+| `tiers` | Границы ступеней не возрастают или цена следующей ступени ниже предыдущей |
+| `schema` | Ответ не совпал со схемой |
+
+В тесте ответ подменяется файлом: `settings.model_response_url` читается тем же `FixtureFetcher`. Свой клиент — `LlmExtractAdapter(client=...)`, метод `complete(LlmRequest) -> str`. Живого HTTP-клиента модели нет: ключ делает источник доступным для политики, но без своего `LlmClient` заготовка отказывается звонить в сеть.
+
+### Пометка о доплате
+
+`paid_data_note(city, reliability)` возвращает `city.paid_data_note` для надёжности `statistics` и `third_party`, и `None` для `official`. Текст и сумма в долларах берутся из файла города. Фразу показывают у оценки по статистике, у стороннего сайта и у цифры, которая заменяет выключенный ИИ-разбор.
 
 ## Команды
 

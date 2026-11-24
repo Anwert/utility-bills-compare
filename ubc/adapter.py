@@ -24,6 +24,7 @@ from ubc.schemas import (
 # Add a module here when you add an adapter. Importing it must register one instance.
 ADAPTER_MODULES: tuple[str, ...] = (
     "ubc.adapters.example_html",
+    "ubc.adapters.llm_extract",
     "ubc.adapters.fx_cba",
     "ubc.adapters.fx_ecb",
     "ubc.adapters.fx_eurostat",
