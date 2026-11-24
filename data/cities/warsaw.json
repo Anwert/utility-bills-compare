@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "warsaw",
+  "name_ru": "Варшава",
+  "name_en": "Warsaw",
+  "currency": "PLN",
+  "latitude": 52.23,
+  "longitude": 21.01,
+  "paid_data_note": "оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)",
+  "articles": [
+    {
+      "item": "maintenance",
+      "sources": []
+    },
+    {
+      "item": "heating",
+      "sources": []
+    },
+    {
+      "item": "electricity",
+      "sources": []
+    },
+    {
+      "item": "gas",
+      "sources": []
+    },
+    {
+      "item": "water",
+      "sources": []
+    },
+    {
+      "item": "hot_water",
+      "sources": []
+    },
+    {
+      "item": "sewage",
+      "sources": []
+    },
+    {
+      "item": "waste",
+      "sources": []
+    }
+  ],
+  "listing_sites": [],
+  "fx_sources": [],
+  "hdd_sources": []
+}

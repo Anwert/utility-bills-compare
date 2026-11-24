@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "apartment": {
+    "rooms": 2,
+    "area_m2": 60,
+    "occupants": 2
+  },
+  "norms": [
+    {
+      "city": "berlin",
+      "house_class": "soviet_panel",
+      "heating": "district",
+      "item": "heating",
+      "annual_value": 150,
+      "unit": "kWh/m2/year",
+      "basis": "per_m2",
+      "source": "stub",
+      "note": "STUB. Real TABULA/UNDP/INE figures belong to the calculation ticket."
+    },
+    {
+      "city": "berlin",
+      "house_class": "soviet_panel",
+      "heating": null,
+      "item": "electricity",
+      "annual_value": 1500,
+      "unit": "kWh/person/year",
+      "basis": "per_person",
+      "source": "stub",
+      "note": "STUB. Real figures belong to the calculation ticket."
+    },
+    {
+      "city": "berlin",
+      "house_class": "soviet_panel",
+      "heating": null,
+      "item": "water",
+      "annual_value": 40,
+      "unit": "m3/person/year",
+      "basis": "per_person",
+      "source": "stub",
+      "note": "STUB. Real figures belong to the calculation ticket."
+    }
+  ]
+}
