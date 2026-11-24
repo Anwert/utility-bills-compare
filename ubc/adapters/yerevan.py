@@ -33,6 +33,7 @@ from ubc.schemas import (
 _GAS_PAIR = re.compile(r"(?m)([\d,]+\.\d{2})[ \t]+([\d,]+\.\d{2})[ \t]*$")
 _GAS_LABEL = re.compile(r"(?m)^\s*1\.2\b")
 _CREATED = re.compile(rb"CreationDate\(D:(\d{4})(\d{2})(\d{2})")
+_RENDER_BUDGETS_MS = (15_000, 30_000, 60_000)
 _ACT_YEAR = re.compile(r"ՏԵՂԱԿԱՆ ՎՃԱՐՆԵՐԻ (\d{4}) ԹՎԱԿԱՆԻ")
 _WASTE_FEE = re.compile(r"20\. Երևանի կողմից աղբահանության.{0,800}?(\d+(?:[.,]\d+)?) /[^/]+/ դրամ")
 _MAINTENANCE_FEE = re.compile(
@@ -122,11 +123,19 @@ def _pdf_links(html: str) -> list[tuple[str, str]]:
     return parser.links
 
 
-def _pick_pdf(html: str, page_url: str, predicate) -> str:
-    matches = [href for href, text in _pdf_links(html) if predicate(text)]
-    if not matches:
-        raise ValueError(f"no consumer tariff PDF on {page_url}")
-    return _absolute(page_url, matches[0])
+def _pick_pdf(ctx: CollectContext, page_url: str, predicate) -> str:
+    """The tariff PDF linked on a page that fills its list of files by script.
+
+    On a slow connection Chrome prints the DOM before the list arrives, so a page
+    without the link is rendered again with more time.
+    """
+
+    for budget_ms in _RENDER_BUDGETS_MS:
+        html = ctx.fetcher.render_html(page_url, budget_ms=budget_ms)
+        for href, text in _pdf_links(html):
+            if predicate(text):
+                return _absolute(page_url, href)
+    raise ValueError(f"no consumer tariff PDF on {page_url}")
 
 
 def _is_gas_tariff(text: str) -> bool:
@@ -255,7 +264,7 @@ class YerevanPsrcGas:
     def collect(self, ctx: CollectContext) -> AdapterOutput:
         source = require_source(ctx)
         page = _require_url(source)
-        pdf_url = _pick_pdf(ctx.fetcher.render_html(page), page, _is_gas_tariff)
+        pdf_url = _pick_pdf(ctx, page, _is_gas_tariff)
         per_thousand = _household_gas(ctx.fetcher.pdf_to_text(pdf_url))
         valid_from = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
         value = per_thousand / 1000
@@ -285,7 +294,7 @@ class YerevanPsrcElectricity:
     def collect(self, ctx: CollectContext) -> AdapterOutput:
         source = require_source(ctx)
         page = _require_url(source)
-        pdf_url = _pick_pdf(ctx.fetcher.render_html(page), page, _is_electricity_tariff)
+        pdf_url = _pick_pdf(ctx, page, _is_electricity_tariff)
         rows = _table_rows(ctx.fetcher.pdf_to_text(pdf_url))
         try:
             day_prices = [rows[row][0] for row in (2, 3, 4)]
@@ -340,7 +349,7 @@ class YerevanPsrcScan:
     def collect(self, ctx: CollectContext) -> AdapterOutput:
         source = require_source(ctx)
         page = _require_url(source)
-        pdf_url = _pick_pdf(ctx.fetcher.render_html(page), page, _is_drinking_water)
+        pdf_url = _pick_pdf(ctx, page, _is_drinking_water)
         ctx.fetcher.pdf_to_text(pdf_url)
         raise ValueError("PSRC water decision is a scan; llm_vision is disabled")
 
