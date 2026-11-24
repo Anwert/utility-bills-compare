@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
 from ubc.adapter import require_listing, require_source
 from ubc.fetch import FixtureFetcher
 from ubc.load import load_city
+from ubc.monthly import MonthOptions, MonthReport, PublicationError
 from ubc.pipeline import collect_contexts, main
-from ubc.schemas import ListingSite, Reliability, SourceConfig, SourceKind, YearMonth
+from ubc.schemas import Item, ListingSite, Reliability, SourceConfig, SourceKind, YearMonth
 
 
 def test_check_reports_the_six_cities_and_the_reference_apartment(capsys) -> None:
@@ -77,5 +80,64 @@ def test_period_is_passed_through_to_collect_contexts(capsys, tmp_path) -> None:
 def test_bad_period_is_rejected() -> None:
     with pytest.raises(SystemExit) as caught:
         main(["--check", "--period", "2026-13"])
+
+    assert caught.value.code == 2
+
+
+def test_run_defaults_to_the_previous_calendar_month(tmp_path) -> None:
+    seen: list[MonthOptions] = []
+
+    def runner(options: MonthOptions) -> MonthReport:
+        seen.append(options)
+        return MonthReport(months=(), alerts=(), written=(), warnings=())
+
+    code = main(
+        ["--run", "--city", "yerevan", "--item", "gas", "--dry-run", "--data-root", str(tmp_path)],
+        today=date(2027, 1, 7),
+        runner=runner,
+        env={"GITHUB_TOKEN": "token", "GITHUB_REPOSITORY": "owner/repo"},
+    )
+
+    assert code == 0
+    (options,) = seen
+    assert str(options.period) == "2026-12"
+    assert [city.id.value for city in options.cities] == ["yerevan"]
+    assert options.item is Item.gas
+    assert options.dry_run is True
+    assert options.data_root == tmp_path
+    assert "token" in options.hide
+
+
+def test_run_sends_alerts_only_with_a_token_and_a_repository(tmp_path) -> None:
+    seen: list[MonthOptions] = []
+
+    def runner(options: MonthOptions) -> MonthReport:
+        seen.append(options)
+        return MonthReport(months=(), alerts=(), written=(), warnings=())
+
+    github = {"GITHUB_TOKEN": "token", "GITHUB_REPOSITORY": "owner/repo"}
+    for argv, env in (
+        (["--run"], github),
+        (["--run"], {"GITHUB_TOKEN": "token"}),
+        (["--run", "--no-alerts"], github),
+    ):
+        assert main([*argv, "--data-root", str(tmp_path)], runner=runner, env=env) == 0
+
+    assert [options.issues is not None for options in seen] == [True, False, False]
+
+
+def test_run_exits_nonzero_and_names_every_problem(capsys) -> None:
+    def runner(options: MonthOptions) -> MonthReport:
+        raise PublicationError(["yerevan: нет курса за 2026-10", "berlin: нет тарифа на месяц"])
+
+    assert main(["--run"], runner=runner, env={}) == 1
+
+    err = capsys.readouterr().err
+    assert "нет курса за 2026-10" in err and "нет тарифа на месяц" in err
+
+
+def test_run_refuses_a_month_that_has_not_ended() -> None:
+    with pytest.raises(SystemExit) as caught:
+        main(["--run", "--period", "2026-11"], today=date(2026, 11, 25), env={})
 
     assert caught.value.code == 2

@@ -7,6 +7,7 @@ not add the temperatures up again.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -211,4 +212,15 @@ def test_archive_without_temperatures_fails_the_source(tmp_path: Path) -> None:
     fetcher = FixtureFetcher(tmp_path, {month_url: "empty.json"})
 
     with pytest.raises(ValueError, match="temperature"):
+        get_adapter("open_meteo_hdd").collect(_context("yerevan", fetcher))
+
+
+def test_month_the_archive_has_not_finished_fails_the_source(tmp_path: Path) -> None:
+    month_url = _MONTH_URL["yerevan"]
+    body = json.loads((_FIXTURES / "yerevan-2026-10.json").read_text(encoding="utf-8"))
+    body["daily"]["temperature_2m_mean"][-2:] = [None, None]
+    (tmp_path / "early.json").write_text(json.dumps(body), encoding="utf-8")
+    fetcher = FixtureFetcher(tmp_path, {month_url: "early.json"})
+
+    with pytest.raises(ValueError, match="29 of 31"):
         get_adapter("open_meteo_hdd").collect(_context("yerevan", fetcher))

@@ -71,11 +71,9 @@ def test_index_rejects_a_misnamed_or_mismatched_snapshot(tmp_path: Path) -> None
         build_site_index(data)
 
 
-def test_repository_index_matches_the_example_fixture() -> None:
+def test_repository_index_matches_the_files_next_to_it() -> None:
     index = build_site_index(data_dir())
 
-    assert index["files"] == [
-        {"path": "examples/yerevan-2026-10.json", "example": True},
-    ]
+    assert "yerevan-2026-10.json" in {Path(file["path"]).name for file in index["files"]}
     on_disk = json.loads((data_dir() / "site-index.json").read_text(encoding="utf-8"))
     assert on_disk == index
