@@ -61,7 +61,6 @@
 - `ubc.adapter.get_adapter`, `ADAPTER_MODULES`
 - `ubc.pipeline.collect_contexts`
 - `ubc.monthly.run_month`, `MonthOptions`, `MonthReport`, `PublicationError`, `HouseStep`
-- `ubc.houses.PinResult`, `enrich_candidates`, `pin_houses`
 - `ubc.articles.decide_article`, `billable_records`
 - `ubc.state.CityState`, `CityHouses`, `load_state`, `load_houses`
 - `ubc.recording.RecordingFetcher`, `Redactor`
