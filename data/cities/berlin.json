@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "berlin",
+  "name_ru": "Берлин",
+  "name_en": "Berlin",
+  "currency": "EUR",
+  "latitude": 52.52,
+  "longitude": 13.4,
+  "paid_data_note": "оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)",
+  "articles": [
+    {
+      "item": "maintenance",
+      "sources": []
+    },
+    {
+      "item": "heating",
+      "sources": []
+    },
+    {
+      "item": "electricity",
+      "sources": []
+    },
+    {
+      "item": "gas",
+      "sources": []
+    },
+    {
+      "item": "water",
+      "sources": []
+    },
+    {
+      "item": "hot_water",
+      "sources": []
+    },
+    {
+      "item": "sewage",
+      "sources": []
+    },
+    {
+      "item": "waste",
+      "sources": []
+    }
+  ],
+  "listing_sites": [],
+  "fx_sources": [],
+  "hdd_sources": []
+}

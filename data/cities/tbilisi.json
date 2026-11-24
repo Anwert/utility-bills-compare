@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "id": "tbilisi",
+  "name_ru": "Тбилиси",
+  "name_en": "Tbilisi",
+  "currency": "GEL",
+  "latitude": 41.72,
+  "longitude": 44.79,
+  "paid_data_note": "оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)",
+  "articles": [
+    {
+      "item": "maintenance",
+      "sources": []
+    },
+    {
+      "item": "heating",
+      "sources": []
+    },
+    {
+      "item": "electricity",
+      "sources": []
+    },
+    {
+      "item": "gas",
+      "sources": []
+    },
+    {
+      "item": "water",
+      "sources": []
+    },
+    {
+      "item": "hot_water",
+      "sources": []
+    },
+    {
+      "item": "sewage",
+      "sources": []
+    },
+    {
+      "item": "waste",
+      "sources": []
+    }
+  ],
+  "listing_sites": [],
+  "fx_sources": [],
+  "hdd_sources": []
+}
