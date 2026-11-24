@@ -25,14 +25,14 @@ def test_city_listing_counts_enabled_sources(capsys) -> None:
     assert main(["--city", "yerevan"]) == 0
 
     assert (
-        capsys.readouterr().out.strip() == "yerevan: 8 articles, 1 enabled sources, 0 listing sites"
+        capsys.readouterr().out.strip() == "yerevan: 8 articles, 2 enabled sources, 0 listing sites"
     )
 
 
 def test_period_is_passed_through_to_collect_contexts(capsys, tmp_path) -> None:
     assert main(["--city", "yerevan", "--period", "2026-10"]) == 0
 
-    assert "period 2026-10, 1 collect calls" in capsys.readouterr().out
+    assert "period 2026-10, 2 collect calls" in capsys.readouterr().out
 
     city = load_city("yerevan").model_copy(
         update={

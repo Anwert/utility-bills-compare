@@ -1,4 +1,4 @@
-"""The six city files are valid. Tariff, listing, and FX lists stay empty."""
+"""The six city files are valid. Articles stay empty; FX and degree-days are configured."""
 
 from __future__ import annotations
 
@@ -7,6 +7,15 @@ from pydantic import ValidationError
 
 from ubc.load import ConfigError, load_cities, load_city
 from ubc.schemas import CHARGE_ITEMS, CityConfig
+
+_FX = {
+    "yerevan": ["fx_cba"],
+    "tbilisi": ["fx_nbg"],
+    "belgrade": ["fx_eurostat", "fx_nbs"],
+    "warsaw": ["fx_ecb"],
+    "lisbon": [],
+    "berlin": [],
+}
 
 EXPECTED = {
     "yerevan": ("AMD", 40.18, 44.51, "Ереван"),
@@ -32,7 +41,7 @@ def test_six_cities_match_the_agreed_currencies_and_coordinates() -> None:
         assert [article.item for article in city.articles] == list(CHARGE_ITEMS)
         assert all(article.sources == [] for article in city.articles)
         assert city.listing_sites == []
-        assert city.fx_sources == []
+        assert [source.adapter for source in city.fx_sources] == _FX[city.id.value]
         assert [source.adapter for source in city.hdd_sources] == ["open_meteo_hdd"]
 
 

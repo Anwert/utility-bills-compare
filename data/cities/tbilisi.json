@@ -42,7 +42,20 @@
     }
   ],
   "listing_sites": [],
-  "fx_sources": [],
+  "fx_sources": [
+    {
+      "id": "fx_gel_nbg",
+      "adapter": "fx_nbg",
+      "kind": "official",
+      "priority": 0,
+      "enabled": true,
+      "reliability": "official",
+      "settings": {
+        "url": "https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/en/json/",
+        "currency": "GEL"
+      }
+    }
+  ],
   "hdd_sources": [
     {
       "id": "hdd_open_meteo",
