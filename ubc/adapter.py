@@ -25,6 +25,13 @@ from ubc.schemas import (
 ADAPTER_MODULES: tuple[str, ...] = (
     "ubc.adapters.example_html",
     "ubc.adapters.llm_extract",
+    "ubc.adapters.fx_cba",
+    "ubc.adapters.fx_ecb",
+    "ubc.adapters.fx_eurostat",
+    "ubc.adapters.fx_nbg",
+    "ubc.adapters.fx_nbs",
+    "ubc.adapters.open_meteo_hdd",
+    "ubc.adapters.yerevan",
 )
 
 

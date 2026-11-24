@@ -119,6 +119,16 @@ class _SilentFetcher:
     def fetch_text(self, url: str) -> str:
         raise RuntimeError(f"pipeline listing does not fetch {url}")
 
+    def post_text(
+        self,
+        url: str,
+        body: str,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> str:
+        del body, headers
+        raise RuntimeError(f"pipeline listing does not fetch {url}")
+
     def render_html(self, url: str, *, budget_ms: int = 15000) -> str:
         raise RuntimeError(f"pipeline listing does not fetch {url}")
 

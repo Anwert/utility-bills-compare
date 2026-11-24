@@ -9,6 +9,8 @@ Import paths that later tickets should keep stable:
 - ``ubc.proxy`` — proxy fetcher attached by source kind
 - ``ubc.notes`` — paid-data sentence from the city file
 - ``ubc.load`` — read the JSON files in ``data/``
+- ``ubc.policy`` — which source is published, the 30% hold, alert intents
+- ``ubc.alerts`` — open and close ``data-alert`` GitHub issues
 """
 
 __version__ = "0.1.0"
