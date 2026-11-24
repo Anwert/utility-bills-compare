@@ -16,15 +16,25 @@ challenge. A blocked response is a failed source; the selection policy moves on.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import socket
 import ssl
 import subprocess
+import tempfile
 import urllib.error
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+_CHROME_NAMES = (
+    "google-chrome",
+    "google-chrome-stable",
+    "chromium",
+    "chromium-browser",
+    "chrome",
+)
+_WINDOWS_PROGRAM_DIRS = ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA")
 USER_AGENT = "utility-bills-compare/0.1 (+https://github.com/Anwert/utility-bills-compare)"
 
 
@@ -214,18 +224,27 @@ class HttpFetcher:
 
     def render_html(self, url: str, *, budget_ms: int = 15000) -> str:
         binary = _chrome_binary(self.chrome_bin, url)
-        result = self.command(
-            [
-                binary,
-                "--headless=new",
-                "--no-sandbox",
-                "--disable-gpu",
-                f"--virtual-time-budget={budget_ms}",
-                f"--user-agent={self.user_agent}",
-                "--dump-dom",
-                url,
-            ]
-        )
+        # A throwaway profile: on Windows a Chrome already open on the default
+        # profile would take the URL over and print no DOM.
+        with tempfile.TemporaryDirectory(
+            prefix="ubc-chrome-", ignore_cleanup_errors=True
+        ) as profile:
+            result = _run(
+                self.command,
+                [
+                    binary,
+                    "--headless=new",
+                    "--no-sandbox",
+                    "--disable-gpu",
+                    f"--user-data-dir={profile}",
+                    f"--virtual-time-budget={budget_ms}",
+                    f"--user-agent={self.user_agent}",
+                    "--dump-dom",
+                    url,
+                ],
+                url=url,
+                program="headless Chrome",
+            )
         if result.returncode != 0:
             detail = result.stderr.decode("utf-8", "replace").strip()
             raise FetchError(url, f"headless Chrome failed ({detail})")
@@ -287,6 +306,22 @@ def _default_command(argv: list[str], *, stdin: bytes | None = None) -> CommandR
     return CommandResult(completed.returncode, completed.stdout, completed.stderr)
 
 
+def _run(
+    command: CommandRunner,
+    argv: list[str],
+    *,
+    url: str,
+    program: str,
+    stdin: bytes | None = None,
+) -> CommandResult:
+    """Run ``command``. A program that is missing or hangs is a failed source."""
+
+    try:
+        return command(argv, stdin=stdin)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise FetchError(url, f"{program} failed ({exc})") from exc
+
+
 def _connection_failure(exc: BaseException) -> bool:
     """True when urllib never received an HTTP response.
 
@@ -345,19 +380,24 @@ def _curl(fetcher: HttpFetcher, url: str) -> bytes | str:
 
 
 def _chrome_binary(explicit: str | None, url: str) -> str:
-    if explicit:
-        if Path(explicit).is_file() or shutil.which(explicit):
-            return explicit
+    """The Chrome to launch: the caller's, then ``CHROME_BIN``, then an installed one."""
+
+    chosen = explicit or os.environ.get("CHROME_BIN")
+    if chosen:
+        if Path(chosen).is_file() or shutil.which(chosen):
+            return chosen
         raise FetchError(url, "headless Chrome is not installed")
-    found = (
-        shutil.which("google-chrome")
-        or shutil.which("google-chrome-stable")
-        or shutil.which("chromium")
-        or shutil.which("chromium-browser")
-    )
-    if not found:
-        raise FetchError(url, "headless Chrome is not installed")
-    return found
+    for name in _CHROME_NAMES:
+        found = shutil.which(name)
+        if found:
+            return found
+    for variable in _WINDOWS_PROGRAM_DIRS:
+        root = os.environ.get(variable)
+        if root:
+            installed = Path(root, "Google", "Chrome", "Application", "chrome.exe")
+            if installed.is_file():
+                return str(installed)
+    raise FetchError(url, "headless Chrome is not installed")
 
 
 def _pdftotext(
@@ -371,8 +411,13 @@ def _pdftotext(
     argv = [binary]
     if layout:
         argv.append("-layout")
-    argv.extend(["-", "-"])
-    result = command(argv, stdin=body)
+    # A file, not stdin: xpdf's pdftotext, usual on Windows, reads only files.
+    # UTF-8 and unix line ends are poppler's defaults but not xpdf's.
+    with tempfile.TemporaryDirectory(prefix="ubc-pdf-", ignore_cleanup_errors=True) as folder:
+        pdf = Path(folder, "document.pdf")
+        pdf.write_bytes(body)
+        argv.extend(["-enc", "UTF-8", "-eol", "unix", str(pdf), "-"])
+        result = _run(command, argv, url=url, program="pdftotext")
     if result.returncode != 0:
         detail = result.stderr.decode("utf-8", "replace").strip()
         raise FetchError(url, f"pdftotext failed ({detail})")
