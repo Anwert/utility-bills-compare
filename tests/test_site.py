@@ -169,7 +169,15 @@ const path = require("path");
 require("./site/app.js");
 (async () => {
   const root = process.cwd();
+  // Only the example: the published months in data/ change every month.
+  const index = {
+    schema_version: 1,
+    files: [{ path: "examples/yerevan-2026-10.json", example: true }],
+  };
   async function fetchImpl(url) {
+    if (url === "data/site-index.json") {
+      return { ok: true, async json() { return index; } };
+    }
     try {
       const text = fs.readFileSync(path.join(root, url), "utf8");
       return { ok: true, async json() { return JSON.parse(text); } };
