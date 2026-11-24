@@ -475,7 +475,8 @@ class BuildingCandidate(ContractModel):
 
     Heating, year, and fees are often missing on the source site. Leave those null.
     ``heating_raw`` keeps the site's own word (``CG``, ``Elektrisch``); ``heating`` is
-    set only when the adapter already knows the mapping.
+    set only when the adapter already knows the mapping. ``building_type`` is the
+    site's construction word (Panel, MONOLITH), not a house class.
     """
 
     id: str = Field(min_length=1, max_length=128)
@@ -489,6 +490,7 @@ class BuildingCandidate(ContractModel):
     year_from: int | None = None
     year_to: int | None = None
     series: str | None = None
+    building_type: str | None = None
     is_newbuild: bool | None = None
     floors: int | None = None
     area_m2: float | None = None

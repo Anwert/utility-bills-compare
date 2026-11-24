@@ -53,7 +53,13 @@ def test_six_cities_match_the_agreed_currencies_and_coordinates() -> None:
             }
         else:
             assert all(count == 0 for count in counts.values())
-        assert city.listing_sites == []
+        if city.id.value == "yerevan":
+            assert [(site.id, site.adapter) for site in city.listing_sites] == [
+                ("myrealty", "myrealty"),
+                ("real_estate_am", "real_estate_am"),
+            ]
+        else:
+            assert city.listing_sites == []
         assert [source.adapter for source in city.fx_sources] == _FX[city.id.value]
         assert [source.adapter for source in city.hdd_sources] == ["open_meteo_hdd"]
 
