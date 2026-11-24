@@ -1,30 +1,57 @@
 """Yerevan 2-room sale listings from myrealty.am.
 
-The search page links the ads. Each ad is HTML: building type, area,
-floor/storeys, facilities, map point, and an edit date. Year and the
-maintenance fee are not on the page. Heating stays unmapped.
+The sale category links the ads of the old fund (``bnakaran``) and of new
+buildings (``norakaruyc-bnakaran``) together, page by page. Half of the cap goes
+to each, so a run of new buildings does not push the old fund out. Each ad is
+HTML: building type, area, floor/storeys, facilities, price per m², map point,
+and an edit date. Year and the maintenance fee are not on the page. Heating
+stays unmapped. An ad that is gone redirects to the home page.
+
+``settings.max_pages`` caps the search pages (6 by default).
 """
 
 from __future__ import annotations
 
 import re
 from datetime import date
-from urllib.parse import unquote, urlparse
+from html import unescape
+from urllib.parse import unquote_plus, urlparse
 
 from ubc.adapter import AdapterOutput, CollectContext, register_adapter, require_listing
-from ubc.schemas import BuildingCandidate
+from ubc.adapters.listing_common import (
+    SitePages,
+    Sleep,
+    collect_ads,
+    max_ads,
+    readable,
+    round_robin,
+    search_url,
+)
+from ubc.fetch import FetchError
+from ubc.schemas import BuildingCandidate, SalePrice
 
 _LISTING_HREF = re.compile(
-    r'href="((?:https://myrealty\.am)?/(?:hy|en)/bnakaran/2-senyakanoc/[^"]+)"'
+    r'href="(?:https://myrealty\.am)?/(?:hy|en)/'
+    r'((bnakaran|norakaruyc-bnakaran)/2-senyakanoc/[^"]+/Yerevan/\d+)"'
 )
+_PAGE_HREF = re.compile(r'href="(https://myrealty\.am/[^"?]+\?page=(\d+))"')
+_TITLE = re.compile(r"<title>([^<]*)</title>")
 _EDITED = re.compile(r"Edited in</label>\s*<i[^>]*>\s*</i>\s*(\d{2})\.(\d{2})\.(\d{4})")
 _COORDS = re.compile(r'data-lat="([0-9.]+)"\s*data-lng="([0-9.]+)"')
 _FACILITIES = re.compile(
     r'<h4 class="item-view-block-title">Facilities</h4>(.*?)</ul>',
     re.DOTALL,
 )
-_HEAT_WORDS = frozenset({"Heating", "Gas"})
+_HEAT_WORDS = frozenset({"Heating", "Gas", "Central heating"})
+_PRICE = re.compile(
+    r"<label>\s*Price \(SQ\. M\.\)\s*</label>(?:(?!<label>).)*?"
+    r'<span>\s*<i class="icon-([a-z]{3})-syb"></i>\s*([\d,]+)\s*</span>',
+    re.DOTALL,
+)
 _ORIGIN = "https://myrealty.am"
+_OLD_FUND = "bnakaran"
+_NEW_BUILDINGS = "norakaruyc-bnakaran"
+_MAX_PAGES = 6
 
 
 class MyrealtyAdapter:
@@ -32,40 +59,48 @@ class MyrealtyAdapter:
 
     name = "myrealty"
 
+    def __init__(self, sleep: Sleep | None = None) -> None:
+        self._sleep = sleep
+
     def collect(self, ctx: CollectContext) -> AdapterOutput:
-        site = require_listing(ctx)
-        if not site.url:
-            raise ValueError("myrealty requires a search url")
-        urls = _listing_urls(ctx.fetcher.fetch_text(site.url))
-        candidates = []
-        for url in urls:
-            candidate = _candidate(ctx, url, ctx.fetcher.fetch_text(url))
-            if candidate is not None:
-                candidates.append(candidate)
-        if urls and not candidates:
-            raise ValueError("myrealty found no listing fields")
-        return AdapterOutput(candidates=candidates)
+        pages = SitePages(ctx, self._sleep)
+        return collect_ads(ctx, pages, _listing_urls(ctx, pages), _candidate)
 
 
-def _listing_urls(html: str) -> list[str]:
-    found: list[str] = []
-    for href in _LISTING_HREF.findall(html):
-        if href.startswith("/"):
-            href = _ORIGIN + href
-        href = href.replace(f"{_ORIGIN}/hy/", f"{_ORIGIN}/en/", 1)
-        if href not in found:
-            found.append(href)
-    return found
+def _listing_urls(ctx: CollectContext, pages: SitePages) -> list[str]:
+    """Ads of both kinds, taken in turn, from as many search pages as needed."""
+
+    found: dict[str, list[str]] = {_OLD_FUND: [], _NEW_BUILDINGS: []}
+    half = (max_ads(ctx) + 1) // 2
+    last_page = int(require_listing(ctx).settings.get("max_pages", _MAX_PAGES))
+    html = pages.text(search_url(ctx))
+    for number in range(2, last_page + 2):
+        for path, kind in _LISTING_HREF.findall(html):
+            url = f"{_ORIGIN}/en/{unescape(path)}"
+            if url not in found[kind]:
+                found[kind].append(url)
+        if all(len(urls) >= half for urls in found.values()) or number > last_page:
+            break
+        following = [href for href, page in _PAGE_HREF.findall(html) if int(page) == number]
+        if not following:
+            break
+        try:
+            html = pages.text(following[0])
+        except FetchError:
+            break
+    return round_robin(found.values())
 
 
 def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | None:
+    parts = urlparse(url).path.strip("/").split("/")
+    kind, listing_id = parts[1], parts[-1]
+    title = _TITLE.search(html)
+    if title is None or listing_id not in title.group(1) or "for sale" not in title.group(1):
+        return None
     building_type = _span(html, "Building type")
     area_text = _span(html, "Area")
     if building_type is None and area_text is None:
         return None
-    parts = [unquote(part.replace("+", " ")) for part in urlparse(url).path.split("/") if part]
-    listing_id = parts[-1]
-    address = ", ".join(parts[-4:-1]) if len(parts) >= 4 else None
     coords = _COORDS.search(html)
     edited = _EDITED.search(html)
     seen = (
@@ -77,13 +112,15 @@ def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | 
     return BuildingCandidate(
         id=f"myrealty-{listing_id}",
         city=ctx.city.id,
-        address=address or None,
+        address=", ".join(readable(unquote_plus(part)) for part in parts[3:-1]),
         latitude=float(coords.group(1)) if coords else None,
         longitude=float(coords.group(2)) if coords else None,
         heating_raw=" | ".join(heat) or None,
         building_type=building_type,
+        is_newbuild=True if kind == _NEW_BUILDINGS else None,
         floors=_storeys(_span(html, "Floor/Storeys")),
         area_m2=_number(area_text),
+        price_per_m2=_price(html),
         url=url,
         seen_at=seen,
     )
@@ -91,7 +128,7 @@ def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | 
 
 def _span(html: str, label: str) -> str | None:
     found = re.search(
-        rf"<label>\s*{re.escape(label)}\s*</label>.*?<span>\s*([^<]+?)\s*</span>",
+        rf"<label>\s*{re.escape(label)}\s*</label>(?:(?!<label>).)*?<span>\s*([^<]+?)\s*</span>",
         html,
         re.DOTALL,
     )
@@ -105,6 +142,13 @@ def _facility_names(html: str) -> list[str]:
     if block is None:
         return []
     return [name.strip() for name in re.findall(r"<label>([^<]+)</label>", block.group(1))]
+
+
+def _price(html: str) -> SalePrice | None:
+    found = _PRICE.search(html)
+    if found is None:
+        return None
+    return SalePrice(amount=float(found.group(2).replace(",", "")), currency=found.group(1).upper())
 
 
 def _storeys(text: str | None) -> int | None:

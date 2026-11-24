@@ -118,6 +118,17 @@
     },
     {
       "city": "yerevan",
+      "house_class": "soviet_panel",
+      "heating": "gas_boiler",
+      "item": "gas",
+      "annual_value": 22.5,
+      "unit": "m3/m2/year",
+      "basis": "per_m2",
+      "source": "Производная: норма тепла 178 кВт·ч/м² (UNDP-GEF) ÷ (9,3 кВт·ч/м³ × 0,85); теплота сгорания и КПД — Karamyan, Avetisyan, Noack, JAER 2023 (Ереван)",
+      "note": "Низшая теплота сгорания ввозимого в Армению газа 8000 ккал/м³ = 9,3 кВт·ч/м³ (авторы дают 8000–8200 и считают по 8000), средний сезонный КПД котла средней мощности 0,85; отдельной цифры для квартирного котла в статье нет: «Possible Prospects for Heat Supply of Multi-Apartment Buildings in Armenia», https://jaer.nuaca.am/index.php/jaer/article/view/127. 9,3 × 0,85 = 7,905 кВт·ч тепла с 1 м³; 178 ÷ 7,905 = 22,52 м³/м², записано 22,5. Показатели UNDP взяты как потребность в тепле, без котла: итоговая оценка проекта называет их «energy requirement for heating» и «thermal energy consumption for space heating» (https://erc.undp.org/evaluation/documents/download/9657). Сами презентации UNDP на unece.org с этой машины отвечают 403, определение там не сверено. Только отопление: газ на горячую воду и плиту не входит (это не сезонный расход, раскладывать его по градусо-суткам нельзя), поэтому счёт за газ занижен, летом он нулевой."
+    },
+    {
+      "city": "yerevan",
       "house_class": "typical_newbuild",
       "heating": null,
       "item": "heating",
@@ -129,6 +140,17 @@
     },
     {
       "city": "yerevan",
+      "house_class": "typical_newbuild",
+      "heating": "gas_boiler",
+      "item": "gas",
+      "annual_value": 12.1,
+      "unit": "m3/m2/year",
+      "basis": "per_m2",
+      "source": "Производная: норма тепла 96 кВт·ч/м² (UNDP-GEF) ÷ (9,3 кВт·ч/м³ × 0,85); теплота сгорания и КПД — Karamyan, Avetisyan, Noack, JAER 2023 (Ереван)",
+      "note": "Низшая теплота сгорания ввозимого в Армению газа 8000 ккал/м³ = 9,3 кВт·ч/м³ (авторы дают 8000–8200 и считают по 8000), средний сезонный КПД котла средней мощности 0,85; отдельной цифры для квартирного котла в статье нет: «Possible Prospects for Heat Supply of Multi-Apartment Buildings in Armenia», https://jaer.nuaca.am/index.php/jaer/article/view/127. 9,3 × 0,85 = 7,905 кВт·ч тепла с 1 м³; 96 ÷ 7,905 = 12,14 м³/м², записано 12,1. Показатели UNDP взяты как потребность в тепле, без котла: итоговая оценка проекта называет их «energy requirement for heating» и «thermal energy consumption for space heating» (https://erc.undp.org/evaluation/documents/download/9657). Сами презентации UNDP на unece.org с этой машины отвечают 403, определение там не сверено. Только отопление: газ на горячую воду и плиту не входит (это не сезонный расход, раскладывать его по градусо-суткам нельзя), поэтому счёт за газ занижен, летом он нулевой."
+    },
+    {
+      "city": "yerevan",
       "house_class": "business",
       "heating": null,
       "item": "heating",
@@ -137,6 +159,17 @@
       "basis": "per_m2",
       "source": "UNDP-GEF Армения: цель для новых домов 80–96 кВт·ч/м² в год, нижняя граница",
       "note": "Годовая норма отопления на м². По месяцам раскладывается градусо-сутками."
+    },
+    {
+      "city": "yerevan",
+      "house_class": "business",
+      "heating": "gas_boiler",
+      "item": "gas",
+      "annual_value": 10.1,
+      "unit": "m3/m2/year",
+      "basis": "per_m2",
+      "source": "Производная: норма тепла 80 кВт·ч/м² (UNDP-GEF) ÷ (9,3 кВт·ч/м³ × 0,85); теплота сгорания и КПД — Karamyan, Avetisyan, Noack, JAER 2023 (Ереван)",
+      "note": "Низшая теплота сгорания ввозимого в Армению газа 8000 ккал/м³ = 9,3 кВт·ч/м³ (авторы дают 8000–8200 и считают по 8000), средний сезонный КПД котла средней мощности 0,85; отдельной цифры для квартирного котла в статье нет: «Possible Prospects for Heat Supply of Multi-Apartment Buildings in Armenia», https://jaer.nuaca.am/index.php/jaer/article/view/127. 9,3 × 0,85 = 7,905 кВт·ч тепла с 1 м³; 80 ÷ 7,905 = 10,12 м³/м², записано 10,1. Показатели UNDP взяты как потребность в тепле, без котла: итоговая оценка проекта называет их «energy requirement for heating» и «thermal energy consumption for space heating» (https://erc.undp.org/evaluation/documents/download/9657). Сами презентации UNDP на unece.org с этой машины отвечают 403, определение там не сверено. Только отопление: газ на горячую воду и плиту не входит (это не сезонный расход, раскладывать его по градусо-суткам нельзя), поэтому счёт за газ занижен, летом он нулевой."
     },
     {
       "city": "tbilisi",
@@ -500,6 +533,39 @@
       "basis": "per_person",
       "source": "Infostan: норма без счётчика 7,6 м³ на человека в месяц",
       "note": "7,6 × 12 = 91,2 м³ на человека в год. Это норма выставления счёта без счётчика, не замер."
+    },
+    {
+      "city": "yerevan",
+      "house_class": "soviet_panel",
+      "heating": null,
+      "item": "water",
+      "annual_value": 37.2,
+      "unit": "m3/person/year",
+      "basis": "per_person",
+      "source": "Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек",
+      "note": "112,6 ÷ 3,03 = 37,2 м³ на человека в год (около 102 л в день). Вся Армения, не Ереван. Это вода, отпущенная населению из водопровода; C4 «Household water use per capita» (207,3 млн м³, 68,3 м³ на человека) больше отпуска из водопровода, то есть шире счёта водоканала, поэтому не взят. Норматива на человека для абонентов без счётчика в открытых документах КРОУ не найдено. Канализация считается по тому же объёму. https://statbank.armstat.am/api/v1/en/ArmStatBank/8%20Environment/(C)%20Water%20resources/EE-c5.px"
+    },
+    {
+      "city": "yerevan",
+      "house_class": "typical_newbuild",
+      "heating": null,
+      "item": "water",
+      "annual_value": 37.2,
+      "unit": "m3/person/year",
+      "basis": "per_person",
+      "source": "Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек",
+      "note": "112,6 ÷ 3,03 = 37,2 м³ на человека в год (около 102 л в день). Вся Армения, не Ереван. Это вода, отпущенная населению из водопровода; C4 «Household water use per capita» (207,3 млн м³, 68,3 м³ на человека) больше отпуска из водопровода, то есть шире счёта водоканала, поэтому не взят. Норматива на человека для абонентов без счётчика в открытых документах КРОУ не найдено. Канализация считается по тому же объёму. https://statbank.armstat.am/api/v1/en/ArmStatBank/8%20Environment/(C)%20Water%20resources/EE-c5.px"
+    },
+    {
+      "city": "yerevan",
+      "house_class": "business",
+      "heating": null,
+      "item": "water",
+      "annual_value": 37.2,
+      "unit": "m3/person/year",
+      "basis": "per_person",
+      "source": "Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек",
+      "note": "112,6 ÷ 3,03 = 37,2 м³ на человека в год (около 102 л в день). Вся Армения, не Ереван. Это вода, отпущенная населению из водопровода; C4 «Household water use per capita» (207,3 млн м³, 68,3 м³ на человека) больше отпуска из водопровода, то есть шире счёта водоканала, поэтому не взят. Норматива на человека для абонентов без счётчика в открытых документах КРОУ не найдено. Канализация считается по тому же объёму. https://statbank.armstat.am/api/v1/en/ArmStatBank/8%20Environment/(C)%20Water%20resources/EE-c5.px"
     }
   ]
 }

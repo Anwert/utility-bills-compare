@@ -30,7 +30,8 @@ from ubc.schemas import (
     Tier,
 )
 
-_GAS_ROW = re.compile(r"(?m)^\s*1\.2\s+([\d,]+\.\d+)\s+([\d,]+\.\d+)\s*$")
+_GAS_PAIR = re.compile(r"(?m)([\d,]+\.\d{2})[ \t]+([\d,]+\.\d{2})[ \t]*$")
+_GAS_LABEL = re.compile(r"(?m)^\s*1\.2\b")
 _CREATED = re.compile(rb"CreationDate\(D:(\d{4})(\d{2})(\d{2})")
 _ACT_YEAR = re.compile(r"ՏԵՂԱԿԱՆ ՎՃԱՐՆԵՐԻ (\d{4}) ԹՎԱԿԱՆԻ")
 _WASTE_FEE = re.compile(r"20\. Երևանի կողմից աղբահանության.{0,800}?(\d+(?:[.,]\d+)?) /[^/]+/ դրամ")
@@ -148,6 +149,35 @@ def _created_on(pdf: bytes) -> date:
     return date(year, month, day)
 
 
+def _dated(created: date) -> str:
+    """Note for a PDF that prints no effective date: its creation date stands in.
+
+    The pipeline prorates by it, and stretches a first-known price to the 1st.
+    """
+
+    return f"Дата действия в тексте PDF не указана, PDF создан {created.isoformat()}."
+
+
+def _household_gas(text: str) -> float:
+    """AMD per 1000 m³ with VAT from row 1.2.
+
+    Row labels and numbers sit on different baselines, so a label lands beside
+    its own pair with poppler but beside another one with xpdf. The pairs keep
+    their order in both: 1.1 first, 1.2 second.
+    """
+
+    pairs = [
+        (float(net.replace(",", "")), float(gross.replace(",", "")))
+        for net, gross in _GAS_PAIR.findall(text)
+    ]
+    if len(pairs) < 2 or _GAS_LABEL.search(text) is None:
+        raise ValueError("gas PDF has no row 1.2 with two tariff columns")
+    net, gross = pairs[1]
+    if not 10_000 <= gross <= 1_000_000 or abs(net * 1.2 - gross) > 1:
+        raise ValueError(f"gas PDF row 1.2 is not AMD per 1000 m³ with 20% VAT: {net}, {gross}")
+    return gross
+
+
 def _table_rows(text: str) -> dict[int, list[float]]:
     rows: dict[int, list[float]] = {}
     current: int | None = None
@@ -171,6 +201,10 @@ def _steps(prices: list[float], when: str) -> list[Tier]:
     ]
 
 
+def _slashed(prices: list[float]) -> str:
+    return " / ".join(f"{price:g}" for price in prices)
+
+
 def _record(
     ctx: CollectContext,
     source: SourceConfig,
@@ -183,6 +217,7 @@ def _record(
     note: str,
     valid_to: date | None = None,
     tiers: list[Tier] | None = None,
+    fetched_at: datetime | None = None,
 ) -> NormalizedRecord:
     return NormalizedRecord(
         city=ctx.city.id,
@@ -197,7 +232,7 @@ def _record(
         source=SourceInfo(
             kind=source.kind,
             url=url,
-            fetched_at=datetime.now(UTC),
+            fetched_at=fetched_at or datetime.now(UTC),
             name=source.id,
         ),
         method=ExtractionMethod.regex,
@@ -221,16 +256,13 @@ class YerevanPsrcGas:
         source = require_source(ctx)
         page = _require_url(source)
         pdf_url = _pick_pdf(ctx.fetcher.render_html(page), page, _is_gas_tariff)
-        text = ctx.fetcher.pdf_to_text(pdf_url)
-        match = _GAS_ROW.search(text)
-        if match is None:
-            raise ValueError("gas PDF has no row 1.2 with two tariff columns")
-        per_thousand = float(match.group(2).replace(",", ""))
+        per_thousand = _household_gas(ctx.fetcher.pdf_to_text(pdf_url))
+        valid_from = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
         value = per_thousand / 1000
         note = (
             f"строка 1.2, столбец с НДС: {per_thousand:.0f} AMD за 1000 м³ "
             f"({value} AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. "
-            "Дата — CreationDate PDF."
+            f"{_dated(valid_from)}"
         )
         record = _record(
             ctx,
@@ -238,7 +270,7 @@ class YerevanPsrcGas:
             item=Item.gas,
             value=value,
             unit="AMD/m3",
-            valid_from=_created_on(ctx.fetcher.fetch_bytes(pdf_url)),
+            valid_from=valid_from,
             url=pdf_url,
             note=note,
         )
@@ -261,6 +293,9 @@ class YerevanPsrcElectricity:
         except (KeyError, IndexError) as exc:
             raise ValueError("electricity PDF has no household day/night steps") from exc
         valid_from = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
+        # One timestamp: of two records equally fresh the calculation takes the
+        # first, so a cell is billed at the day price on every machine.
+        fetched_at = datetime.now(UTC)
         day = _record(
             ctx,
             source,
@@ -270,12 +305,13 @@ class YerevanPsrcElectricity:
             valid_from=valid_from,
             url=pdf_url,
             tiers=_steps(day_prices, "day"),
+            fetched_at=fetched_at,
             note=(
-                "day household 0.38 kV: 46.48 / 48.48 / 53.48 AMD/kWh at monthly use "
-                "up to 200 / 201-400 / above 400 kWh. Night is the other record, "
-                "10 AMD/kWh less. Row 1 (29.99/19.99) is the socially vulnerable rate, "
-                "not this tariff. valid_from is the PDF CreationDate; labels are not "
-                "in the text layer."
+                "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / "
+                f"больше 400 кВт·ч в месяц: {_slashed(day_prices)}. Строка 1 (29.99/19.99) — "
+                "льготная для социально уязвимых, не этот тариф. Счёт считается по дневной "
+                "цене на весь расход: для доли ночного расхода источника нет. Подписей в "
+                f"текстовом слое нет. {_dated(valid_from)}"
             ),
         )
         night = _record(
@@ -287,9 +323,10 @@ class YerevanPsrcElectricity:
             valid_from=valid_from,
             url=pdf_url,
             tiers=_steps(night_prices, "night"),
+            fetched_at=fetched_at,
             note=(
-                "night household 0.38 kV: 36.48 / 38.48 / 43.48 AMD/kWh, "
-                "the same monthly steps as the day record."
+                "ночной бытовой тариф 0,38 кВ, те же ступени, что у дневного: "
+                f"{_slashed(night_prices)} AMD/кВт·ч."
             ),
         )
         return AdapterOutput(records=[day, night])

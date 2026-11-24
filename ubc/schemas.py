@@ -42,6 +42,7 @@ DEFAULT_PAID_DATA_NOTE = (
 
 _MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 _ID = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+_CURRENCY_CODE = r"^[A-Z]{3}$"
 
 
 def _require_http_url(value: str) -> str:
@@ -470,13 +471,21 @@ class HousingFee(ContractModel):
         return value
 
 
+class SalePrice(ContractModel):
+    """Asking price of one square metre. Listings quote USD, so any ISO code is allowed."""
+
+    amount: Finite = Field(gt=0)
+    currency: str = Field(pattern=_CURRENCY_CODE)
+
+
 class BuildingCandidate(ContractModel):
     """One apartment listing, before it is classified into a cell.
 
     Heating, year, and fees are often missing on the source site. Leave those null.
     ``heating_raw`` keeps the site's own word (``CG``, ``Elektrisch``); ``heating`` is
     set only when the adapter already knows the mapping. ``building_type`` is the
-    site's construction word (Panel, MONOLITH), not a house class.
+    site's construction word (Panel, MONOLITH), not a house class. ``block_type`` is
+    the built form of the whole block from open data (Berlin Umweltatlas).
     """
 
     id: str = Field(min_length=1, max_length=128)
@@ -491,10 +500,12 @@ class BuildingCandidate(ContractModel):
     year_to: int | None = None
     series: str | None = None
     building_type: str | None = None
+    block_type: str | None = None
     is_newbuild: bool | None = None
     floors: int | None = None
     area_m2: float | None = None
     housing_fee: HousingFee | None = None
+    price_per_m2: SalePrice | None = None
     url: HttpUrlString
     seen_at: FlexDate
     note: str = ""
@@ -522,8 +533,8 @@ class PinnedHouse(ContractModel):
     """A house already classified into one cell and kept from month to month.
 
     ``BuildingCandidate`` is the raw listing. This is the house the classifier
-    pins and the cell calculation bills. ``listing_url`` may be null once the
-    ad is gone; ``last_seen`` stays on the last month the house was still known.
+    pins and the cell calculation bills. ``listing_url`` is the ad the facts came
+    from and stays after the ad is gone; ``last_seen`` is the last sighting.
     """
 
     id: str = Field(min_length=1, max_length=128)
@@ -596,6 +607,90 @@ class ArticleSources(ContractModel):
         return value
 
 
+class PriceReference(ContractModel):
+    """Average price of 1 m2 in one district. ``district`` is the word the listings use."""
+
+    district: str = Field(min_length=1)
+    amount: Finite = Field(gt=0)
+    currency: str = Field(pattern=_CURRENCY_CODE)
+    source: str = Field(min_length=1)
+
+
+class HouseClassRule(ContractModel):
+    """Facts that place a listing in one house class.
+
+    Every condition that is set must hold, and a fact the listing does not have
+    never satisfies a condition. Words are compared without case; ``block_types``
+    match a part of the text. Years must lie inside the bounds as a whole range.
+    ``price_ratio_*`` compare the asking price with the district's ``PriceReference``.
+    ``fee_per_m2_from`` is a monthly fee in the city currency. ``exclude_newbuild``
+    only rejects a listing that says it is new.
+    """
+
+    house_class: HouseClass
+    building_types: list[str] = Field(default_factory=list)
+    series: list[str] = Field(default_factory=list)
+    block_types: list[str] = Field(default_factory=list)
+    is_newbuild: bool | None = None
+    exclude_newbuild: bool = False
+    year_from: int | None = None
+    year_to: int | None = None
+    floors_from: int | None = None
+    floors_to: int | None = None
+    price_ratio_from: Finite | None = None
+    price_ratio_to: Finite | None = None
+    fee_per_m2_from: Finite | None = None
+    reason: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _has_a_condition(self) -> HouseClassRule:
+        conditions = self.model_dump(
+            exclude={"house_class", "reason", "exclude_newbuild"}, exclude_defaults=True
+        )
+        if not conditions:
+            raise ValueError("a class rule needs at least one condition")
+        return self
+
+
+class HeatingRule(ContractModel):
+    """Site words that mean one heating type. ``heating_raw`` is split at ``|``."""
+
+    heating: HeatingType
+    all_of: list[str] = Field(min_length=1)
+    none_of: list[str] = Field(default_factory=list)
+    reason: str = Field(min_length=1)
+
+
+class HouseRules(ContractModel):
+    """How one city's listings become cells. Thresholds live here, not in code.
+
+    ``classes`` are tried in order and the first match wins. Heating rules must
+    agree: two different types on one listing leave it unclassified.
+    ``unavailable_heating`` names columns where no house is ever pinned, with the
+    reason the empty cell shows.
+    """
+
+    classes: list[HouseClassRule] = Field(default_factory=list)
+    heatings: list[HeatingRule] = Field(default_factory=list)
+    price_references: list[PriceReference] = Field(default_factory=list)
+    unavailable_heating: dict[HeatingType, str] = Field(default_factory=dict)
+
+
+class OpenDataKind(StrEnum):
+    nominatim = "nominatim"
+    osm_levels = "osm_levels"
+    berlin_alkis = "berlin_alkis"
+    berlin_building_age = "berlin_building_age"
+
+
+class OpenDataSource(ContractModel):
+    """An open register that fills facts a listing left out."""
+
+    kind: OpenDataKind
+    enabled: bool = True
+    url: HttpUrlString
+
+
 class CityConfig(ContractModel):
     """Everything that differs per city. Adding a city is a new file, not a calculation change."""
 
@@ -609,6 +704,8 @@ class CityConfig(ContractModel):
     paid_data_note: str = Field(min_length=1)
     articles: list[ArticleSources]
     listing_sites: list[ListingSite] = Field(default_factory=list)
+    house_rules: HouseRules = Field(default_factory=HouseRules)
+    open_data: list[OpenDataSource] = Field(default_factory=list)
     fx_sources: list[SourceConfig] = Field(default_factory=list)
     hdd_sources: list[SourceConfig] = Field(default_factory=list)
 

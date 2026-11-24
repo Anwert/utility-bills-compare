@@ -1,0 +1,7 @@
+{
+  "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=W%C3%BChlischstra%C3%9Fe%2030%2C%2010245%20Berlin": "nominatim_wuehlischstrasse_30.json",
+  "https://gdi.berlin.de/services/wfs/alkis_gebaeude?service=WFS&version=1.1.0&request=GetFeature&typeName=alkis_gebaeude:gebaeude&outputFormat=application/json&srsName=EPSG:4326&bbox=52.509494,13.457602,52.509794,13.457902,urn:ogc:def:crs:EPSG:4326": "alkis_wuehlischstrasse_30.json",
+  "https://gdi.berlin.de/services/wfs/ua_gebaeudealter?service=WFS&version=1.1.0&request=GetFeature&typeName=ua_gebaeudealter:ua_gebaeudealter_baualter&outputFormat=application/json&srsName=EPSG:4326&bbox=52.509344,13.457452,52.509944,13.458052,urn:ogc:def:crs:EPSG:4326": "age_wuehlischstrasse_30.json",
+  "https://gdi.berlin.de/services/wfs/alkis_gebaeude?service=WFS&version=1.1.0&request=GetFeature&typeName=alkis_gebaeude:gebaeude&outputFormat=application/json&srsName=EPSG:4326&bbox=52.508650,13.458650,52.508950,13.458950,urn:ogc:def:crs:EPSG:4326": "alkis_wuehlischstrasse_37.json",
+  "https://gdi.berlin.de/services/wfs/ua_gebaeudealter?service=WFS&version=1.1.0&request=GetFeature&typeName=ua_gebaeudealter:ua_gebaeudealter_baualter&outputFormat=application/json&srsName=EPSG:4326&bbox=52.508500,13.458500,52.509100,13.459100,urn:ogc:def:crs:EPSG:4326": "age_wuehlischstrasse_37.json"
+}

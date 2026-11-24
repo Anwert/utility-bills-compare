@@ -42,6 +42,110 @@
     }
   ],
   "listing_sites": [],
+  "house_rules": {
+    "classes": [
+      {
+        "house_class": "soviet_panel",
+        "series": [
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "10",
+          "თუხარელის",
+          "მოსკოვის",
+          "ქალაქური",
+          "ხრუშოვის",
+          "ჩეხური",
+          "ყავლაშვილის",
+          "ლვოვის",
+          "მეტრომშენის"
+        ],
+        "exclude_newbuild": true,
+        "reason": "Советская серия в поле project_type сайта myhome.ge (номер или название)."
+      },
+      {
+        "house_class": "soviet_panel",
+        "year_from": 1950,
+        "year_to": 2000,
+        "exclude_newbuild": true,
+        "reason": "Диапазон myhome.ge «1955–2000»: после 1991 года массово не строили."
+      },
+      {
+        "house_class": "typical_newbuild",
+        "year_from": 2000,
+        "year_to": 2019,
+        "reason": "Типовая новостройка 2000–2010-х (решение #9)."
+      },
+      {
+        "house_class": "business",
+        "year_from": 2020,
+        "reason": "Современный дом последних лет (решение #9): с 2020 года."
+      }
+    ],
+    "heatings": [
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "2"
+        ],
+        "reason": "heating_type_id 2 на myhome.ge: своё газовое отопление, плата по газовому счётчику."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "gas heater"
+        ],
+        "reason": "heating_type_id 2 на myhome.ge: своё газовое отопление, плата по газовому счётчику."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "გაზის გამაცხელებელი"
+        ],
+        "reason": "heating_type_id 2 на myhome.ge: своё газовое отопление, плата по газовому счётчику."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "3"
+        ],
+        "reason": "heating_type_id 3 на myhome.ge."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "electric heaters"
+        ],
+        "reason": "heating_type_id 3 на myhome.ge."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "ელექტრო გამაცხელებელი"
+        ],
+        "reason": "heating_type_id 3 на myhome.ge."
+      }
+    ],
+    "unavailable_heating": {
+      "district": "в Тбилиси нет городского тарифа центрального отопления: теплосети нет с 1990-х, «центральное» в объявлениях — котёл квартиры или дома"
+    }
+  },
+  "open_data": [
+    {
+      "kind": "nominatim",
+      "enabled": true,
+      "url": "https://nominatim.openstreetmap.org/search"
+    },
+    {
+      "kind": "osm_levels",
+      "enabled": true,
+      "url": "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    }
+  ],
   "fx_sources": [
     {
       "id": "fx_gel_nbg",

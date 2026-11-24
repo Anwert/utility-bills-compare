@@ -1,24 +1,47 @@
-"""Local entry point for the data files.
+"""Command line of the monthly pipeline.
 
-This command validates the contracts and lists the sources a later pipeline
-will call. It does not fetch pages, calculate cells, or publish the site.
-Those steps are separate tickets; they should call ``load_cities``,
-``collect_contexts``, and ``get_adapter`` rather than grow a second loader.
+Without ``--run`` the command only validates the data files or lists the sources
+of a month: it does not fetch pages, calculate cells, or publish.
 
     python -m ubc.pipeline --check
     python -m ubc.pipeline
     python -m ubc.pipeline --city yerevan --period 2026-10
+
+``--run`` is the monthly run (``ubc.monthly``): collect, choose, alert, pin
+houses, calculate, write ``data/``. The month is the previous calendar month
+unless ``--period`` says otherwise. Exit code 1 means nothing was written.
+
+    python -m ubc.pipeline --run
+    python -m ubc.pipeline --run --city yerevan --period 2026-10 --dry-run
+    python -m ubc.pipeline --run --city yerevan --item gas
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
+from collections.abc import Callable, Mapping
+from datetime import UTC, date, datetime
+from pathlib import Path
 
 from ubc.adapter import CollectContext, load_adapters
-from ubc.fetch import ContentFetcher
+from ubc.alerts import GitHubIssues, GitHubRestClient
+from ubc.fetch import ContentFetcher, HttpFetcher
 from ubc.load import ConfigError, load_cities, load_example_city_month, load_reference
-from ubc.schemas import CityConfig, CityId, SourceConfig, YearMonth, ordered_enabled_sources
+from ubc.monthly import MonthOptions, MonthReport, PublicationError, run_month
+from ubc.paths import data_dir
+from ubc.schemas import (
+    CHARGE_ITEMS,
+    CityConfig,
+    CityId,
+    Item,
+    ReferenceData,
+    SourceConfig,
+    YearMonth,
+    ordered_enabled_sources,
+)
+from ubc.secrets import SecretConfig
 
 
 def collect_contexts(
@@ -56,7 +79,21 @@ def _parse_period(value: str) -> YearMonth:
         raise argparse.ArgumentTypeError(str(exc)) from exc
 
 
-def main(argv: list[str] | None = None) -> int:
+def _previous_month(today: date) -> YearMonth:
+    if today.month == 1:
+        return YearMonth(today.year - 1, 12)
+    return YearMonth(today.year, today.month - 1)
+
+
+def main(
+    argv: list[str] | None = None,
+    *,
+    today: date | None = None,
+    env: Mapping[str, str] | None = None,
+    runner: Callable[[MonthOptions], MonthReport] = run_month,
+) -> int:
+    """Run the command. Tests replace the clock, the environment, and the run itself."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--check",
@@ -69,7 +106,38 @@ def main(argv: list[str] | None = None) -> int:
         type=_parse_period,
         help="Month to collect, YYYY-MM. Passed through on every CollectContext.",
     )
+    parser.add_argument(
+        "--run",
+        action="store_true",
+        help="Collect the month, calculate the cells, and write data/.",
+    )
+    parser.add_argument(
+        "--item",
+        choices=[item.value for item in CHARGE_ITEMS],
+        help="With --run: collect one article, take the others from data/state.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="With --run: calculate everything, write nothing, send nothing.",
+    )
+    parser.add_argument(
+        "--no-alerts",
+        action="store_true",
+        help="With --run: do not open or close data-alert issues.",
+    )
+    parser.add_argument(
+        "--data-root",
+        type=Path,
+        default=None,
+        help="With --run: the directory to read state from and write to. Default: data/.",
+    )
     args = parser.parse_args(argv)
+    clock = today or datetime.now(UTC).date()
+    if args.run:
+        args.period = args.period or _previous_month(clock)
+        if args.period.last_day >= clock:
+            parser.error(f"--period {args.period} has not ended yet")
     try:
         cities = load_cities()
         reference = load_reference()
@@ -90,6 +158,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.city:
         cities = [city for city in cities if city.id.value == args.city]
+    if args.run:
+        return _run(args, cities, reference, os.environ if env is None else env, runner)
     # A fetcher is part of the context. This command does not call it.
     fetcher = _SilentFetcher()
     for city in cities:
@@ -108,6 +178,49 @@ def main(argv: list[str] | None = None) -> int:
             line += f", period {args.period}, {len(contexts)} collect calls"
         print(line)
     return 0
+
+
+def _run(
+    args: argparse.Namespace,
+    cities: list[CityConfig],
+    reference: ReferenceData,
+    env: Mapping[str, str],
+    runner: Callable[[MonthOptions], MonthReport],
+) -> int:
+    options = MonthOptions(
+        period=args.period,
+        cities=cities,
+        reference=reference,
+        fetcher=HttpFetcher(),
+        data_root=args.data_root or data_dir(),
+        item=Item(args.item) if args.item else None,
+        issues=None if args.no_alerts else _issues(env),
+        secrets=SecretConfig.from_env(env),
+        dry_run=args.dry_run,
+        hide=tuple(filter(None, (_token(env),))),
+        log=lambda line: print(line, flush=True),
+    )
+    try:
+        report = runner(options)
+    except (PublicationError, ConfigError) as exc:
+        print(f"не опубликовано:\n{exc}", file=sys.stderr)
+        return 1
+    print(f"{args.period}: городов {len(report.months)}, файлов записано {len(report.written)}")
+    return 0
+
+
+def _token(env: Mapping[str, str]) -> str:
+    return env.get("GITHUB_TOKEN") or env.get("GH_TOKEN") or ""
+
+
+def _issues(env: Mapping[str, str]) -> GitHubIssues | None:
+    """The repository to alert. A run without its token and name sends no alerts."""
+
+    owner, _, repo = env.get("GITHUB_REPOSITORY", "").partition("/")
+    token = _token(env)
+    if not (owner and repo and token):
+        return None
+    return GitHubRestClient(owner, repo, token)
 
 
 class _SilentFetcher:

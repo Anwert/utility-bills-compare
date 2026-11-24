@@ -203,15 +203,100 @@ def test_missing_chrome_fails_before_launch() -> None:
         )
 
 
+def _render_with(monkeypatch: pytest.MonkeyPatch, env: dict[str, str]) -> list[str]:
+    """Render with only ``env`` describing where Chrome may be. Returns the argv."""
+
+    for name in ("CHROME_BIN", "PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("PATH", "")
+    for name, value in env.items():
+        monkeypatch.setenv(name, value)
+    seen: list[str] = []
+
+    def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        seen.extend(argv)
+        return CommandResult(0, "<html>Ջուր</html>".encode(), b"")
+
+    assert HttpFetcher(command=command).render_html("https://example.test/app") == (
+        "<html>Ջուր</html>"
+    )
+    return seen
+
+
+@pytest.mark.parametrize("root", ["PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"])
+def test_chrome_is_found_in_its_windows_install_directories(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, root: str
+) -> None:
+    binary = tmp_path / "Google" / "Chrome" / "Application" / "chrome.exe"
+    binary.parent.mkdir(parents=True)
+    binary.write_text("", encoding="utf-8")
+
+    assert _render_with(monkeypatch, {root: str(tmp_path)})[0] == str(binary)
+
+
+def test_chrome_bin_overrides_the_installed_chrome(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    installed = tmp_path / "Google" / "Chrome" / "Application" / "chrome.exe"
+    installed.parent.mkdir(parents=True)
+    installed.write_text("", encoding="utf-8")
+    chosen = tmp_path / "my-chrome"
+    chosen.write_text("", encoding="utf-8")
+
+    argv = _render_with(monkeypatch, {"CHROME_BIN": str(chosen), "PROGRAMFILES": str(tmp_path)})
+
+    assert argv[0] == str(chosen)
+
+
+def test_chrome_runs_in_a_throwaway_profile(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    chosen = tmp_path / "my-chrome"
+    chosen.write_text("", encoding="utf-8")
+
+    argv = _render_with(monkeypatch, {"CHROME_BIN": str(chosen)})
+
+    (profile,) = [arg for arg in argv if arg.startswith("--user-data-dir=")]
+    assert not Path(profile.removeprefix("--user-data-dir=")).exists()
+
+
+def test_a_program_that_cannot_start_is_a_fetch_error(tmp_path: Path) -> None:
+    binary = tmp_path / "chrome"
+    binary.write_text("", encoding="utf-8")
+
+    def missing(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        raise FileNotFoundError(argv[0])
+
+    def slow(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        raise subprocess.TimeoutExpired(argv, 90)
+
+    for command in (missing, slow):
+        fetcher = HttpFetcher(
+            opener=lambda request, timeout: b"%PDF-fake",
+            command=command,
+            chrome_bin=str(binary),
+        )
+        with pytest.raises(FetchError, match="Chrome"):
+            fetcher.render_html("https://example.test/app")
+        with pytest.raises(FetchError, match="pdftotext"):
+            fetcher.pdf_to_text("https://example.test/a.pdf")
+
+
 def test_pdf_to_text_sends_bytes_to_pdftotext() -> None:
+    seen: list[str] = []
+
     def opener(request: object, timeout: float) -> bytes:
         return b"%PDF-fake"
 
     def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
-        assert stdin == b"%PDF-fake"
         assert argv[:2] == ["pdftotext", "-layout"]
-        return CommandResult(0, b"price 9.52\n", b"")
+        # xpdf's pdftotext, usual on Windows, does not read a PDF from stdin.
+        assert Path(argv[-2]).read_bytes() == b"%PDF-fake"
+        assert argv[-1] == "-"
+        seen.append(argv[-2])
+        return CommandResult(0, "price 9.52 Ջուր\n".encode(), b"")
 
     text = HttpFetcher(opener=opener, command=command).pdf_to_text("https://example.test/a.pdf")
 
-    assert text == "price 9.52\n"
+    assert text == "price 9.52 Ջուր\n"
+    assert not Path(seen[0]).exists()

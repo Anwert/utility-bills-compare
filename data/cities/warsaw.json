@@ -42,6 +42,89 @@
     }
   ],
   "listing_sites": [],
+  "house_rules": {
+    "classes": [
+      {
+        "house_class": "business",
+        "year_from": 2000,
+        "fee_per_m2_from": 25,
+        "reason": "Сборы от 25 зл/м² в новом доме — охрана и бассейн (исследование #3); типичный czynsz около 16,5 зл/м²."
+      },
+      {
+        "house_class": "soviet_panel",
+        "year_from": 1946,
+        "year_to": 1990,
+        "reason": "Старый типовой фонд (решение #9): массовая застройка до 1990 года."
+      },
+      {
+        "house_class": "typical_newbuild",
+        "year_from": 2000,
+        "year_to": 2019,
+        "reason": "Типовая новостройка 2000–2010-х (решение #9)."
+      },
+      {
+        "house_class": "business",
+        "year_from": 2020,
+        "reason": "Современный дом последних лет (решение #9): с 2020 года."
+      }
+    ],
+    "heatings": [
+      {
+        "heating": "district",
+        "all_of": [
+          "urban"
+        ],
+        "reason": "Городская теплосеть Veolia. «boiler_room» — домовая котельная, не относим."
+      },
+      {
+        "heating": "district",
+        "all_of": [
+          "miejskie"
+        ],
+        "reason": "Городская теплосеть Veolia. «boiler_room» — домовая котельная, не относим."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "gas"
+        ],
+        "reason": "Квартирный газовый котёл."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "gazowe"
+        ],
+        "reason": "Квартирный газовый котёл."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "electrical"
+        ],
+        "reason": "Электрическое отопление."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "elektryczne"
+        ],
+        "reason": "Электрическое отопление."
+      }
+    ]
+  },
+  "open_data": [
+    {
+      "kind": "nominatim",
+      "enabled": true,
+      "url": "https://nominatim.openstreetmap.org/search"
+    },
+    {
+      "kind": "osm_levels",
+      "enabled": true,
+      "url": "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    }
+  ],
   "fx_sources": [
     {
       "id": "fx_pln_ecb",
