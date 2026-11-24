@@ -1,8 +1,12 @@
 """Yerevan apartment listings from real-estate.am.
 
-The index page links the ads. Each ad carries one escaped JSON object:
-building type, market, new-construction flag, price, area, floors, utilities,
-address. There is no year and no maintenance fee. Heating stays unmapped.
+The property sitemap lists every ad; paging the site itself goes through
+``/filtered-properties``, which robots.txt forbids. 2-room sale ads in Yerevan are
+taken newest first, one district after another, so the old fund of the outer
+districts is not lost behind the centre's new buildings. Each ad carries one
+escaped JSON object: building type, market, new-construction flag, price, area,
+floors, utilities, address. There is no year and no maintenance fee. Heating
+stays unmapped.
 """
 
 from __future__ import annotations
@@ -11,12 +15,22 @@ import json
 import re
 from datetime import date
 
-from ubc.adapter import AdapterOutput, CollectContext, register_adapter, require_listing
+from ubc.adapter import AdapterOutput, CollectContext, register_adapter
+from ubc.adapters.listing_common import (
+    SitePages,
+    Sleep,
+    collect_ads,
+    readable,
+    round_robin,
+    search_url,
+)
 from ubc.schemas import BuildingCandidate, SalePrice
 
-_HREF = re.compile(r'href="((?:https://www\.real-estate\.am)?/en/prp/apartment/buy/yerevan/[^"]+)"')
+_HREF = re.compile(
+    r'href="(https://www\.real-estate\.am/en/prp/apartment/buy/yerevan/'
+    r'([^"/]+)/[^"]*2-room/(\d+))"'
+)
 _HEAT = frozenset({"centralized_heating", "heating", "gas"})
-_ORIGIN = "https://www.real-estate.am"
 
 
 class RealEstateAmAdapter:
@@ -24,29 +38,21 @@ class RealEstateAmAdapter:
 
     name = "real_estate_am"
 
+    def __init__(self, sleep: Sleep | None = None) -> None:
+        self._sleep = sleep
+
     def collect(self, ctx: CollectContext) -> AdapterOutput:
-        site = require_listing(ctx)
-        if not site.url:
-            raise ValueError("real_estate_am requires a search url")
-        urls = _listing_urls(ctx.fetcher.fetch_text(site.url))
-        candidates = []
-        for url in urls:
-            candidate = _candidate(ctx, url, ctx.fetcher.fetch_text(url))
-            if candidate is not None:
-                candidates.append(candidate)
-        if urls and not candidates:
-            raise ValueError("real_estate_am found no listing fields")
-        return AdapterOutput(candidates=candidates)
+        pages = SitePages(ctx, self._sleep)
+        urls = _listing_urls(pages.text(search_url(ctx)))
+        return collect_ads(ctx, pages, urls, _candidate)
 
 
-def _listing_urls(html: str) -> list[str]:
-    found: list[str] = []
-    for href in _HREF.findall(html):
-        if href.startswith("/"):
-            href = _ORIGIN + href
-        if href not in found:
-            found.append(href)
-    return found
+def _listing_urls(sitemap: str) -> list[str]:
+    ads = {url: (district, int(number)) for url, district, number in _HREF.findall(sitemap)}
+    districts: dict[str, list[str]] = {}
+    for url, (district, _) in sorted(ads.items(), key=lambda ad: -ad[1][1]):
+        districts.setdefault(district, []).append(url)
+    return round_robin(districts.values())
 
 
 def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | None:
@@ -56,7 +62,7 @@ def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | 
         return None
     body = text[start:]
     building_type = _string(body, "buildingType")
-    if not building_type:
+    if not building_type or not _is_live_sale(text[:start], body):
         return None
     updated = re.search(r'"updatedAt":"(\d{4}-\d{2}-\d{2})', body)
     seen = date.fromisoformat(updated.group(1)) if updated else ctx.period.first_day
@@ -78,6 +84,15 @@ def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | 
         url=url,
         seen_at=seen,
         note=_string(body, "marketType") or "",
+    )
+
+
+def _is_live_sale(head: str, body: str) -> bool:
+    actions = re.findall(r'"propertyActionType":"([A-Z]+)"', head)
+    return (
+        actions[-1:] == ["SALE"]
+        and _string(body, "propertyStatus") == "ACTIVE"
+        and _flag(body, "removed") is False
     )
 
 
@@ -116,7 +131,9 @@ def _title(body: str, key: str) -> str | None:
     match = re.search(rf'"{key}":\{{[^}}]*"titleEn":"([^"]*)"', body)
     if match is None or not match.group(1):
         return None
-    return match.group(1)
+    # The page escapes this JSON inside another JSON string.
+    unescaped = json.loads('"' + match.group(1).replace("\\\\", "\\") + '"')
+    return readable(unescaped) or None
 
 
 def _string(body: str, name: str) -> str | None:
