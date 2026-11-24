@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import socket
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -40,3 +41,10 @@ def _forbid_network(monkeypatch: pytest.MonkeyPatch) -> None:
         return real_run(args, *pos, **kwargs)  # type: ignore[arg-type]
 
     monkeypatch.setattr(subprocess, "run", guarded_run)
+
+
+@pytest.fixture(autouse=True)
+def _no_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pauses between requests cost nothing in tests."""
+
+    monkeypatch.setattr(time, "sleep", lambda seconds: None)
