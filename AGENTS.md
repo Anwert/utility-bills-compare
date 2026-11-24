@@ -25,9 +25,11 @@
 | `ubc/load.py` | Чтение `data/` с падением на неверной схеме |
 | `ubc/pipeline.py` | Локальная проверка файлов. Сбор и публикация — отдельные тикеты |
 | `ubc/calculate.py` | Месячная плата одной ячейки из нормализованных записей |
-| `data/cities/*.json` | Шесть городов. Списки источников пока пустые — их заполняют тикеты адаптеров |
+| `data/cities/*.json` | Шесть городов. Курсы PLN, AMD, GEL и RSD — в `fx_sources` (у EUR-городов список пуст). Градусо-сутки — Open-Meteo. Списки статей пока пустые |
 | `data/reference.json` | Эталонная квартира и нормы расхода с источниками |
 | `data/examples/yerevan-2026-10.json` | Пример контракта сайта, цифры выдуманы |
+| `data/site-index.json` | Список `CityMonth`, который читает статический сайт |
+| `index.html`, `site/` | Сайт варианта 3: вкладки, сетка, разбивка. Без сборки |
 | `tests/` | Поведение через публичные функции. Сеть выключена фикстурой в `conftest.py` |
 
 ## Стабильные имена
@@ -45,6 +47,9 @@
 - `ubc.fetch.ContentFetcher`, `FixtureFetcher`, `HttpFetcher`, `FetchError`
 - `ubc.load.load_cities`, `load_city`, `load_reference`, `load_example_city_month`
 - `ubc.calculate.calculate_cell`, `CalculationError`
+- `ubc.site_index.build_site_index`, `write_site_index`
+- `ubc.policy.choose_article`, `SourceAttempt`, `AttemptStatus`, `ActingValue`, `dump_acting`, `load_acting`
+- `ubc.alerts.sync_alerts`, `GitHubIssues`, `GitHubRestClient`, `DATA_ALERT_LABEL`
 
 Адаптер тарифа, курса или градусо-суток заполняет `AdapterOutput.records`. Адаптер объявлений заполняет `AdapterOutput.candidates` (`BuildingCandidate`), а не нормализованные записи. Классификатор потом пишет `PinnedHouse`. Адаптер не знает про ячейки и расчёт.
 
@@ -87,7 +92,7 @@
 
 `settings` определяет адаптер. Обычный ключ одной страницы — `url`. Поля `id` и `adapter` — строчные латинские буквы, цифры и `_`.
 
-Порядок опроса задаёт `ordered_enabled_sources`: сначала `proxy_direct`, затем `official`, затем `third_party`, затем `statistics`; внутри вида меньший `priority`, при равенстве — порядок в JSON. Выключенный источник в этот список не входит. Сама политика (скачок 30%, `stale`, уведомление) — шов (c), её не дублировать в адаптере.
+Порядок опроса задаёт `ordered_enabled_sources`: сначала `proxy_direct`, затем `official`, затем `third_party`, затем `statistics`; внутри вида меньший `priority`, при равенстве — порядок в JSON. Выключенный источник в этот список не входит. Сама политика (скачок 30%, `stale`, уведомление) — шов (c), её не дублировать в адаптере. Её считает `ubc.policy.choose_article`; issue с меткой `data-alert` открывает и закрывает `ubc.alerts.sync_alerts`.
 
 Категория записи следует из статьи (`ITEM_CATEGORY`): обслуживание дома — `housing`, остальные статьи счёта — `utility`, курс и градусо-сутки — `context`. Пометки (`fixed`, `norm_based`, `statistics_estimate`, `third_party`, `llm_extracted`, `stale`) ставятся при расчёте, не адаптером.
 
@@ -132,3 +137,5 @@ python -m ubc.pipeline --city yerevan --period 2026-10
 ```
 
 `python -m ubc.pipeline --period YYYY-MM` проверяет JSON, печатает включённые источники и передаёт месяц в `collect_contexts`. Он не открывает сеть, не считает ячейки и не публикует сайт.
+
+Сайт — `index.html` и `site/`. Он сам не обходит каталог: читает `data/site-index.json`, затем каждый путь из него. В индекс входят `data/examples/<city>-<YYYY-MM>.json` (пометка «пример») и `data/<city>-<YYYY-MM>.json`, которые позже пишет конвейер. Файл конвейера заменяет пример того же города и месяца. После нового снимка индекс пересобирается командой `python -m ubc.site_index`. `reference.json` и `data/cities/` в индекс не входят.

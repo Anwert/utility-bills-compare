@@ -21,21 +21,24 @@ def test_check_reports_the_six_cities_and_the_reference_apartment(capsys) -> Non
     assert "yerevan 2026-10" in out
 
 
-def test_city_listing_shows_empty_sources(capsys) -> None:
+def test_city_listing_counts_enabled_sources(capsys) -> None:
     assert main(["--city", "yerevan"]) == 0
 
     assert (
-        capsys.readouterr().out.strip() == "yerevan: 8 articles, 0 enabled sources, 0 listing sites"
+        capsys.readouterr().out.strip() == "yerevan: 8 articles, 8 enabled sources, 0 listing sites"
     )
 
 
 def test_period_is_passed_through_to_collect_contexts(capsys, tmp_path) -> None:
     assert main(["--city", "yerevan", "--period", "2026-10"]) == 0
 
-    assert "period 2026-10, 0 collect calls" in capsys.readouterr().out
+    assert "period 2026-10, 8 collect calls" in capsys.readouterr().out
 
-    city = load_city("yerevan").model_copy(
+    loaded = load_city("yerevan")
+    city = loaded.model_copy(
         update={
+            "articles": [article.model_copy(update={"sources": []}) for article in loaded.articles],
+            "hdd_sources": [],
             "fx_sources": [
                 SourceConfig(
                     id="fx_amd",
