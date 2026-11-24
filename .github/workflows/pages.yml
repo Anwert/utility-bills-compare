@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.first.outputs.page_url || steps.second.outputs.page_url }}
     steps:
       # The tip of main, not the commit that started the run: a queued deploy
       # must not put older data back over a newer month.
@@ -42,5 +42,13 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      - id: deployment
+      # GitHub sometimes does not list an artifact uploaded a second ago
+      # ("No artifacts named github-pages were found"), so wait and try again.
+      - id: first
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.first.outcome == 'failure'
+        run: sleep 45
+      - id: second
+        if: steps.first.outcome == 'failure'
         uses: actions/deploy-pages@v4
