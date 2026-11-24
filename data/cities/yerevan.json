@@ -140,6 +140,31 @@
     }
   ],
   "listing_sites": [],
-  "fx_sources": [],
-  "hdd_sources": []
+  "fx_sources": [
+    {
+      "id": "fx_amd_cba",
+      "adapter": "fx_cba",
+      "kind": "official",
+      "priority": 0,
+      "enabled": true,
+      "reliability": "official",
+      "settings": {
+        "url": "https://api.cba.am/exchangerates.asmx",
+        "currency": "AMD"
+      }
+    }
+  ],
+  "hdd_sources": [
+    {
+      "id": "hdd_open_meteo",
+      "adapter": "open_meteo_hdd",
+      "kind": "third_party",
+      "priority": 0,
+      "enabled": true,
+      "reliability": "third_party",
+      "settings": {
+        "url": "https://archive-api.open-meteo.com/v1/archive"
+      }
+    }
+  ]
 }

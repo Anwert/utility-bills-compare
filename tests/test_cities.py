@@ -1,4 +1,4 @@
-"""The six city files are valid. Only Yerevan has tariff sources so far."""
+"""The six city files are valid. Yerevan has tariffs; every city has FX and degree-days."""
 
 from __future__ import annotations
 
@@ -7,6 +7,15 @@ from pydantic import ValidationError
 
 from ubc.load import ConfigError, load_cities, load_city
 from ubc.schemas import CHARGE_ITEMS, CityConfig
+
+_FX = {
+    "yerevan": ["fx_cba"],
+    "tbilisi": ["fx_nbg"],
+    "belgrade": ["fx_eurostat", "fx_nbs"],
+    "warsaw": ["fx_ecb"],
+    "lisbon": [],
+    "berlin": [],
+}
 
 EXPECTED = {
     "yerevan": ("AMD", 40.18, 44.51, "Ереван"),
@@ -45,8 +54,8 @@ def test_six_cities_match_the_agreed_currencies_and_coordinates() -> None:
         else:
             assert all(count == 0 for count in counts.values())
         assert city.listing_sites == []
-        assert city.fx_sources == []
-        assert city.hdd_sources == []
+        assert [source.adapter for source in city.fx_sources] == _FX[city.id.value]
+        assert [source.adapter for source in city.hdd_sources] == ["open_meteo_hdd"]
 
 
 def test_unknown_city_file_is_an_error() -> None:

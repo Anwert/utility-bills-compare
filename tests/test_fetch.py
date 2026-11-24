@@ -61,6 +61,55 @@ def test_http_success_does_not_call_curl() -> None:
     assert body == b"ok"
 
 
+def test_post_text_sends_the_body_and_keeps_tls_verification() -> None:
+    seen: dict[str, object] = {}
+
+    def opener(request: object, timeout: float) -> bytes:
+        del timeout
+        seen["data"] = getattr(request, "data", None)
+        seen["headers"] = dict(request.header_items())  # type: ignore[attr-defined]
+        return b"<ok/>"
+
+    def refuse_command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        raise AssertionError(argv)
+
+    text = HttpFetcher(opener=opener, command=refuse_command).post_text(
+        "https://example.test/soap",
+        "<ISOCodes>EUR</ISOCodes>",
+        headers={"SOAPAction": "http://www.cba.am/ExchangeRatesByDateRangeByISO"},
+    )
+
+    assert text == "<ok/>"
+    assert seen["data"] == b"<ISOCodes>EUR</ISOCodes>"
+    headers = {key.lower(): value for key, value in seen["headers"].items()}  # type: ignore[attr-defined]
+    assert headers["soapaction"] == "http://www.cba.am/ExchangeRatesByDateRangeByISO"
+
+    def refuse(request: object, timeout: float) -> bytes:
+        del request, timeout
+        raise ssl.SSLError("tls handshake rejected")
+
+    def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        seen["argv"] = argv
+        seen["stdin"] = stdin
+        return CommandResult(0, b"<ok/>", b"")
+
+    fallback = HttpFetcher(opener=refuse, command=command).post_text(
+        "https://example.test/soap",
+        "<body/>",
+        headers={"SOAPAction": "urn:example"},
+    )
+
+    assert fallback == "<ok/>"
+    argv = seen["argv"]
+    assert isinstance(argv, list)
+    assert argv[0] == "curl"
+    assert "-k" not in argv
+    assert "--insecure" not in argv
+    assert "--data-binary" in argv
+    assert "SOAPAction: urn:example" in argv
+    assert seen["stdin"] == b"<body/>"
+
+
 def test_curl_fallback_keeps_tls_verification() -> None:
     seen: dict[str, list[str]] = {}
 
