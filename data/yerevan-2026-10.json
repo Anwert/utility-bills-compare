@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "city": "yerevan",
+  "month": "2026-10",
+  "updated_at": "2026-11-24T22:45:53.618921Z",
+  "apartment": {
+    "rooms": 2,
+    "area_m2": 60,
+    "occupants": 2
+  },
+  "exchange_rate": {
+    "currency": "AMD",
+    "per_eur": 405.045,
+    "month": "2026-10",
+    "source_url": "https://api.cba.am/exchangerates.asmx",
+    "source_name": "Central Bank of Armenia"
+  },
+  "paid_data_note": "оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)",
+  "cells": [
+    {
+      "house_class": "soviet_panel",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "soviet_panel",
+      "heating": "gas_boiler",
+      "status": "ok",
+      "empty_reason": null,
+      "total_eur": 37.15,
+      "housing_eur": 3.7,
+      "utility_eur": 33.45,
+      "lines": [
+        {
+          "item": "maintenance",
+          "category": "housing",
+          "amount_eur": 3.7,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "п.22 решения о местных платежах 2026 года, жилое помещение, 25 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        },
+        {
+          "item": "electricity",
+          "category": "utility",
+          "amount_eur": 18.17,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-26",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26. Норма: Якорь эталонной пары 1900 кВт·ч в год (Stromspiegel и ERSE, решение #5); отдельной бытовой цифры для города не принято"
+        },
+        {
+          "item": "gas",
+          "category": "utility",
+          "amount_eur": 10.28,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-10-06",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06. Источник датирует тариф 2026-10-06, более ранняя цена неизвестна: весь месяц посчитан по этой. Норма: Производная: норма тепла 178 кВт·ч/м² (UNDP-GEF) ÷ (9,3 кВт·ч/м³ × 0,85); теплота сгорания и КПД — Karamyan, Avetisyan, Noack, JAER 2023 (Ереван)"
+        },
+        {
+          "item": "water",
+          "category": "utility",
+          "amount_eur": 2.61,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "statistics",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based",
+            "statistics_estimate"
+          ],
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси) Норма: Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек"
+        },
+        {
+          "item": "sewage",
+          "category": "utility",
+          "amount_eur": 0.46,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "statistics",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based",
+            "statistics_estimate"
+          ],
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси) Норма: Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек"
+        },
+        {
+          "item": "waste",
+          "category": "utility",
+          "amount_eur": 1.93,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "п.20 решения о местных платежах 2026 года, жилое помещение, 13 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        }
+      ],
+      "building": {
+        "id": "real-estate-415249",
+        "address": "Khaghagh Doni street, Erebuni, Yerevan",
+        "url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/erebuni/khaghagh-doni-street/2-room/415249"
+      }
+    },
+    {
+      "house_class": "soviet_panel",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "дом такого класса с таким отоплением автоматически не найден",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "gas_boiler",
+      "status": "ok",
+      "empty_reason": null,
+      "total_eur": 32.4,
+      "housing_eur": 3.7,
+      "utility_eur": 28.7,
+      "lines": [
+        {
+          "item": "maintenance",
+          "category": "housing",
+          "amount_eur": 3.7,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "п.22 решения о местных платежах 2026 года, жилое помещение, 25 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        },
+        {
+          "item": "electricity",
+          "category": "utility",
+          "amount_eur": 18.17,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-26",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26. Норма: Якорь эталонной пары 1900 кВт·ч в год (Stromspiegel и ERSE, решение #5); отдельной бытовой цифры для города не принято"
+        },
+        {
+          "item": "gas",
+          "category": "utility",
+          "amount_eur": 5.53,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-10-06",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06. Источник датирует тариф 2026-10-06, более ранняя цена неизвестна: весь месяц посчитан по этой. Норма: Производная: норма тепла 96 кВт·ч/м² (UNDP-GEF) ÷ (9,3 кВт·ч/м³ × 0,85); теплота сгорания и КПД — Karamyan, Avetisyan, Noack, JAER 2023 (Ереван)"
+        },
+        {
+          "item": "water",
+          "category": "utility",
+          "amount_eur": 2.61,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "statistics",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based",
+            "statistics_estimate"
+          ],
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси) Норма: Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек"
+        },
+        {
+          "item": "sewage",
+          "category": "utility",
+          "amount_eur": 0.46,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "statistics",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based",
+            "statistics_estimate"
+          ],
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси) Норма: Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек"
+        },
+        {
+          "item": "waste",
+          "category": "utility",
+          "amount_eur": 1.93,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "п.20 решения о местных платежах 2026 года, жилое помещение, 13 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        }
+      ],
+      "building": {
+        "id": "real-estate-427630",
+        "address": "Antarayin street, Center, Yerevan",
+        "url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/center/antarayin-street/2-room/427630"
+      }
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "дом такого класса с таким отоплением автоматически не найден",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "business",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "business",
+      "heating": "gas_boiler",
+      "status": "ok",
+      "empty_reason": null,
+      "total_eur": 31.49,
+      "housing_eur": 3.7,
+      "utility_eur": 27.79,
+      "lines": [
+        {
+          "item": "maintenance",
+          "category": "housing",
+          "amount_eur": 3.7,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "п.22 решения о местных платежах 2026 года, жилое помещение, 25 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        },
+        {
+          "item": "electricity",
+          "category": "utility",
+          "amount_eur": 18.17,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-26",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26. Норма: Якорь эталонной пары 1900 кВт·ч в год (Stromspiegel и ERSE, решение #5); отдельной бытовой цифры для города не принято"
+        },
+        {
+          "item": "gas",
+          "category": "utility",
+          "amount_eur": 4.62,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-10-06",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06. Источник датирует тариф 2026-10-06, более ранняя цена неизвестна: весь месяц посчитан по этой. Норма: Производная: норма тепла 80 кВт·ч/м² (UNDP-GEF) ÷ (9,3 кВт·ч/м³ × 0,85); теплота сгорания и КПД — Karamyan, Avetisyan, Noack, JAER 2023 (Ереван)"
+        },
+        {
+          "item": "water",
+          "category": "utility",
+          "amount_eur": 2.61,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "statistics",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based",
+            "statistics_estimate"
+          ],
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси) Норма: Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек"
+        },
+        {
+          "item": "sewage",
+          "category": "utility",
+          "amount_eur": 0.46,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "statistics",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based",
+            "statistics_estimate"
+          ],
+          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси) Норма: Производная: Армстат, ArmStatBank, таблица C5 «Public water supply», 2024 год: населению 112,6 млн м³; C4 — 3,03 млн человек"
+        },
+        {
+          "item": "waste",
+          "category": "utility",
+          "amount_eur": 1.93,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "п.20 решения о местных платежах 2026 года, жилое помещение, 13 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+        }
+      ],
+      "building": {
+        "id": "real-estate-425338",
+        "address": "Lvovyan street, Nor-Nork, Yerevan",
+        "url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/nor-nork/lvovyan-street/2-room/425338"
+      }
+    },
+    {
+      "house_class": "business",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "дом такого класса с таким отоплением автоматически не найден",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    }
+  ]
+}

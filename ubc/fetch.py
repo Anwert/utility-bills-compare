@@ -22,7 +22,9 @@ import socket
 import ssl
 import subprocess
 import tempfile
+import time
 import urllib.error
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -164,6 +166,10 @@ class HttpFetcher:
 
     ``opener`` and ``command`` exist so the fallback behaviour can be tested
     without a socket: pass fakes. The defaults call urllib and subprocess.
+
+    ``retry_pauses`` are the waits before each further attempt of ``fetch_bytes``
+    when the connection broke for both urllib and curl. An HTTP error is an
+    answer and is never asked again.
     """
 
     def __init__(
@@ -176,6 +182,8 @@ class HttpFetcher:
         curl_bin: str = "curl",
         chrome_bin: str | None = None,
         pdftotext_bin: str = "pdftotext",
+        retry_pauses: Sequence[float] = (),
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.timeout = timeout
         self.user_agent = user_agent
@@ -184,8 +192,20 @@ class HttpFetcher:
         self.curl_bin = curl_bin
         self.chrome_bin = chrome_bin
         self.pdftotext_bin = pdftotext_bin
+        self.retry_pauses = tuple(retry_pauses)
+        self.sleep = sleep
 
     def fetch_bytes(self, url: str) -> bytes:
+        for pause in self.retry_pauses:
+            try:
+                return self._fetch_once(url)
+            except FetchError as exc:
+                if exc.__cause__ is None or not _connection_failure(exc.__cause__):
+                    raise
+            self.sleep(pause)
+        return self._fetch_once(url)
+
+    def _fetch_once(self, url: str) -> bytes:
         try:
             return self.opener(_request(url, self.user_agent), self.timeout)
         except Exception as exc:
