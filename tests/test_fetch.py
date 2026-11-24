@@ -300,3 +300,50 @@ def test_pdf_to_text_sends_bytes_to_pdftotext() -> None:
 
     assert text == "price 9.52 Ջուր\n"
     assert not Path(seen[0]).exists()
+
+
+def _resetting(resets: int, waits: list[float]) -> HttpFetcher:
+    """A server that drops the first ``resets`` connections, curl's included."""
+
+    left = [resets]
+
+    def opener(request: object, timeout: float) -> bytes:
+        del request, timeout
+        if left[0]:
+            left[0] -= 1
+            raise ConnectionResetError("reset by peer")
+        return b"tariff"
+
+    def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        del argv, stdin
+        return CommandResult(35, b"", b"Recv failure: Connection was reset")
+
+    return HttpFetcher(opener=opener, command=command, retry_pauses=(5.0, 15.0), sleep=waits.append)
+
+
+def test_dropped_connection_is_tried_again_after_a_pause() -> None:
+    waits: list[float] = []
+
+    assert _resetting(2, waits).fetch_bytes("https://example.test/a.pdf") == b"tariff"
+    assert waits == [5.0, 15.0]
+
+
+def test_connection_dropped_every_time_is_a_fetch_error() -> None:
+    waits: list[float] = []
+
+    with pytest.raises(FetchError):
+        _resetting(9, waits).fetch_bytes("https://example.test/a.pdf")
+    assert waits == [5.0, 15.0]
+
+
+def test_refusal_by_the_server_is_not_tried_again() -> None:
+    waits: list[float] = []
+
+    def opener(request: object, timeout: float) -> bytes:
+        del request, timeout
+        raise urllib.error.HTTPError("https://example.test", 403, "Forbidden", None, None)  # type: ignore[arg-type]
+
+    fetcher = HttpFetcher(opener=opener, retry_pauses=(5.0,), sleep=waits.append)
+    with pytest.raises(FetchError):
+        fetcher.fetch_bytes("https://example.test/page")
+    assert waits == []

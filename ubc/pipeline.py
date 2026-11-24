@@ -43,6 +43,9 @@ from ubc.schemas import (
 )
 from ubc.secrets import SecretConfig
 
+# psrc.am drops about one connection in ten.
+_RETRY_PAUSES = (5.0, 15.0)
+
 
 def collect_contexts(
     city: CityConfig,
@@ -191,7 +194,7 @@ def _run(
         period=args.period,
         cities=cities,
         reference=reference,
-        fetcher=HttpFetcher(),
+        fetcher=HttpFetcher(retry_pauses=_RETRY_PAUSES),
         data_root=args.data_root or data_dir(),
         item=Item(args.item) if args.item else None,
         issues=None if args.no_alerts else _issues(env),
