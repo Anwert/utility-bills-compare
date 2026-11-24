@@ -16,7 +16,7 @@ def test_reference_apartment_is_the_shared_dwelling() -> None:
     assert reference.apartment.area_m2 == 60
     assert reference.apartment.occupants == 2
     assert reference.norms
-    assert all(norm.source == "stub" for norm in reference.norms)
+    assert all(norm.source != "stub" for norm in reference.norms)
 
 
 def test_apartment_shape_is_fixed() -> None:
