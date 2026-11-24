@@ -42,6 +42,140 @@
     }
   ],
   "listing_sites": [],
+  "house_rules": {
+    "classes": [
+      {
+        "house_class": "soviet_panel",
+        "building_types": [
+          "plattenbau"
+        ],
+        "reason": "Plattenbau — берлинский аналог панельного фонда (решение #4)."
+      },
+      {
+        "house_class": "soviet_panel",
+        "block_types": [
+          "großsiedlung"
+        ],
+        "year_from": 1950,
+        "year_to": 1990,
+        "reason": "Квартал крупных жилых массивов 1950–1980-х по Umweltatlas."
+      },
+      {
+        "house_class": "soviet_panel",
+        "year_from": 1961,
+        "year_to": 1990,
+        "floors_from": 6,
+        "reason": "Застройка 1961–1990 годов от 6 этажей — массовое жильё крупных серий."
+      },
+      {
+        "house_class": "typical_newbuild",
+        "year_from": 2000,
+        "year_to": 2019,
+        "reason": "Типовая новостройка 2000–2010-х (решение #9)."
+      },
+      {
+        "house_class": "business",
+        "year_from": 2020,
+        "reason": "Современный дом последних лет (решение #9): с 2020 года."
+      }
+    ],
+    "heatings": [
+      {
+        "heating": "district",
+        "all_of": [
+          "fernwärme"
+        ],
+        "reason": "Fernwärme и домовая Zentralheizung — центральное (решение #4)."
+      },
+      {
+        "heating": "district",
+        "all_of": [
+          "zentralheizung"
+        ],
+        "reason": "Fernwärme и домовая Zentralheizung — центральное (решение #4)."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "gas-etagenheizung"
+        ],
+        "reason": "Квартирный газовый котёл. «Etagenheizung» без топлива не относим."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "gasetagenheizung"
+        ],
+        "reason": "Квартирный газовый котёл. «Etagenheizung» без топлива не относим."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "etagenheizung",
+          "gas"
+        ],
+        "reason": "Квартирный газовый котёл. «Etagenheizung» без топлива не относим."
+      },
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "etagenheizung",
+          "erdgas"
+        ],
+        "reason": "Квартирный газовый котёл. «Etagenheizung» без топлива не относим."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "elektrisch"
+        ],
+        "reason": "Электрическое отопление."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "elektroheizung"
+        ],
+        "reason": "Электрическое отопление."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "nachtspeicherofen"
+        ],
+        "reason": "Электрическое отопление."
+      },
+      {
+        "heating": "electric",
+        "all_of": [
+          "nachtspeicherheizung"
+        ],
+        "reason": "Электрическое отопление."
+      }
+    ]
+  },
+  "open_data": [
+    {
+      "kind": "nominatim",
+      "enabled": true,
+      "url": "https://nominatim.openstreetmap.org/search"
+    },
+    {
+      "kind": "berlin_alkis",
+      "enabled": true,
+      "url": "https://gdi.berlin.de/services/wfs/alkis_gebaeude"
+    },
+    {
+      "kind": "berlin_building_age",
+      "enabled": true,
+      "url": "https://gdi.berlin.de/services/wfs/ua_gebaeudealter"
+    },
+    {
+      "kind": "osm_levels",
+      "enabled": true,
+      "url": "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    }
+  ],
   "fx_sources": [],
   "hdd_sources": [
     {

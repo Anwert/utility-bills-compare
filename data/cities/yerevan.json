@@ -153,6 +153,103 @@
       "url": "https://www.real-estate.am/en"
     }
   ],
+  "house_rules": {
+    "classes": [
+      {
+        "house_class": "soviet_panel",
+        "building_types": [
+          "panel"
+        ],
+        "exclude_newbuild": true,
+        "reason": "Панельные серии в Ереване строили до 1991 года; новые дома монолитные."
+      },
+      {
+        "house_class": "soviet_panel",
+        "building_types": [
+          "stone"
+        ],
+        "exclude_newbuild": true,
+        "floors_from": 4,
+        "floors_to": 5,
+        "reason": "Каменный дом в 4–5 этажей — массовая советская застройка; ниже бывают дома до 1917 года, выше — новые, поэтому их не относим."
+      },
+      {
+        "house_class": "business",
+        "building_types": [
+          "monolith",
+          "monolit"
+        ],
+        "is_newbuild": true,
+        "price_ratio_from": 2.0,
+        "reason": "Года на сайтах нет. Монолитная новостройка с ценой от 2,0 средней цены квартиры в районе. Порог — решение проекта, не официальная классификация."
+      },
+      {
+        "house_class": "typical_newbuild",
+        "building_types": [
+          "monolith",
+          "monolit"
+        ],
+        "is_newbuild": true,
+        "price_ratio_to": 1.6,
+        "reason": "Монолитная новостройка с ценой до 1,6 средней цены квартиры в районе: средняя включает старый фонд, новый дом с ремонтом дороже неё. Между 1,6 и 2,0 класс не определяем."
+      }
+    ],
+    "heatings": [
+      {
+        "heating": "gas_boiler",
+        "all_of": [
+          "heating",
+          "gas"
+        ],
+        "none_of": [
+          "centralized_heating",
+          "central heating"
+        ],
+        "reason": "Газ вместе с отоплением — квартирный газовый котёл; «centralized heating» — домовая котельная."
+      }
+    ],
+    "price_references": [
+      {
+        "district": "Center",
+        "amount": 2743,
+        "currency": "USD",
+        "source": "Кадастровый комитет Армении, средняя цена квартир, август 2026: 993 000 AMD/м² (https://internationalinvestment.biz/en/real-estate/9054-yerevan-real-estate-rising-prices-and-the-risk-of-overheating.html); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Arabkir",
+        "amount": 2032,
+        "currency": "USD",
+        "source": "Кадастровый комитет Армении, средняя цена квартир, август 2026: 735 700 AMD/м² (https://internationalinvestment.biz/en/real-estate/9054-yerevan-real-estate-rising-prices-and-the-risk-of-overheating.html); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Shengavit",
+        "amount": 1395,
+        "currency": "USD",
+        "source": "Кадастровый комитет Армении, средняя цена квартир, август 2026: 505 000 AMD/м² (https://internationalinvestment.biz/en/real-estate/9054-yerevan-real-estate-rising-prices-and-the-risk-of-overheating.html); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
+      },
+      {
+        "district": "Nork-Marash",
+        "amount": 1527,
+        "currency": "USD",
+        "source": "Кадастровый комитет Армении, средняя цена квартир, II квартал 2026: 553 000 AMD/м² (https://jam-news.net/property-prices-in-armenia-rise-again-new-wave-of-emigration-from-russia-and-other-factors/); в доллары по курсу 362 AMD из публикации самого комитета (553 000 AMD = 1527 USD)"
+      }
+    ],
+    "unavailable_heating": {
+      "district": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется"
+    }
+  },
+  "open_data": [
+    {
+      "kind": "nominatim",
+      "enabled": true,
+      "url": "https://nominatim.openstreetmap.org/search"
+    },
+    {
+      "kind": "osm_levels",
+      "enabled": true,
+      "url": "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    }
+  ],
   "fx_sources": [
     {
       "id": "fx_amd_cba",

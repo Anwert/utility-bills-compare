@@ -1,7 +1,7 @@
 """Yerevan apartment listings from real-estate.am.
 
 The index page links the ads. Each ad carries one escaped JSON object:
-building type, market, new-construction flag, area, floors, utilities,
+building type, market, new-construction flag, price, area, floors, utilities,
 address. There is no year and no maintenance fee. Heating stays unmapped.
 """
 
@@ -12,7 +12,7 @@ import re
 from datetime import date
 
 from ubc.adapter import AdapterOutput, CollectContext, register_adapter, require_listing
-from ubc.schemas import BuildingCandidate
+from ubc.schemas import BuildingCandidate, SalePrice
 
 _HREF = re.compile(r'href="((?:https://www\.real-estate\.am)?/en/prp/apartment/buy/yerevan/[^"]+)"')
 _HEAT = frozenset({"centralized_heating", "heating", "gas"})
@@ -74,10 +74,22 @@ def _candidate(ctx: CollectContext, url: str, html: str) -> BuildingCandidate | 
         is_newbuild=_flag(body, "isNewConstruction"),
         floors=_int(body, "totalFloor"),
         area_m2=_float(body, "totalArea"),
+        price_per_m2=_price(text[:start], body),
         url=url,
         seen_at=seen,
         note=_string(body, "marketType") or "",
     )
+
+
+def _price(head: str, body: str) -> SalePrice | None:
+    """The page shows ``updatedPrice``; ``price`` is what the ad first asked."""
+
+    currencies = re.findall(r'"currency":"([A-Z]{3})"', head)
+    total = _float(body, "updatedPrice") or _float(body, "price")
+    area = _float(body, "totalArea")
+    if not currencies or not total or not area:
+        return None
+    return SalePrice(amount=round(total / area, 2), currency=currencies[-1])
 
 
 def _utilities(body: str) -> list[dict[str, object]]:
