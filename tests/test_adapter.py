@@ -10,12 +10,13 @@ from ubc.adapter import AdapterOutput, CollectContext, Registry, get_adapter
 from ubc.fetch import FixtureFetcher
 from ubc.load import load_city
 from ubc.paths import REPO_ROOT
-from ubc.schemas import Reliability, SourceConfig, SourceKind
+from ubc.schemas import Reliability, SourceConfig, SourceKind, YearMonth
 
 
 def _context(url: str, fetcher: FixtureFetcher) -> CollectContext:
     return CollectContext(
         city=load_city("yerevan"),
+        period=YearMonth.parse("2026-10"),
         source=SourceConfig(
             id="example_waste",
             adapter="example_html",
@@ -49,6 +50,7 @@ def test_example_adapter_returns_the_fixture_record() -> None:
     assert record.reliability is Reliability.official
     assert record.source.url == "https://example.test/tariff.html"
     assert record.source.fetched_at.tzinfo is not None
+    assert record.note == "collected for 2026-10"
 
 
 def test_example_adapter_rejects_a_page_without_a_value(tmp_path: Path) -> None:

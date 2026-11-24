@@ -50,6 +50,8 @@ def test_glossary_names_the_domain_terms() -> None:
         "third_party",
         "stale",
         "Кандидат дома",
+        "Закреплённый дом",
+        "hdd_annual",
         "Градусо-сутки",
         "Конфигурация города",
         "Контракт собранных данных",

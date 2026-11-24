@@ -12,7 +12,14 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 from ubc.fetch import ContentFetcher
-from ubc.schemas import BuildingCandidate, CityConfig, NormalizedRecord, SourceConfig
+from ubc.schemas import (
+    BuildingCandidate,
+    CityConfig,
+    ListingSite,
+    NormalizedRecord,
+    SourceConfig,
+    YearMonth,
+)
 
 # Add a module here when you add an adapter. Importing it must register one instance.
 ADAPTER_MODULES: tuple[str, ...] = ("ubc.adapters.example_html",)
@@ -20,11 +27,41 @@ ADAPTER_MODULES: tuple[str, ...] = ("ubc.adapters.example_html",)
 
 @dataclass(frozen=True)
 class CollectContext:
-    """Input of ``Adapter.collect``. ``fetcher`` is a fixture fetcher in tests."""
+    """One collection call: a city, a month, and either a tariff source or a listing site.
+
+    Tariff, FX, and degree-day adapters receive a ``SourceConfig``. Listing
+    adapters receive a ``ListingSite`` and must not invent a ``SourceConfig``
+    (listings have no kind, reliability, or priority). Both kinds of adapter
+    implement this same ``collect`` and register in the same registry.
+    ``period.first_day`` is the 1st of the month being collected.
+    """
 
     city: CityConfig
-    source: SourceConfig
+    period: YearMonth
     fetcher: ContentFetcher
+    source: SourceConfig | ListingSite
+
+
+def require_source(ctx: CollectContext) -> SourceConfig:
+    """The tariff/FX/degree-day config. Raises if this call is for a listing site."""
+
+    if isinstance(ctx.source, SourceConfig):
+        return ctx.source
+    raise TypeError(
+        f"adapter {ctx.source.adapter!r} was given a listing site; "
+        "tariff adapters read SourceConfig via require_source"
+    )
+
+
+def require_listing(ctx: CollectContext) -> ListingSite:
+    """The listing-site config. Raises if this call is for a tariff source."""
+
+    if isinstance(ctx.source, ListingSite):
+        return ctx.source
+    raise TypeError(
+        f"adapter {ctx.source.adapter!r} was given a tariff source; "
+        "listing adapters read ListingSite via require_listing"
+    )
 
 
 @dataclass
@@ -36,7 +73,7 @@ class AdapterOutput:
 
 
 class Adapter(Protocol):
-    """One source. ``name`` matches ``SourceConfig.adapter``."""
+    """One source or listing site. ``name`` matches the config's ``adapter`` field."""
 
     name: str
 

@@ -30,7 +30,7 @@ def test_example_snapshot_covers_the_grid_and_one_empty_cell() -> None:
     assert filled.building is not None
     assert {line.item.value for line in filled.lines} >= {"maintenance", "electricity"}
     assert HOUSE_CLASS_LABELS_RU[HouseClass.business]
-    assert HEATING_LABELS_RU[HeatingType.gas_boiler]
+    assert HEATING_LABELS_RU[HeatingType.gas_boiler] == "Индивидуальный газовый котёл"
 
 
 def _example() -> dict:

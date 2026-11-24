@@ -3,9 +3,10 @@
 Two implementations share one interface:
 
 - ``FixtureFetcher`` reads files saved in the repo. Tests use only this one.
-- ``HttpFetcher`` does the live request: HTTP, with curl when Python's TLS
-  handshake is refused, headless Chrome for pages that are empty without JS,
-  and pdftotext for PDF bytes.
+- ``HttpFetcher`` does the live request: HTTP, with curl only when the
+  failure is a TLS handshake or a connection refusal (not an HTTP status
+  and not an arbitrary exception), headless Chrome for pages that are empty
+  without JS, and pdftotext for PDF bytes.
 
 Neither implementation disables TLS verification or tries to pass an anti-bot
 challenge. A blocked response is a failed source; the selection policy moves on.
@@ -15,7 +16,10 @@ from __future__ import annotations
 
 import json
 import shutil
+import socket
+import ssl
 import subprocess
+import urllib.error
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -150,6 +154,8 @@ class HttpFetcher:
         try:
             return self.opener(_request(url, self.user_agent), self.timeout)
         except Exception as exc:
+            if not _connection_failure(exc):
+                raise FetchError(url, f"HTTP failed ({exc})") from exc
             try:
                 curl_result = _curl(self, url)
             except Exception as curl_exc:
@@ -223,6 +229,23 @@ def _default_command(argv: list[str], *, stdin: bytes | None = None) -> CommandR
         check=False,
     )
     return CommandResult(completed.returncode, completed.stdout, completed.stderr)
+
+
+def _connection_failure(exc: BaseException) -> bool:
+    """True when urllib never received an HTTP response.
+
+    Curl then retries the same URL with certificate checks still on. HTTP
+    status errors and programming errors are not retried.
+    """
+
+    if isinstance(exc, urllib.error.HTTPError):
+        return False
+    reason: BaseException = exc
+    if isinstance(exc, urllib.error.URLError) and isinstance(exc.reason, BaseException):
+        reason = exc.reason
+    return isinstance(
+        reason, (ssl.SSLError, TimeoutError, socket.timeout, ConnectionError, socket.gaierror)
+    )
 
 
 def _curl(fetcher: HttpFetcher, url: str) -> bytes | str:

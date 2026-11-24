@@ -10,18 +10,31 @@ from __future__ import annotations
 
 import math
 import re
-from datetime import UTC, date, datetime
+from dataclasses import dataclass
+from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 SCHEMA_VERSION = 1
 
 # Degree-days use this ASCII unit (the Eurostat K·day). Exchange rates use "<CCY>/EUR".
 HDD_UNIT = "K*day"
 
-# Shown next to statistics and third-party figures. The dollar amount is configuration.
+# Default text for CityConfig.paid_data_note. Spec #18 shows this sentence on
+# figures whose reliability is statistics. The MVP decision uses the same
+# sentence for third-party figures and for values standing in for the disabled
+# LLM parser. Each city file can replace the wording; when the site shows it
+# is that later ticket's choice, and the dollar amount stays in the text.
 DEFAULT_PAID_DATA_NOTE = (
     "оценка по статистике; точные данные поставщика возможны за доплату "
     "(~$1–2 в месяц на страну через резидентный прокси)"
@@ -29,6 +42,60 @@ DEFAULT_PAID_DATA_NOTE = (
 
 _MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 _ID = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+
+
+def _require_http_url(value: str) -> str:
+    if not isinstance(value, str) or not value.startswith(("https://", "http://")):
+        raise ValueError("url must be http(s)")
+    return value
+
+
+def _optional_http_url(value: str | None) -> str | None:
+    if value is None:
+        return None
+    return _require_http_url(value)
+
+
+@dataclass(frozen=True, slots=True)
+class YearMonth:
+    """The month an adapter collects. ``first_day`` is that month's 1st.
+
+    FX adapters turn this into ``startPeriod=YYYY-MM``. Degree-day adapters
+    turn ``first_day`` and ``last_day`` into the Open-Meteo date range.
+    """
+
+    year: int
+    month: int
+
+    def __post_init__(self) -> None:
+        if isinstance(self.year, bool) or not isinstance(self.year, int):
+            raise ValueError("year must be an integer")
+        if isinstance(self.month, bool) or not isinstance(self.month, int):
+            raise ValueError("month must be an integer")
+        if not 1990 <= self.year <= 2100:
+            raise ValueError("year out of range")
+        if not 1 <= self.month <= 12:
+            raise ValueError("month must be 1..12")
+
+    @classmethod
+    def parse(cls, text: str) -> YearMonth:
+        if not _MONTH.fullmatch(text):
+            raise ValueError("period must be YYYY-MM")
+        year_text, month_text = text.split("-")
+        return cls(int(year_text), int(month_text))
+
+    @property
+    def first_day(self) -> date:
+        return date(self.year, self.month, 1)
+
+    @property
+    def last_day(self) -> date:
+        if self.month == 12:
+            return date(self.year, 12, 31)
+        return date(self.year, self.month + 1, 1) - timedelta(days=1)
+
+    def __str__(self) -> str:
+        return f"{self.year:04d}-{self.month:02d}"
 
 
 class CityId(StrEnum):
@@ -67,6 +134,7 @@ class Item(StrEnum):
     waste = "waste"
     fx = "fx"
     hdd = "hdd"
+    hdd_annual = "hdd_annual"
 
 
 class Category(StrEnum):
@@ -160,7 +228,10 @@ ITEM_CATEGORY: dict[Item, Category] = {
     Item.waste: Category.utility,
     Item.fx: Category.context,
     Item.hdd: Category.context,
+    Item.hdd_annual: Category.context,
 }
+
+_HDD_ITEMS = frozenset({Item.hdd, Item.hdd_annual})
 
 # Lower rank is tried first. Within a rank, SourceConfig.priority then file order.
 SOURCE_KIND_RANK: dict[SourceKind, int] = {
@@ -186,7 +257,7 @@ HOUSE_CLASS_LABELS_RU: dict[HouseClass, str] = {
 
 HEATING_LABELS_RU: dict[HeatingType, str] = {
     HeatingType.district: "Центральное",
-    HeatingType.gas_boiler: "Газовый котёл",
+    HeatingType.gas_boiler: "Индивидуальный газовый котёл",
     HeatingType.electric: "Электрическое",
 }
 
@@ -201,6 +272,7 @@ ITEM_LABELS_RU: dict[Item, str] = {
     Item.waste: "Мусор",
     Item.fx: "Курс",
     Item.hdd: "Градусо-сутки",
+    Item.hdd_annual: "Градусо-сутки за отопительный год",
 }
 
 MARK_LABELS_RU: dict[Mark, str] = {
@@ -267,6 +339,17 @@ def _parse_datetime(value: object) -> datetime:
 Finite = Annotated[float, BeforeValidator(_finite_number)]
 FlexDate = Annotated[date, BeforeValidator(_parse_date)]
 FlexDateTime = Annotated[datetime, BeforeValidator(_parse_datetime)]
+HttpUrlString = Annotated[str, Field(min_length=1), AfterValidator(_require_http_url)]
+OptionalHttpUrlString = Annotated[str | None, AfterValidator(_optional_http_url)]
+
+
+def _check_coordinates(latitude: float | None, longitude: float | None) -> None:
+    if (latitude is None) ^ (longitude is None):
+        raise ValueError("latitude and longitude are set together")
+    if latitude is not None and not -90 <= latitude <= 90:
+        raise ValueError("latitude out of range")
+    if longitude is not None and not -180 <= longitude <= 180:
+        raise ValueError("longitude out of range")
 
 
 class ContractModel(BaseModel):
@@ -296,16 +379,9 @@ class SourceInfo(ContractModel):
     """Provenance stored on a normalized record."""
 
     kind: SourceKind
-    url: str = Field(min_length=1)
+    url: HttpUrlString
     fetched_at: FlexDateTime
     name: str | None = None
-
-    @field_validator("url")
-    @classmethod
-    def _http_url(cls, value: str) -> str:
-        if not value.startswith(("https://", "http://")):
-            raise ValueError("source url must be http(s)")
-        return value
 
 
 class NormalizedRecord(ContractModel):
@@ -335,13 +411,23 @@ class NormalizedRecord(ContractModel):
             raise ValueError(
                 f"{self.item.value} belongs to category {expected.value}, got {self.category.value}"
             )
-        if self.item in {Item.fx, Item.hdd}:
-            if self.city != "all" and self.item is Item.fx:
+        if self.item is Item.fx:
+            if self.city != "all":
                 raise ValueError("exchange-rate records use city 'all'")
+            if self.currency is None:
+                raise ValueError("fx record needs a currency")
+            expected_unit = f"{self.currency.value}/EUR"
+            if self.unit != expected_unit:
+                raise ValueError(f"fx unit must be {expected_unit}")
+        elif self.item in _HDD_ITEMS:
+            if self.city == "all":
+                raise ValueError("degree-day records name a city")
+            if self.unit != HDD_UNIT:
+                raise ValueError(f"degree-day unit must be {HDD_UNIT}")
+            if self.currency is not None:
+                raise ValueError("degree-day records have no currency")
         elif self.city == "all":
             raise ValueError("only fx records may use city 'all'")
-        if self.item is Item.hdd and self.city == "all":
-            raise ValueError("degree-day records name a city")
         if self.valid_to is not None and self.valid_to < self.valid_from:
             raise ValueError("valid_to is earlier than valid_from")
         if self.reliability not in _KIND_RELIABILITY[self.source.kind]:
@@ -352,7 +438,7 @@ class NormalizedRecord(ContractModel):
         if self.value < 0:
             raise ValueError("value cannot be negative")
         _check_tiers(self.tiers)
-        if self.currency is None and self.item is not Item.hdd:
+        if self.currency is None and self.item not in _HDD_ITEMS and self.item is not Item.fx:
             raise ValueError("record needs a currency")
         return self
 
@@ -407,25 +493,13 @@ class BuildingCandidate(ContractModel):
     floors: int | None = None
     area_m2: float | None = None
     housing_fee: HousingFee | None = None
-    url: str = Field(min_length=1)
+    url: HttpUrlString
     seen_at: FlexDate
     note: str = ""
 
-    @field_validator("url")
-    @classmethod
-    def _http_url(cls, value: str) -> str:
-        if not value.startswith(("https://", "http://")):
-            raise ValueError("listing url must be http(s)")
-        return value
-
     @model_validator(mode="after")
     def _check_candidate(self) -> BuildingCandidate:
-        if (self.latitude is None) ^ (self.longitude is None):
-            raise ValueError("latitude and longitude are set together")
-        if self.latitude is not None and not -90 <= self.latitude <= 90:
-            raise ValueError("latitude out of range")
-        if self.longitude is not None and not -180 <= self.longitude <= 180:
-            raise ValueError("longitude out of range")
+        _check_coordinates(self.latitude, self.longitude)
         for year in (self.year_built, self.year_from, self.year_to):
             if year is not None and not 1800 <= year <= 2100:
                 raise ValueError("year out of range")
@@ -439,6 +513,35 @@ class BuildingCandidate(ContractModel):
             raise ValueError("floors must be at least 1")
         if self.area_m2 is not None and self.area_m2 <= 0:
             raise ValueError("area_m2 must be positive")
+        return self
+
+
+class PinnedHouse(ContractModel):
+    """A house already classified into one cell and kept from month to month.
+
+    ``BuildingCandidate`` is the raw listing. This is the house the classifier
+    pins and the cell calculation bills. ``listing_url`` may be null once the
+    ad is gone; ``last_seen`` stays on the last month the house was still known.
+    """
+
+    id: str = Field(min_length=1, max_length=128)
+    city: CityId
+    house_class: HouseClass
+    heating: HeatingType
+    housing_fees: list[HousingFee] = Field(default_factory=list)
+    listing_url: OptionalHttpUrlString = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    first_seen: FlexDate
+    last_seen: FlexDate
+    note: str = ""
+
+    @model_validator(mode="after")
+    def _check_pinned(self) -> PinnedHouse:
+        _check_coordinates(self.latitude, self.longitude)
+        if self.last_seen < self.first_seen:
+            raise ValueError("last_seen is earlier than first_seen")
         return self
 
 
@@ -475,15 +578,8 @@ class ListingSite(ContractModel):
     id: str = Field(pattern=_ID.pattern)
     adapter: str = Field(pattern=_ID.pattern)
     enabled: bool = True
-    url: str | None = None
+    url: OptionalHttpUrlString = None
     settings: dict[str, Any] = Field(default_factory=dict)
-
-    @field_validator("url")
-    @classmethod
-    def _http_url(cls, value: str | None) -> str | None:
-        if value is not None and not value.startswith(("https://", "http://")):
-            raise ValueError("listing site url must be http(s)")
-        return value
 
 
 class ArticleSources(ContractModel):
@@ -494,7 +590,7 @@ class ArticleSources(ContractModel):
     @classmethod
     def _bill_item(cls, value: Item) -> Item:
         if value not in CHARGE_ITEMS:
-            raise ValueError("fx and hdd are not articles; use fx_sources and hdd_sources")
+            raise ValueError("fx and degree-days are not articles; use fx_sources and hdd_sources")
         return value
 
 
@@ -563,7 +659,7 @@ class ConsumptionNorm(ContractModel):
     @field_validator("item")
     @classmethod
     def _consumable(cls, value: Item) -> Item:
-        if value in {Item.fx, Item.hdd}:
+        if value in {Item.fx, *_HDD_ITEMS}:
             raise ValueError("a consumption norm is not an exchange rate or degree-days")
         return value
 
@@ -587,18 +683,11 @@ class LineItem(ContractModel):
     item: Item
     category: Category
     amount_eur: Finite
-    source_url: str = Field(min_length=1)
+    source_url: HttpUrlString
     source_kind: SourceKind
     valid_from: FlexDate
     marks: list[Mark] = Field(default_factory=list)
     note: str = ""
-
-    @field_validator("source_url")
-    @classmethod
-    def _http_url(cls, value: str) -> str:
-        if not value.startswith(("https://", "http://")):
-            raise ValueError("source url must be http(s)")
-        return value
 
     @field_validator("item")
     @classmethod
@@ -624,14 +713,7 @@ class CellBuilding(ContractModel):
 
     id: str = Field(min_length=1)
     address: str | None = None
-    url: str | None = None
-
-    @field_validator("url")
-    @classmethod
-    def _http_url(cls, value: str | None) -> str | None:
-        if value is not None and not value.startswith(("https://", "http://")):
-            raise ValueError("building url must be http(s)")
-        return value
+    url: OptionalHttpUrlString = None
 
     @model_validator(mode="after")
     def _address_or_url(self) -> CellBuilding:
@@ -693,7 +775,7 @@ class ExchangeRate(ContractModel):
     currency: Currency
     per_eur: Finite
     month: str
-    source_url: str = Field(min_length=1)
+    source_url: HttpUrlString
     source_name: str = Field(min_length=1)
 
     @field_validator("month")
@@ -701,13 +783,6 @@ class ExchangeRate(ContractModel):
     def _month(cls, value: str) -> str:
         if not _MONTH.fullmatch(value):
             raise ValueError("month must be YYYY-MM")
-        return value
-
-    @field_validator("source_url")
-    @classmethod
-    def _http_url(cls, value: str) -> str:
-        if not value.startswith(("https://", "http://")):
-            raise ValueError("source url must be http(s)")
         return value
 
     @model_validator(mode="after")
@@ -758,14 +833,11 @@ class CityMonth(ContractModel):
 
 
 def _currency_for(city: CityId) -> Currency:
-    return {
-        CityId.yerevan: Currency.AMD,
-        CityId.tbilisi: Currency.GEL,
-        CityId.belgrade: Currency.RSD,
-        CityId.warsaw: Currency.PLN,
-        CityId.lisbon: Currency.EUR,
-        CityId.berlin: Currency.EUR,
-    }[city]
+    """Currency from that city's config file, the only copy of the mapping."""
+
+    from ubc.load import load_city
+
+    return load_city(city.value).currency
 
 
 def sort_sources(sources: list[SourceConfig]) -> list[SourceConfig]:

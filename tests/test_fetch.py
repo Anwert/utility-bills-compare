@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import ssl
+import subprocess
+import urllib.error
 from pathlib import Path
 
 import pytest
@@ -62,7 +65,7 @@ def test_curl_fallback_keeps_tls_verification() -> None:
     seen: dict[str, list[str]] = {}
 
     def opener(request: object, timeout: float) -> bytes:
-        raise OSError("tls handshake rejected")
+        raise ssl.SSLError("tls handshake rejected")
 
     def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
         seen["argv"] = argv
@@ -79,13 +82,44 @@ def test_curl_fallback_keeps_tls_verification() -> None:
 
 def test_curl_failure_is_a_fetch_error() -> None:
     def opener(request: object, timeout: float) -> bytes:
-        raise OSError("refused")
+        raise ConnectionRefusedError("refused")
 
     def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
         return CommandResult(22, b"", b"http 404")
 
     with pytest.raises(FetchError, match="curl failed"):
         HttpFetcher(opener=opener, command=command).fetch_bytes("https://example.test/missing")
+
+
+def test_http_status_and_other_errors_do_not_call_curl() -> None:
+    def command(argv: list[str], *, stdin: bytes | None = None) -> CommandResult:
+        raise AssertionError(argv)
+
+    def status(request: object, timeout: float) -> bytes:
+        raise urllib.error.HTTPError("https://example.test/missing", 404, "missing", {}, None)
+
+    def bug(request: object, timeout: float) -> bytes:
+        raise ValueError("parser bug")
+
+    with pytest.raises(FetchError, match="HTTP failed"):
+        HttpFetcher(opener=status, command=command).fetch_bytes("https://example.test/missing")
+    with pytest.raises(FetchError, match="HTTP failed"):
+        HttpFetcher(opener=bug, command=command).fetch_bytes("https://example.test/missing")
+
+
+def test_default_curl_path_is_blocked_in_tests() -> None:
+    def opener(request: object, timeout: float) -> bytes:
+        raise ssl.SSLError("handshake failed")
+
+    with pytest.raises(FetchError, match="network is disabled"):
+        HttpFetcher(opener=opener).fetch_bytes("https://example.test/x")
+
+
+def test_conftest_blocks_curl_and_chrome_subprocesses() -> None:
+    with pytest.raises(RuntimeError, match="network is disabled"):
+        subprocess.run(["curl", "-I", "https://example.test"], check=False)
+    with pytest.raises(RuntimeError, match="network is disabled"):
+        subprocess.run(["/usr/bin/google-chrome", "--version"], check=False)
 
 
 def test_render_html_builds_a_headless_chrome_command(tmp_path: Path) -> None:

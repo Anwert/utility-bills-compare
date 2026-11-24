@@ -38,8 +38,10 @@ pytest
 ```bash
 python -m ubc.pipeline --check
 python -m ubc.pipeline
-python -m ubc.pipeline --city yerevan
+python -m ubc.pipeline --city yerevan --period 2026-10
 ```
+
+`--period YYYY-MM` задаёт месяц сбора. Команда передаёт его в контекст каждого включённого источника и сайта объявлений и по-прежнему ничего не скачивает.
 
 `--check` завершается с кодом 0, когда валидны шесть городов, эталонная квартира (2 комнаты, 60 м², 2 жильца) и пример JSON для сайта `data/examples/yerevan-2026-10.json`. Неверный файл завершает команду с кодом 1.
 

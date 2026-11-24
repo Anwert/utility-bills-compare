@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from html.parser import HTMLParser
 
-from ubc.adapter import AdapterOutput, CollectContext, register_adapter
+from ubc.adapter import AdapterOutput, CollectContext, register_adapter, require_source
 from ubc.schemas import ITEM_CATEGORY, ExtractionMethod, Item, NormalizedRecord, SourceInfo
 
 _REQUIRED = ("data-item", "data-value", "data-unit", "data-currency", "data-valid-from")
@@ -38,7 +38,10 @@ class ExampleHtmlAdapter:
     name = "example_html"
 
     def collect(self, ctx: CollectContext) -> AdapterOutput:
-        url = ctx.source.settings.get("url")
+        # Real adapters use ctx.period to request that month (FX startPeriod,
+        # Open-Meteo dates). This template only records that the month arrived.
+        source = require_source(ctx)
+        url = source.settings.get("url")
         if not isinstance(url, str) or not url:
             raise ValueError("example_html requires settings.url")
         parser = _ValueParser()
@@ -59,13 +62,14 @@ class ExampleHtmlAdapter:
             currency=attrs["data-currency"],
             valid_from=attrs["data-valid-from"],
             source=SourceInfo(
-                kind=ctx.source.kind,
+                kind=source.kind,
                 url=url,
                 fetched_at=datetime.now(UTC),
-                name=ctx.source.id,
+                name=source.id,
             ),
             method=ExtractionMethod.regex,
-            reliability=ctx.source.reliability,
+            reliability=source.reliability,
+            note=f"collected for {ctx.period}",
         )
         return AdapterOutput(records=[record])
 

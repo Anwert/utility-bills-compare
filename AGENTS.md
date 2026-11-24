@@ -33,16 +33,20 @@
 
 Их импортируют параллельные тикеты. Не переименовывать без правки всех вызывающих.
 
-- `ubc.schemas.NormalizedRecord`, `BuildingCandidate`, `CityConfig`, `SourceConfig`
+- `ubc.schemas.NormalizedRecord`, `BuildingCandidate`, `PinnedHouse`, `CityConfig`, `SourceConfig`
 - `ubc.schemas.ReferenceData`, `ReferenceApartment`, `ConsumptionNorm`, `CityMonth`
-- `ubc.schemas.sort_sources`, `ordered_enabled_sources`
+- `ubc.schemas.YearMonth`, `sort_sources`, `ordered_enabled_sources`
 - `ubc.schemas.Item`, `Category`, `HouseClass`, `HeatingType`, `Mark`, `SourceKind`, `Reliability`
 - `ubc.schemas.HDD_UNIT` (`K*day`), `ITEM_CATEGORY`, `*_LABELS_RU`
-- `ubc.adapter.Adapter`, `CollectContext`, `AdapterOutput`, `get_adapter`, `ADAPTER_MODULES`
+- `ubc.adapter.Adapter`, `CollectContext`, `AdapterOutput`, `require_source`, `require_listing`
+- `ubc.adapter.get_adapter`, `ADAPTER_MODULES`
+- `ubc.pipeline.collect_contexts`
 - `ubc.fetch.ContentFetcher`, `FixtureFetcher`, `HttpFetcher`, `FetchError`
 - `ubc.load.load_cities`, `load_city`, `load_reference`, `load_example_city_month`
 
-Адаптер тарифа, курса или градусо-суток заполняет `AdapterOutput.records`. Адаптер объявлений заполняет `AdapterOutput.candidates` (`BuildingCandidate`), а не нормализованные записи. Адаптер не знает про ячейки и расчёт.
+Адаптер тарифа, курса или градусо-суток заполняет `AdapterOutput.records`. Адаптер объявлений заполняет `AdapterOutput.candidates` (`BuildingCandidate`), а не нормализованные записи. Классификатор потом пишет `PinnedHouse`. Адаптер не знает про ячейки и расчёт.
+
+Один протокол `Adapter.collect(CollectContext)` и один реестр. `ctx.source` — это `SourceConfig` для тарифа, курса и градусо-суток и `ListingSite` для объявлений. У сайта объявлений нет вида, надёжности и приоритета, поэтому подменять его фальшивым `SourceConfig` не нужно: тарифный адаптер читает конфиг через `require_source`, адаптер объявлений — через `require_listing`. `ctx.period` — месяц сбора (`YearMonth`, первый день в `period.first_day`). `collect_contexts` собирает эти контексты из конфигурации города.
 
 ## Правила TDD
 
@@ -61,7 +65,7 @@
 ## Как добавить адаптер
 
 1. Сохранить образец страницы в `tests/fixtures/<имя>/` и прописать URL в `manifest.json`. Для страницы, которая пустая без JavaScript, сохранять уже отрисованный DOM. Для PDF рядом положить `.txt`, если в CI нет poppler: `FixtureFetcher.pdf_to_text` берёт его.
-2. Написать падающий тест: `FixtureFetcher` + `get_adapter(...).collect(CollectContext(...))` и ожидаемые поля записи или кандидата.
+2. Написать падающий тест: `FixtureFetcher` + `get_adapter(...).collect(CollectContext(city, period, fetcher, source))` и ожидаемые поля записи или кандидата. `period` — `YearMonth.parse("YYYY-MM")`.
 3. Реализовать модуль по образцу `ubc/adapters/example_html.py`. В конце модуля — `register_adapter(...)`. Добавить строку в `ADAPTER_MODULES`.
 4. Дописать источник в `data/cities/<город>.json` в список статьи (или в `fx_sources` / `hdd_sources` / `listing_sites`).
 
@@ -85,7 +89,7 @@
 
 Категория записи следует из статьи (`ITEM_CATEGORY`): обслуживание дома — `housing`, остальные статьи счёта — `utility`, курс и градусо-сутки — `context`. Пометки (`fixed`, `norm_based`, `statistics_estimate`, `third_party`, `llm_extracted`, `stale`) ставятся при расчёте, не адаптером.
 
-Курс: `item = fx`, `city = "all"`, `value` — сколько местной валюты за 1 евро, `unit` вида `AMD/EUR`. Градусо-сутки: `item = hdd`, город указан, `unit = HDD_UNIT` (`K*day`), валюты нет. `valid_from` месяцем `YYYY-MM` сохраняется как первый день месяца.
+Курс: `item = fx`, `city = "all"`, `value` — сколько местной валюты за 1 евро, `unit` ровно `<валюта>/EUR` (для AMD это `AMD/EUR`). Градусо-сутки месяца: `item = hdd`. Градусо-сутки отопительного года (знаменатель раскладки нормы): `item = hdd_annual`. Оба с указанным городом, `unit = HDD_UNIT` (`K*day`) и без валюты. Месяц запроса берётся из `ctx.period`, не из `valid_from`: `valid_from` — с какой даты действует тариф или к какому месяцу относится уже посчитанная сумма. `valid_from` строкой `YYYY-MM` сохраняется как первый день месяца.
 
 ## Схемы
 
@@ -93,6 +97,7 @@
 
 - **Нормализованная запись** — город, статья, категория, значение, единица, валюта, ступени, действует с/по, источник (тип, URL, когда получено), способ получения (`regex` / `llm_text` / `llm_vision` / `api`), уровень надёжности, примечание. Ступени возрастают, открытая граница только у последней.
 - **Кандидат дома** — id, город, адрес и координаты, отопление как на сайте и приведённое, год или диапазон или серия, новостройка, этажность, площадь, жилищные сборы (сумма, валюта, период, за м² или за квартиру), ссылка, когда видели. Пустые факты с сайта остаются `null`.
+- **Закреплённый дом** (`PinnedHouse`) — уже разложен по классу и типу отопления: сборы (список, может быть пустым), ссылка на объявление (может исчезнуть), адрес и координаты если есть, `first_seen` / `last_seen`. Его пишут #36 и читает расчёт ячейки #21.
 - **Конфигурация города** — валюта, координаты, текст пометки о платных данных, восемь статей с упорядоченными источниками, сайты объявлений, источники курса и градусо-суток.
 - **Эталонная квартира** — 2 комнаты, 60 м², 2 жильца. Другие числа схема не примет. Нормы расхода лежат в `data/reference.json`; сейчас это заглушки `source: "stub"`, настоящие цифры приносит тикет расчёта.
 - **Контракт сайта** (`CityMonth`) — JSON на город и месяц: курс и дата обновления, ровно 9 ячеек. У заполненной ячейки итог в евро, подсуммы жилищных и коммунальных, разбивка (источник, дата, пометки) и дом. Пустая ячейка без сумм, со статусом `empty` и причиной.
@@ -103,7 +108,7 @@
 
 `FixtureFetcher` в тестах и `HttpFetcher` в живом запуске. Оба умеют `fetch_bytes`, `fetch_text`, `render_html`, `pdf_to_text`.
 
-`HttpFetcher` ходит по HTTPS с проверкой сертификата и своим User-Agent. Если рукопожатие Python сервер отверг, тот же URL запрашивает curl **без** отключения проверки TLS. `render_html` — headless Chrome `--dump-dom` для страниц, которые без JS пустые. `pdf_to_text` — `pdftotext`. Это не обход защиты от роботов: ответ-блокировка означает, что источник не отдал данные.
+`HttpFetcher` ходит по HTTPS с проверкой сертификата и своим User-Agent. Curl вызывается только если рукопожатие или соединение оборвалось (TLS, таймаут, отказ соединения, DNS) и **без** отключения проверки TLS. Ответ HTTP с кодом ошибки и любое другое исключение curl не запускают. `render_html` — headless Chrome `--dump-dom` для страниц, которые без JS пустые. `pdf_to_text` — `pdftotext`. Это не обход защиты от роботов: ответ-блокировка означает, что источник не отдал данные. В тестах `conftest.py` закрывает и сокеты, и запуск `curl` / Chrome.
 
 ## Защита от роботов, прокси, ИИ
 
@@ -121,7 +126,7 @@ ruff check .
 ruff format --check .
 pytest
 python -m ubc.pipeline --check
-python -m ubc.pipeline --city yerevan
+python -m ubc.pipeline --city yerevan --period 2026-10
 ```
 
-`python -m ubc.pipeline` только проверяет JSON и печатает, сколько источников включено. Он не открывает сеть, не считает ячейки и не публикует сайт.
+`python -m ubc.pipeline --period YYYY-MM` проверяет JSON, печатает включённые источники и передаёт месяц в `collect_contexts`. Он не открывает сеть, не считает ячейки и не публикует сайт.

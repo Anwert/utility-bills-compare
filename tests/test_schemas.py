@@ -7,9 +7,12 @@ from pydantic import ValidationError
 
 from ubc.schemas import (
     HDD_UNIT,
+    HEATING_LABELS_RU,
+    HeatingType,
     NormalizedRecord,
     SourceConfig,
     SourceKind,
+    YearMonth,
     ordered_enabled_sources,
     sort_sources,
 )
@@ -152,6 +155,57 @@ def test_exchange_rate_cannot_pretend_to_be_one_city() -> None:
 
 def test_degree_day_unit_is_stable() -> None:
     assert HDD_UNIT == "K*day"
+
+
+def test_gas_boiler_label_matches_the_glossary() -> None:
+    assert HEATING_LABELS_RU[HeatingType.gas_boiler] == "Индивидуальный газовый котёл"
+
+
+def test_year_month_exposes_the_first_and_last_day() -> None:
+    period = YearMonth.parse("2026-10")
+
+    assert str(period) == "2026-10"
+    assert period.first_day.isoformat() == "2026-10-01"
+    assert period.last_day.isoformat() == "2026-10-31"
+    assert YearMonth.parse("2024-02").last_day.isoformat() == "2024-02-29"
+
+
+def test_year_month_rejects_a_bad_string() -> None:
+    with pytest.raises(ValueError):
+        YearMonth.parse("2026-13")
+
+
+def test_fx_unit_must_be_local_currency_per_euro() -> None:
+    with pytest.raises(ValidationError, match="AMD/EUR"):
+        NormalizedRecord.model_validate(
+            record(city="all", item="fx", category="context", unit="EUR/AMD", currency="AMD")
+        )
+
+
+def test_hdd_unit_must_be_the_shared_constant() -> None:
+    data = record(city="yerevan", item="hdd", category="context", unit="K·day", value=54.9)
+    del data["currency"]
+
+    with pytest.raises(ValidationError, match="K\\*day"):
+        NormalizedRecord.model_validate(data)
+
+
+def test_annual_degree_days_are_a_city_record() -> None:
+    data = record(
+        city="berlin",
+        item="hdd_annual",
+        category="context",
+        unit="K*day",
+        value=1800,
+        valid_from="2025-07",
+    )
+    del data["currency"]
+
+    parsed = NormalizedRecord.model_validate(data)
+
+    assert parsed.item.value == "hdd_annual"
+    assert parsed.currency is None
+    assert parsed.unit == HDD_UNIT
 
 
 def test_degree_days_name_a_city_and_need_no_currency() -> None:
