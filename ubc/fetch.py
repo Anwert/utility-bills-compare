@@ -39,10 +39,14 @@ USER_AGENT = "utility-bills-compare/0.1 (+https://github.com/Anwert/utility-bill
 
 
 class FetchError(Exception):
-    """The content could not be obtained. The message names the URL and the reason."""
+    """The content could not be obtained. The message names the URL and the reason.
 
-    def __init__(self, url: str, message: str) -> None:
+    ``status`` is the HTTP code when the server answered with an error.
+    """
+
+    def __init__(self, url: str, message: str, *, status: int | None = None) -> None:
         self.url = url
+        self.status = status
         super().__init__(f"{url}: {message}" if url else message)
 
 
@@ -186,7 +190,8 @@ class HttpFetcher:
             return self.opener(_request(url, self.user_agent), self.timeout)
         except Exception as exc:
             if not _connection_failure(exc):
-                raise FetchError(url, f"HTTP failed ({exc})") from exc
+                status = exc.code if isinstance(exc, urllib.error.HTTPError) else None
+                raise FetchError(url, f"HTTP failed ({exc})", status=status) from exc
             try:
                 curl_result = _curl(self, url)
             except Exception as curl_exc:
