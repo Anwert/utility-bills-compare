@@ -95,6 +95,9 @@ def decide_article(
     )
     if decision.record is None or decision.acting is None:
         return ArticleOutcome(item=item, alerts=decision.alerts)
+    recount = previous is not None and _later(previous.checked_month(), period)
+    if previous is not None and recount and _covers(previous.history, period):
+        return replace(keep_article(previous, period), alerts=decision.alerts)
     history = list(previous.history) if previous is not None else []
     if not decision.stale and decision.source_id is not None:
         history = _append(history, period, decision.source_id, billable[decision.source_id])
@@ -107,7 +110,7 @@ def decide_article(
         history=history,
     )
     outcome = _bill(state, period, stale=decision.stale, note=decision.note)
-    if previous is not None and _later(previous.checked_month(), period):
+    if previous is not None and recount:
         # A recount of an older month must not move the policy state back in time.
         state = previous
     return replace(outcome, alerts=decision.alerts, state=state, source_id=decision.source_id)
@@ -246,6 +249,15 @@ def _month_records(
         if covered_from <= first:
             return kept, {}
     return _stretch_back(kept, first)
+
+
+def _covers(history: Sequence[HistoryEntry], period: YearMonth) -> bool:
+    """The saved values reach from the first day of the month to the last."""
+
+    records, dated = _month_records(history, period, extend=False)
+    return not dated and any(
+        record.valid_to is None or record.valid_to >= period.last_day for record in records
+    )
 
 
 def _renewed(record: NormalizedRecord, records: Sequence[NormalizedRecord]) -> bool:

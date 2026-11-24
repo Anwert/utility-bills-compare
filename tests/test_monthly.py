@@ -293,9 +293,7 @@ def tree(root: Path) -> dict[str, bytes]:
     }
 
 
-def test_yerevan_is_billed_by_the_day_price_and_the_gas_price_known_this_month(
-    tmp_path: Path,
-) -> None:
+def test_yerevan_is_billed_by_the_day_price(tmp_path: Path) -> None:
     run_yerevan(tmp_path)
 
     cell = filled(tmp_path)
@@ -311,10 +309,6 @@ def test_yerevan_is_billed_by_the_day_price_and_the_gas_price_known_this_month(
         "waste": 1.93,
     }
     assert cell["total_eur"] == 20.39
-    # The gas PDF is dated 6 October and nothing older is known.
-    gas = lines(cell)["gas"]
-    assert gas["valid_from"] == "2026-10-06"
-    assert "более ранняя цена неизвестна" in gas["note"]
 
 
 def test_empty_cells_carry_the_classifier_reason(tmp_path: Path) -> None:
@@ -615,6 +609,19 @@ def run_lisbon(
     return lines(cell)
 
 
+def test_first_known_price_that_starts_inside_the_month_covers_it_whole(tmp_path: Path) -> None:
+    bill = run_lisbon(tmp_path, 0.20, "2026-10-06")
+
+    assert bill["electricity"]["amount_eur"] == 20
+    assert bill["electricity"]["valid_from"] == "2026-10-06"
+    assert "более ранняя цена неизвестна" in bill["electricity"]["note"]
+
+
+def test_first_known_price_that_starts_after_the_month_is_not_used(tmp_path: Path) -> None:
+    with pytest.raises(PublicationError, match="electricity"):
+        run_lisbon(tmp_path, 0.20, "2026-11-01")
+
+
 def test_changed_tariff_is_split_by_days_and_the_old_one_is_kept(tmp_path: Path) -> None:
     run_lisbon(tmp_path, 0.20, "2026-01-01")
     bill = run_lisbon(tmp_path, 0.25, "2026-10-17")
@@ -669,16 +676,36 @@ def test_unconfirmed_jump_keeps_the_old_value_and_is_reported(tmp_path: Path) ->
     assert "0.4 EUR/kWh" in issues.bodies[0]
 
 
-def test_recount_of_an_older_month_does_not_move_the_state_back(tmp_path: Path) -> None:
-    run_lisbon(tmp_path, 0.20, "2026-01-01")
-    state = published(tmp_path, "state/lisbon.json")
-    state["articles"][0]["checked"] = "2026-11"
-    state["articles"][0]["acting"]["period"] = "2026-11"
-    (tmp_path / "state/lisbon.json").write_text(json.dumps(state), encoding="utf-8")
+def november_state(root: Path, valid_from: str) -> dict:
+    """State as if November had already been collected."""
 
-    bill = run_lisbon(tmp_path, 0.22, "2026-11-01")
+    run_lisbon(root, 0.20, "2026-01-01")
+    state = published(root, "state/lisbon.json")
+    (article,) = state["articles"]
+    article["checked"] = article["acting"]["period"] = "2026-11"
+    article["acting"]["record"]["valid_from"] = valid_from
+    article["history"][0]["records"][0]["valid_from"] = valid_from
+    (root / "state/lisbon.json").write_text(json.dumps(state), encoding="utf-8")
+    return state
+
+
+def test_recount_of_an_older_month_uses_that_months_tariff(tmp_path: Path) -> None:
+    state = november_state(tmp_path, "2026-01-01")
+
+    # Today's page has a new price and backdates it into the recounted month.
+    bill = run_lisbon(tmp_path, 0.22, "2026-10-01")
 
     assert bill["electricity"]["amount_eur"] == 20
+    assert bill["electricity"]["marks"] == ["norm_based"]
+    assert published(tmp_path, "state/lisbon.json") == state
+
+
+def test_recount_of_a_month_before_the_history_takes_todays_answer(tmp_path: Path) -> None:
+    state = november_state(tmp_path, "2026-11-01")
+
+    bill = run_lisbon(tmp_path, 0.22, "2026-01-01")
+
+    assert bill["electricity"]["amount_eur"] == 22
     assert published(tmp_path, "state/lisbon.json") == state
 
 
