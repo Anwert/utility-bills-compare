@@ -42,6 +42,31 @@
     }
   ],
   "listing_sites": [],
-  "fx_sources": [],
-  "hdd_sources": []
+  "fx_sources": [
+    {
+      "id": "fx_pln_ecb",
+      "adapter": "fx_ecb",
+      "kind": "official",
+      "priority": 0,
+      "enabled": true,
+      "reliability": "official",
+      "settings": {
+        "url": "https://data-api.ecb.europa.eu/service/data/EXR/M.PLN.EUR.SP00.A",
+        "currency": "PLN"
+      }
+    }
+  ],
+  "hdd_sources": [
+    {
+      "id": "hdd_open_meteo",
+      "adapter": "open_meteo_hdd",
+      "kind": "third_party",
+      "priority": 0,
+      "enabled": true,
+      "reliability": "third_party",
+      "settings": {
+        "url": "https://archive-api.open-meteo.com/v1/archive"
+      }
+    }
+  ]
 }

@@ -24,7 +24,7 @@
 | `ubc/fetch.py` | Слой получения содержимого: HTTP / Chrome / pdftotext / фикстура |
 | `ubc/load.py` | Чтение `data/` с падением на неверной схеме |
 | `ubc/pipeline.py` | Локальная проверка файлов. Сбор и публикация — отдельные тикеты |
-| `data/cities/*.json` | Шесть городов. Списки источников пока пустые — их заполняют тикеты адаптеров |
+| `data/cities/*.json` | Шесть городов. Курсы PLN, AMD, GEL и RSD — в `fx_sources` (у EUR-городов список пуст). Градусо-сутки — Open-Meteo. Списки статей пока пустые |
 | `data/reference.json` | Эталонная квартира и заглушки норм расхода |
 | `data/examples/yerevan-2026-10.json` | Пример контракта сайта, цифры выдуманы |
 | `data/site-index.json` | Список `CityMonth`, который читает статический сайт |
@@ -46,6 +46,8 @@
 - `ubc.fetch.ContentFetcher`, `FixtureFetcher`, `HttpFetcher`, `FetchError`
 - `ubc.load.load_cities`, `load_city`, `load_reference`, `load_example_city_month`
 - `ubc.site_index.build_site_index`, `write_site_index`
+- `ubc.policy.choose_article`, `SourceAttempt`, `AttemptStatus`, `ActingValue`, `dump_acting`, `load_acting`
+- `ubc.alerts.sync_alerts`, `GitHubIssues`, `GitHubRestClient`, `DATA_ALERT_LABEL`
 
 Адаптер тарифа, курса или градусо-суток заполняет `AdapterOutput.records`. Адаптер объявлений заполняет `AdapterOutput.candidates` (`BuildingCandidate`), а не нормализованные записи. Классификатор потом пишет `PinnedHouse`. Адаптер не знает про ячейки и расчёт.
 
@@ -88,7 +90,7 @@
 
 `settings` определяет адаптер. Обычный ключ одной страницы — `url`. Поля `id` и `adapter` — строчные латинские буквы, цифры и `_`.
 
-Порядок опроса задаёт `ordered_enabled_sources`: сначала `proxy_direct`, затем `official`, затем `third_party`, затем `statistics`; внутри вида меньший `priority`, при равенстве — порядок в JSON. Выключенный источник в этот список не входит. Сама политика (скачок 30%, `stale`, уведомление) — шов (c), её не дублировать в адаптере.
+Порядок опроса задаёт `ordered_enabled_sources`: сначала `proxy_direct`, затем `official`, затем `third_party`, затем `statistics`; внутри вида меньший `priority`, при равенстве — порядок в JSON. Выключенный источник в этот список не входит. Сама политика (скачок 30%, `stale`, уведомление) — шов (c), её не дублировать в адаптере. Её считает `ubc.policy.choose_article`; issue с меткой `data-alert` открывает и закрывает `ubc.alerts.sync_alerts`.
 
 Категория записи следует из статьи (`ITEM_CATEGORY`): обслуживание дома — `housing`, остальные статьи счёта — `utility`, курс и градусо-сутки — `context`. Пометки (`fixed`, `norm_based`, `statistics_estimate`, `third_party`, `llm_extracted`, `stale`) ставятся при расчёте, не адаптером.
 
