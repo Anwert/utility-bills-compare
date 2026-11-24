@@ -18,7 +18,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:56:34.818103Z",
+            "fetched_at": "2026-11-24T23:00:44.111868Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
@@ -98,7 +98,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
-            "fetched_at": "2026-11-24T22:46:26.390410Z",
+            "fetched_at": "2026-11-24T23:01:30.611572Z",
             "name": "yerevan_electricity_psrc"
           },
           "method": "regex",
@@ -112,8 +112,8 @@
         "pending_source_id": null
       },
       "checked": "2026-10",
-      "stale": true,
-      "note": "источники не отдали данные, показано прошлое значение",
+      "stale": false,
+      "note": "",
       "history": [
         {
           "period": "2026-10",
@@ -178,7 +178,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
-            "fetched_at": "2026-11-24T22:46:45.299052Z",
+            "fetched_at": "2026-11-24T23:02:10.262397Z",
             "name": "yerevan_gas_psrc"
           },
           "method": "regex",
@@ -192,8 +192,8 @@
         "pending_source_id": null
       },
       "checked": "2026-10",
-      "stale": true,
-      "note": "источники не отдали данные, показано прошлое значение",
+      "stale": false,
+      "note": "",
       "history": [
         {
           "period": "2026-10",
@@ -239,7 +239,7 @@
           "source": {
             "kind": "statistics",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:57:36.838982Z",
+            "fetched_at": "2026-11-24T23:02:10.326286Z",
             "name": "yerevan_water_last_official"
           },
           "method": "regex",
@@ -300,7 +300,7 @@
           "source": {
             "kind": "statistics",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:57:36.839246Z",
+            "fetched_at": "2026-11-24T23:02:10.326791Z",
             "name": "yerevan_sewage_last_official"
           },
           "method": "regex",
@@ -361,7 +361,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:57:38.057549Z",
+            "fetched_at": "2026-11-24T23:02:10.486418Z",
             "name": "yerevan_waste_arlis"
           },
           "method": "regex",

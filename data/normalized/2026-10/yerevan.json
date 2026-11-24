@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "yerevan",
   "period": "2026-10",
-  "collected_at": "2026-11-24T22:54:23.227965+00:00",
+  "collected_at": "2026-11-24T23:00:43.883197+00:00",
   "sources": [
     {
       "source_id": "yerevan_maintenance_arlis",
@@ -23,7 +23,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:56:34.818103Z",
+            "fetched_at": "2026-11-24T23:00:44.111868Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
@@ -35,16 +35,116 @@
     {
       "source_id": "yerevan_electricity_psrc",
       "item": "electricity",
-      "status": "error",
-      "detail": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf: HTTP failed (<urlopen error [Errno 104] Connection reset by peer>); curl failed (curl: (3...",
-      "records": []
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "electricity",
+          "category": "utility",
+          "value": 46.48,
+          "unit": "AMD/kWh",
+          "currency": "AMD",
+          "tiers": [
+            {
+              "up_to": 201.0,
+              "value": 46.48,
+              "unit": null,
+              "label": "day, up to 200 kWh/month"
+            },
+            {
+              "up_to": 401.0,
+              "value": 48.48,
+              "unit": null,
+              "label": "day, 201-400 kWh/month"
+            },
+            {
+              "up_to": null,
+              "value": 53.48,
+              "unit": null,
+              "label": "day, above 400 kWh/month"
+            }
+          ],
+          "valid_from": "2026-01-26",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+            "fetched_at": "2026-11-24T23:01:30.611572Z",
+            "name": "yerevan_electricity_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26."
+        },
+        {
+          "city": "yerevan",
+          "item": "electricity",
+          "category": "utility",
+          "value": 36.48,
+          "unit": "AMD/kWh",
+          "currency": "AMD",
+          "tiers": [
+            {
+              "up_to": 201.0,
+              "value": 36.48,
+              "unit": null,
+              "label": "night, up to 200 kWh/month"
+            },
+            {
+              "up_to": 401.0,
+              "value": 38.48,
+              "unit": null,
+              "label": "night, 201-400 kWh/month"
+            },
+            {
+              "up_to": null,
+              "value": 43.48,
+              "unit": null,
+              "label": "night, above 400 kWh/month"
+            }
+          ],
+          "valid_from": "2026-01-26",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+            "fetched_at": "2026-11-24T23:01:30.611572Z",
+            "name": "yerevan_electricity_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "ночной бытовой тариф 0,38 кВ, те же ступени, что у дневного: 36.48 / 38.48 / 43.48 AMD/кВт·ч."
+        }
+      ]
     },
     {
       "source_id": "yerevan_gas_psrc",
       "item": "gas",
-      "status": "error",
-      "detail": "no consumer tariff PDF on https://www.psrc.am/contents/fields/gas/gas_tariffs",
-      "records": []
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "gas",
+          "category": "utility",
+          "value": 143.7,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-10-06",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+            "fetched_at": "2026-11-24T23:02:10.262397Z",
+            "name": "yerevan_gas_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06."
+        }
+      ]
     },
     {
       "source_id": "yerevan_water_last_official",
@@ -65,7 +165,7 @@
           "source": {
             "kind": "statistics",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:57:36.838982Z",
+            "fetched_at": "2026-11-24T23:02:10.326286Z",
             "name": "yerevan_water_last_official"
           },
           "method": "regex",
@@ -93,7 +193,7 @@
           "source": {
             "kind": "statistics",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:57:36.839246Z",
+            "fetched_at": "2026-11-24T23:02:10.326791Z",
             "name": "yerevan_sewage_last_official"
           },
           "method": "regex",
@@ -121,7 +221,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:57:38.057549Z",
+            "fetched_at": "2026-11-24T23:02:10.486418Z",
             "name": "yerevan_waste_arlis"
           },
           "method": "regex",
@@ -149,7 +249,7 @@
           "source": {
             "kind": "official",
             "url": "https://api.cba.am/exchangerates.asmx",
-            "fetched_at": "2026-11-24T22:57:39.188062Z",
+            "fetched_at": "2026-11-24T23:02:10.620872Z",
             "name": "Central Bank of Armenia"
           },
           "method": "api",
@@ -177,7 +277,7 @@
           "source": {
             "kind": "third_party",
             "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-            "fetched_at": "2026-11-24T22:57:39.189963Z",
+            "fetched_at": "2026-11-24T23:02:10.630119Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",
@@ -197,7 +297,7 @@
           "source": {
             "kind": "third_party",
             "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-            "fetched_at": "2026-11-24T22:57:39.189963Z",
+            "fetched_at": "2026-11-24T23:02:10.630119Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",
@@ -236,9 +336,7 @@
     },
     "electricity": {
       "source_id": "yerevan_electricity_psrc",
-      "marks": [
-        "stale"
-      ],
+      "marks": [],
       "records": [
         {
           "city": "yerevan",
@@ -277,15 +375,13 @@
           },
           "method": "regex",
           "reliability": "official",
-          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26. источники не отдали данные, показано прошлое значение"
+          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26."
         }
       ]
     },
     "gas": {
       "source_id": "yerevan_gas_psrc",
-      "marks": [
-        "stale"
-      ],
+      "marks": [],
       "records": [
         {
           "city": "yerevan",
@@ -305,7 +401,7 @@
           },
           "method": "regex",
           "reliability": "official",
-          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06. Источник датирует тариф 2026-10-06, более ранняя цена неизвестна: весь месяц посчитан по этой. источники не отдали данные, показано прошлое значение"
+          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06. Источник датирует тариф 2026-10-06, более ранняя цена неизвестна: весь месяц посчитан по этой."
         }
       ]
     },
@@ -863,7 +959,7 @@
           "note": ""
         },
         {
-          "id": "myrealty-159730",
+          "id": "myrealty-159731",
           "city": "yerevan",
           "address": "Vardanants St, Center, Yerevan",
           "latitude": 40.1786933,
@@ -884,7 +980,7 @@
             "amount": 4259.0,
             "currency": "USD"
           },
-          "url": "https://myrealty.am/en/bnakaran/2-senyakanoc/Vardanants+St/Center/Yerevan/159730",
+          "url": "https://myrealty.am/en/bnakaran/2-senyakanoc/Vardanants+St/Center/Yerevan/159731",
           "seen_at": "2026-11-18",
           "note": ""
         },
@@ -915,7 +1011,7 @@
           "note": ""
         },
         {
-          "id": "myrealty-159731",
+          "id": "myrealty-159730",
           "city": "yerevan",
           "address": "Vardanants St, Center, Yerevan",
           "latitude": 40.1786933,
@@ -936,7 +1032,7 @@
             "amount": 4259.0,
             "currency": "USD"
           },
-          "url": "https://myrealty.am/en/bnakaran/2-senyakanoc/Vardanants+St/Center/Yerevan/159731",
+          "url": "https://myrealty.am/en/bnakaran/2-senyakanoc/Vardanants+St/Center/Yerevan/159730",
           "seen_at": "2026-11-18",
           "note": ""
         },
