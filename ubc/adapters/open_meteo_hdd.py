@@ -16,11 +16,13 @@ with days still missing fails the source instead of looking warmer than it was.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+import time
+from collections.abc import Callable, Iterable
 from datetime import UTC, date, datetime
 from math import isfinite
 
 from ubc.adapter import AdapterOutput, CollectContext, register_adapter, require_source
+from ubc.fetch import FetchError
 from ubc.schemas import (
     HDD_UNIT,
     ITEM_CATEGORY,
@@ -71,6 +73,11 @@ def annual_heating_degree_days(daily_mean_celsius: Iterable[float | None]) -> fl
     return heating_degree_days(daily_mean_celsius)
 
 
+# The free archive limits requests per minute and address, and a CI runner shares
+# its address with strangers. An hourly or daily limit outlasts these waits.
+_TOO_MANY_REQUESTS = 429
+_WAITS_SECONDS = (65.0, 130.0)
+
 _DAILY = "daily=temperature_2m_mean&timezone=auto"
 
 
@@ -82,6 +89,9 @@ class OpenMeteoHddAdapter:
     """
 
     name = "open_meteo_hdd"
+
+    def __init__(self, sleep: Callable[[float], None] = time.sleep) -> None:
+        self._sleep = sleep
 
     def collect(self, ctx: CollectContext) -> AdapterOutput:
         source = require_source(ctx)
@@ -100,6 +110,7 @@ class OpenMeteoHddAdapter:
                 month_end,
                 fetched_at,
                 annual=False,
+                sleep=self._sleep,
             ),
             _record(
                 ctx,
@@ -110,6 +121,7 @@ class OpenMeteoHddAdapter:
                 year_end,
                 fetched_at,
                 annual=True,
+                sleep=self._sleep,
             ),
         ]
         return AdapterOutput(records=records)
@@ -167,6 +179,17 @@ def _daily_means(body: str, start: date, end: date) -> list[float | None]:
     return selected
 
 
+def _ask(ctx: CollectContext, url: str, sleep: Callable[[float], None]) -> str:
+    for wait in _WAITS_SECONDS:
+        try:
+            return ctx.fetcher.fetch_text(url)
+        except FetchError as exc:
+            if exc.status != _TOO_MANY_REQUESTS:
+                raise
+        sleep(wait)
+    return ctx.fetcher.fetch_text(url)
+
+
 def _record(
     ctx: CollectContext,
     source: SourceConfig,
@@ -177,9 +200,10 @@ def _record(
     fetched_at: datetime,
     *,
     annual: bool,
+    sleep: Callable[[float], None],
 ) -> NormalizedRecord:
     url = _archive_url(endpoint, ctx.city.latitude, ctx.city.longitude, start, end)
-    temperatures = _daily_means(ctx.fetcher.fetch_text(url), start, end)
+    temperatures = _daily_means(_ask(ctx, url, sleep), start, end)
     present = sum(temperature is not None for temperature in temperatures)
     if present == 0:
         raise ValueError(f"Open-Meteo returned no daily temperatures for {url}")

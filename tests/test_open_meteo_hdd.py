@@ -14,11 +14,12 @@ import pytest
 
 from ubc.adapter import AdapterOutput, CollectContext, get_adapter
 from ubc.adapters.open_meteo_hdd import (
+    OpenMeteoHddAdapter,
     annual_heating_degree_days,
     heating_degree_days,
     heating_year,
 )
-from ubc.fetch import FixtureFetcher
+from ubc.fetch import FetchError, FixtureFetcher
 from ubc.load import load_city
 from ubc.paths import REPO_ROOT
 from ubc.schemas import HDD_UNIT, Reliability, SourceConfig, SourceKind, YearMonth
@@ -224,3 +225,45 @@ def test_month_the_archive_has_not_finished_fails_the_source(tmp_path: Path) -> 
 
     with pytest.raises(ValueError, match="29 of 31"):
         get_adapter("open_meteo_hdd").collect(_context("yerevan", fetcher))
+
+
+class _Busy(FixtureFetcher):
+    """Answers with ``status`` to the first ``refusals`` requests."""
+
+    def __init__(self, refusals: int, status: int) -> None:
+        super().__init__(REPO_ROOT / "tests" / "fixtures" / "open_meteo")
+        self.refusals = refusals
+        self.status = status
+
+    def fetch_text(self, url: str) -> str:
+        if self.refusals:
+            self.refusals -= 1
+            raise FetchError(url, "refused", status=self.status)
+        return super().fetch_text(url)
+
+
+def _busy_yerevan(fetcher: _Busy, waits: list[float]) -> AdapterOutput:
+    return OpenMeteoHddAdapter(sleep=waits.append).collect(
+        CollectContext(
+            city=load_city("yerevan"),
+            period=YearMonth.parse("2026-10"),
+            fetcher=fetcher,
+            source=load_city("yerevan").hdd_sources[0],
+        )
+    )
+
+
+def test_too_many_requests_is_asked_again_after_a_minute() -> None:
+    waits: list[float] = []
+
+    output = _busy_yerevan(_Busy(refusals=2, status=429), waits)
+
+    assert [record.value for record in output.records] == [54.9, 2556.6]
+    assert len(waits) == 2
+    assert min(waits) >= 60
+
+
+@pytest.mark.parametrize(("refusals", "status"), [(9, 429), (1, 500)])
+def test_lasting_limit_or_another_error_is_a_failed_source(refusals: int, status: int) -> None:
+    with pytest.raises(FetchError):
+        _busy_yerevan(_Busy(refusals=refusals, status=status), [])

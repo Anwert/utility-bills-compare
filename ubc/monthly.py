@@ -314,7 +314,9 @@ class _Run:
             run.outcomes.append(outcome)
             run.alerts.extend(outcome.alerts)
         self._read_rate(run)
-        self._read_degree_days(run)
+        if run.connected:
+            # Without tariffs no cell is priced, so the archive is not asked in vain.
+            self._read_degree_days(run)
         if run.connected and not self._houses_are_settled(run):
             run.listings = [
                 self._read_listing(run, site) for site in city.listing_sites if site.enabled

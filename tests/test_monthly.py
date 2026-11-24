@@ -141,8 +141,10 @@ def published(data_root: Path, name: str) -> dict:
 def test_a_city_without_tariff_sources_gets_nine_empty_cells_and_the_euro_rate(
     tmp_path: Path,
 ) -> None:
-    run(tmp_path, [load_city("lisbon")], SavedPages("open_meteo"))
+    fetcher = SavedPages("open_meteo")
+    run(tmp_path, [load_city("lisbon")], fetcher)
 
+    assert not any("open-meteo" in url for url in fetcher.asked)
     month = published(tmp_path, "lisbon-2026-10.json")
     assert month["updated_at"] == "2026-11-07T06:00:00Z"
     assert month["exchange_rate"]["per_eur"] == 1
