@@ -91,6 +91,7 @@ def calculate_cell(
     norms: Sequence[ConsumptionNorm],
     apartment: ReferenceApartment | None = None,
     extra_marks: Mapping[Item, Sequence[Mark]] | None = None,
+    empty_reason: str | None = None,
 ) -> Cell:
     """Price one cell for ``period``.
 
@@ -107,7 +108,7 @@ def calculate_cell(
             house_class=row,
             heating=column,
             status=CellStatus.empty,
-            empty_reason=_EMPTY_REASON,
+            empty_reason=empty_reason or _EMPTY_REASON,
         )
     if house.city is not city_id or house.house_class is not row or house.heating is not column:
         raise CalculationError("дом не относится к этой ячейке")
