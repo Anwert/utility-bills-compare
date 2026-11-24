@@ -42,7 +42,20 @@
     }
   ],
   "listing_sites": [],
-  "fx_sources": [],
+  "fx_sources": [
+    {
+      "id": "fx_pln_ecb",
+      "adapter": "fx_ecb",
+      "kind": "official",
+      "priority": 0,
+      "enabled": true,
+      "reliability": "official",
+      "settings": {
+        "url": "https://data-api.ecb.europa.eu/service/data/EXR/M.PLN.EUR.SP00.A",
+        "currency": "PLN"
+      }
+    }
+  ],
   "hdd_sources": [
     {
       "id": "hdd_open_meteo",
