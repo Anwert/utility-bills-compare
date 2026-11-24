@@ -18,7 +18,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:46:07.541378Z",
+            "fetched_at": "2026-11-24T22:56:34.818103Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
@@ -112,8 +112,8 @@
         "pending_source_id": null
       },
       "checked": "2026-10",
-      "stale": false,
-      "note": "",
+      "stale": true,
+      "note": "источники не отдали данные, показано прошлое значение",
       "history": [
         {
           "period": "2026-10",
@@ -192,8 +192,8 @@
         "pending_source_id": null
       },
       "checked": "2026-10",
-      "stale": false,
-      "note": "",
+      "stale": true,
+      "note": "источники не отдали данные, показано прошлое значение",
       "history": [
         {
           "period": "2026-10",
@@ -239,7 +239,7 @@
           "source": {
             "kind": "statistics",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:46:45.360313Z",
+            "fetched_at": "2026-11-24T22:57:36.838982Z",
             "name": "yerevan_water_last_official"
           },
           "method": "regex",
@@ -300,7 +300,7 @@
           "source": {
             "kind": "statistics",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:46:45.360696Z",
+            "fetched_at": "2026-11-24T22:57:36.839246Z",
             "name": "yerevan_sewage_last_official"
           },
           "method": "regex",
@@ -361,7 +361,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:46:45.666608Z",
+            "fetched_at": "2026-11-24T22:57:38.057549Z",
             "name": "yerevan_waste_arlis"
           },
           "method": "regex",
