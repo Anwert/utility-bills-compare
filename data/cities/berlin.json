@@ -180,6 +180,9 @@
   "hdd_sources": [
     {
       "id": "hdd_open_meteo",
+      "title_ru": "Open-Meteo: архив погоды ERA5",
+      "page_url": "https://open-meteo.com/en/docs/historical-weather-api",
+      "reading": "api",
       "adapter": "open_meteo_hdd",
       "kind": "third_party",
       "priority": 0,

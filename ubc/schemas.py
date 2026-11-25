@@ -174,6 +174,16 @@ class ExtractionMethod(StrEnum):
     api = "api"
 
 
+class Reading(StrEnum):
+    """How a source is read, for the «Источники» tab. The calculation ignores it."""
+
+    page = "page"
+    pdf = "pdf"
+    api = "api"
+    scan = "scan"
+    manual = "manual"
+
+
 class Mark(StrEnum):
     """Badges on a published line. Derived at calculation time, not by the adapter."""
 
@@ -274,6 +284,14 @@ ITEM_LABELS_RU: dict[Item, str] = {
     Item.fx: "Курс",
     Item.hdd: "Градусо-сутки",
     Item.hdd_annual: "Градусо-сутки за отопительный год",
+}
+
+READING_LABELS_RU: dict[Reading, str] = {
+    Reading.page: "страница сайта",
+    Reading.pdf: "таблица в PDF",
+    Reading.api: "открытый программный доступ (API)",
+    Reading.scan: "скан документа, программа его не читает",
+    Reading.manual: "переписано вручную из документа, новая цена сама не подхватится",
 }
 
 MARK_LABELS_RU: dict[Mark, str] = {
@@ -565,6 +583,8 @@ class SourceConfig(ContractModel):
     (usually a ``url``). ``priority`` breaks ties inside the same ``kind``;
     a lower number is tried first. Kind always outranks priority:
     proxy_direct, then official, then third_party, then statistics.
+    ``title_ru``, ``page_url``, and ``reading`` are shown to people on the
+    «Источники» tab; ``page_url`` replaces an API endpoint in the link.
     """
 
     id: str = Field(pattern=_ID.pattern)
@@ -573,6 +593,9 @@ class SourceConfig(ContractModel):
     priority: int = Field(default=0, ge=0, le=999)
     enabled: bool = True
     reliability: Reliability
+    title_ru: str | None = Field(default=None, min_length=1)
+    page_url: OptionalHttpUrlString = None
+    reading: Reading | None = None
     settings: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -591,6 +614,8 @@ class ListingSite(ContractModel):
     id: str = Field(pattern=_ID.pattern)
     adapter: str = Field(pattern=_ID.pattern)
     enabled: bool = True
+    title_ru: str | None = Field(default=None, min_length=1)
+    page_url: OptionalHttpUrlString = None
     url: OptionalHttpUrlString = None
     settings: dict[str, Any] = Field(default_factory=dict)
 
@@ -692,7 +717,11 @@ class OpenDataSource(ContractModel):
 
 
 class CityConfig(ContractModel):
-    """Everything that differs per city. Adding a city is a new file, not a calculation change."""
+    """Everything that differs per city. Adding a city is a new file, not a calculation change.
+
+    ``limits_ru`` is what this city's figures leave out, in plain Russian, for the
+    «Источники» tab. Edit it together with the source or norm it talks about.
+    """
 
     schema_version: Literal[1] = SCHEMA_VERSION
     id: CityId
@@ -702,6 +731,7 @@ class CityConfig(ContractModel):
     latitude: float
     longitude: float
     paid_data_note: str = Field(min_length=1)
+    limits_ru: list[str] = Field(default_factory=list)
     articles: list[ArticleSources]
     listing_sites: list[ListingSite] = Field(default_factory=list)
     house_rules: HouseRules = Field(default_factory=HouseRules)

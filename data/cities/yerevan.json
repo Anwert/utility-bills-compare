@@ -7,12 +7,19 @@
   "latitude": 40.18,
   "longitude": 44.51,
   "paid_data_note": "оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)",
+  "limits_ru": [
+    "За обслуживание дома взята муниципальная ставка: 25 AMD/м² в месяц по решению на 2026 год. Управляющие современных домов обычно берут больше, поэтому итог новостроек и бизнес-класса занижен.",
+    "Электричество считается по дневной цене на весь расход: какая его часть приходится на ночь, взять неоткуда.",
+    "Норма отопления панельного дома — расчётная величина, она скорее выше настоящих счетов."
+  ],
   "articles": [
     {
       "item": "maintenance",
       "sources": [
         {
           "id": "yerevan_maintenance_arlis",
+          "title_ru": "Решение Совета старейшин Еревана о местных платежах, плата за управление домом",
+          "reading": "page",
           "adapter": "yerevan_arlis",
           "kind": "official",
           "priority": 0,
@@ -34,6 +41,8 @@
       "sources": [
         {
           "id": "yerevan_electricity_psrc",
+          "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): тарифы на электричество",
+          "reading": "pdf",
           "adapter": "yerevan_psrc_electricity",
           "kind": "official",
           "priority": 0,
@@ -50,6 +59,8 @@
       "sources": [
         {
           "id": "yerevan_gas_psrc",
+          "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): тарифы на газ",
+          "reading": "pdf",
           "adapter": "yerevan_psrc_gas",
           "kind": "official",
           "priority": 0,
@@ -66,6 +77,8 @@
       "sources": [
         {
           "id": "yerevan_water_psrc_scan",
+          "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): решение о тарифах на воду",
+          "reading": "scan",
           "adapter": "yerevan_psrc_scan",
           "kind": "official",
           "priority": 0,
@@ -77,6 +90,8 @@
         },
         {
           "id": "yerevan_water_last_official",
+          "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): решение №397-Н, питьевая вода",
+          "reading": "manual",
           "adapter": "yerevan_water_stat",
           "kind": "statistics",
           "priority": 0,
@@ -98,6 +113,8 @@
       "sources": [
         {
           "id": "yerevan_sewage_psrc_scan",
+          "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): решение о тарифах на воду",
+          "reading": "scan",
           "adapter": "yerevan_psrc_scan",
           "kind": "official",
           "priority": 0,
@@ -109,6 +126,8 @@
         },
         {
           "id": "yerevan_sewage_last_official",
+          "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): решение №397-Н, водоотведение",
+          "reading": "manual",
           "adapter": "yerevan_water_stat",
           "kind": "statistics",
           "priority": 0,
@@ -126,6 +145,8 @@
       "sources": [
         {
           "id": "yerevan_waste_arlis",
+          "title_ru": "Решение Совета старейшин Еревана о местных платежах, вывоз мусора",
+          "reading": "page",
           "adapter": "yerevan_arlis",
           "kind": "official",
           "priority": 0,
@@ -142,12 +163,15 @@
   "listing_sites": [
     {
       "id": "myrealty",
+      "title_ru": "MyRealty.am",
       "adapter": "myrealty",
       "enabled": true,
       "url": "https://myrealty.am/hy/vacharq/bnakaranner"
     },
     {
       "id": "real_estate_am",
+      "title_ru": "Real-Estate.am",
+      "page_url": "https://www.real-estate.am/",
       "adapter": "real_estate_am",
       "enabled": true,
       "url": "https://www.real-estate.am/sitemaps/properties/sitemap.xml"
@@ -313,6 +337,8 @@
   "fx_sources": [
     {
       "id": "fx_amd_cba",
+      "title_ru": "Центральный банк Армении",
+      "reading": "api",
       "adapter": "fx_cba",
       "kind": "official",
       "priority": 0,
@@ -327,6 +353,9 @@
   "hdd_sources": [
     {
       "id": "hdd_open_meteo",
+      "title_ru": "Open-Meteo: архив погоды ERA5",
+      "page_url": "https://open-meteo.com/en/docs/historical-weather-api",
+      "reading": "api",
       "adapter": "open_meteo_hdd",
       "kind": "third_party",
       "priority": 0,
