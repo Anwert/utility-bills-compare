@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "warsaw",
   "period": "2026-10",
-  "collected_at": "2026-11-24T22:54:23.227965+00:00",
+  "collected_at": "2026-11-25T02:30:24.574273+00:00",
   "sources": [
     {
       "source_id": "fx_pln_ecb",
@@ -23,7 +23,7 @@
           "source": {
             "kind": "official",
             "url": "https://data-api.ecb.europa.eu/service/data/EXR/M.PLN.EUR.SP00.A?startPeriod=2026-10&endPeriod=2026-10&format=csvdata",
-            "fetched_at": "2026-11-24T22:56:33.503584Z",
+            "fetched_at": "2026-11-25T02:30:39.795999Z",
             "name": "ECB"
           },
           "method": "api",

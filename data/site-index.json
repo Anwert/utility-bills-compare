@@ -2,6 +2,42 @@
   "schema_version": 1,
   "files": [
     {
+      "path": "yerevan-2026-01.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-02.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-03.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-04.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-05.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-06.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-07.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-08.json",
+      "example": false
+    },
+    {
+      "path": "yerevan-2026-09.json",
+      "example": false
+    },
+    {
       "path": "yerevan-2026-10.json",
       "example": false
     },

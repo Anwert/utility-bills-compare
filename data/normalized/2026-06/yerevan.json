@@ -1,0 +1,488 @@
+{
+  "schema_version": 1,
+  "city": "yerevan",
+  "period": "2026-06",
+  "collected_at": "2026-11-25T02:36:19.255334+00:00",
+  "sources": [
+    {
+      "source_id": "yerevan_maintenance_arlis",
+      "item": "maintenance",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "maintenance",
+          "category": "housing",
+          "value": 25.0,
+          "unit": "AMD/m2/month",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": "2026-12-31",
+          "source": {
+            "kind": "official",
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "fetched_at": "2026-11-25T02:36:19.465558Z",
+            "name": "yerevan_maintenance_arlis"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
+        }
+      ]
+    },
+    {
+      "source_id": "yerevan_electricity_psrc",
+      "item": "electricity",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "electricity",
+          "category": "utility",
+          "value": 46.48,
+          "unit": "AMD/kWh",
+          "currency": "AMD",
+          "tiers": [
+            {
+              "up_to": 201.0,
+              "value": 46.48,
+              "unit": null,
+              "label": "day, up to 200 kWh/month"
+            },
+            {
+              "up_to": 401.0,
+              "value": 48.48,
+              "unit": null,
+              "label": "day, 201-400 kWh/month"
+            },
+            {
+              "up_to": null,
+              "value": 53.48,
+              "unit": null,
+              "label": "day, above 400 kWh/month"
+            }
+          ],
+          "valid_from": "2022-02-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+            "fetched_at": "2026-11-25T02:36:37.584439Z",
+            "name": "yerevan_electricity_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "Дневной тариф для населения, AMD за кВт·ч с НДС: 46,48 при расходе до 200 кВт·ч в месяц, 48,48 при 201–400, 53,48 выше 400. Весь расход посчитан по дневной цене: какая его часть приходится на ночь, неизвестно. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025."
+        },
+        {
+          "city": "yerevan",
+          "item": "electricity",
+          "category": "utility",
+          "value": 36.48,
+          "unit": "AMD/kWh",
+          "currency": "AMD",
+          "tiers": [
+            {
+              "up_to": 201.0,
+              "value": 36.48,
+              "unit": null,
+              "label": "night, up to 200 kWh/month"
+            },
+            {
+              "up_to": 401.0,
+              "value": 38.48,
+              "unit": null,
+              "label": "night, 201-400 kWh/month"
+            },
+            {
+              "up_to": null,
+              "value": 43.48,
+              "unit": null,
+              "label": "night, above 400 kWh/month"
+            }
+          ],
+          "valid_from": "2022-02-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+            "fetched_at": "2026-11-25T02:36:37.584439Z",
+            "name": "yerevan_electricity_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "Ночной тариф для населения, AMD за кВт·ч с НДС: 36,48 при расходе до 200 кВт·ч в месяц, 38,48 при 201–400, 43,48 выше 400. В счёт не входит. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025."
+        }
+      ]
+    },
+    {
+      "source_id": "yerevan_gas_psrc",
+      "item": "gas",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "gas",
+          "category": "utility",
+          "value": 143.7,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2022-04-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+            "fetched_at": "2026-11-25T02:36:41.253400Z",
+            "name": "yerevan_gas_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026."
+        }
+      ]
+    },
+    {
+      "source_id": "yerevan_water_last_official",
+      "item": "water",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "water",
+          "category": "utility",
+          "value": 170.36,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "fetched_at": "2026-11-25T02:36:41.281745Z",
+            "name": "yerevan_water_last_official"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "170,36 AMD за м³ с НДС — питьевая вода, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
+        }
+      ]
+    },
+    {
+      "source_id": "yerevan_sewage_last_official",
+      "item": "sewage",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "sewage",
+          "category": "utility",
+          "value": 30.06,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "fetched_at": "2026-11-25T02:36:41.282386Z",
+            "name": "yerevan_sewage_last_official"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "30,06 AMD за м³ с НДС — водоотведение, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
+        }
+      ]
+    },
+    {
+      "source_id": "yerevan_waste_arlis",
+      "item": "waste",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "waste",
+          "category": "utility",
+          "value": 13.0,
+          "unit": "AMD/m2/month",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": "2026-12-31",
+          "source": {
+            "kind": "official",
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "fetched_at": "2026-11-25T02:36:41.443353Z",
+            "name": "yerevan_waste_arlis"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
+        }
+      ]
+    },
+    {
+      "source_id": "fx_amd_cba",
+      "item": "fx",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "all",
+          "item": "fx",
+          "category": "context",
+          "value": 424.1973,
+          "unit": "AMD/EUR",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-06-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://api.cba.am/exchangerates.asmx",
+            "fetched_at": "2026-11-25T02:36:41.547857Z",
+            "name": "Central Bank of Armenia"
+          },
+          "method": "api",
+          "reliability": "official",
+          "note": "CBA mean of 22 daily rates"
+        }
+      ]
+    },
+    {
+      "source_id": "hdd_open_meteo",
+      "item": "hdd",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "hdd",
+          "category": "context",
+          "value": 0.0,
+          "unit": "K*day",
+          "currency": null,
+          "tiers": [],
+          "valid_from": "2026-06-01",
+          "valid_to": "2026-06-30",
+          "source": {
+            "kind": "third_party",
+            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-06-01&end_date=2026-06-30&daily=temperature_2m_mean&timezone=auto&models=era5",
+            "fetched_at": "2026-11-25T02:36:41.556831Z",
+            "name": "Open-Meteo ERA5"
+          },
+          "method": "api",
+          "reliability": "third_party",
+          "note": "30 days"
+        },
+        {
+          "city": "yerevan",
+          "item": "hdd_annual",
+          "category": "context",
+          "value": 2334.8,
+          "unit": "K*day",
+          "currency": null,
+          "tiers": [],
+          "valid_from": "2026-06-01",
+          "valid_to": "2026-06-30",
+          "source": {
+            "kind": "third_party",
+            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-07-01&end_date=2026-06-30&daily=temperature_2m_mean&timezone=auto&models=era5",
+            "fetched_at": "2026-11-25T02:36:41.556831Z",
+            "name": "Open-Meteo ERA5"
+          },
+          "method": "api",
+          "reliability": "third_party",
+          "note": "365 days, 2025-07-01..2026-06-30"
+        }
+      ]
+    }
+  ],
+  "acting": {
+    "maintenance": {
+      "source_id": "yerevan_maintenance_arlis",
+      "marks": [],
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "maintenance",
+          "category": "housing",
+          "value": 25.0,
+          "unit": "AMD/m2/month",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": "2026-12-31",
+          "source": {
+            "kind": "official",
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "fetched_at": "2026-11-25T02:30:39.996191Z",
+            "name": "yerevan_maintenance_arlis"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
+        }
+      ]
+    },
+    "electricity": {
+      "source_id": "yerevan_electricity_psrc",
+      "marks": [],
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "electricity",
+          "category": "utility",
+          "value": 46.48,
+          "unit": "AMD/kWh",
+          "currency": "AMD",
+          "tiers": [
+            {
+              "up_to": 201.0,
+              "value": 46.48,
+              "unit": null,
+              "label": "day, up to 200 kWh/month"
+            },
+            {
+              "up_to": 401.0,
+              "value": 48.48,
+              "unit": null,
+              "label": "day, 201-400 kWh/month"
+            },
+            {
+              "up_to": null,
+              "value": 53.48,
+              "unit": null,
+              "label": "day, above 400 kWh/month"
+            }
+          ],
+          "valid_from": "2022-02-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+            "fetched_at": "2026-11-25T02:31:10.154267Z",
+            "name": "yerevan_electricity_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "Дневной тариф для населения, AMD за кВт·ч с НДС: 46,48 при расходе до 200 кВт·ч в месяц, 48,48 при 201–400, 53,48 выше 400. Весь расход посчитан по дневной цене: какая его часть приходится на ночь, неизвестно. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025."
+        }
+      ]
+    },
+    "gas": {
+      "source_id": "yerevan_gas_psrc",
+      "marks": [],
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "gas",
+          "category": "utility",
+          "value": 143.7,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2022-04-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+            "fetched_at": "2026-11-25T02:31:28.160934Z",
+            "name": "yerevan_gas_psrc"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026."
+        }
+      ]
+    },
+    "water": {
+      "source_id": "yerevan_water_last_official",
+      "marks": [],
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "water",
+          "category": "utility",
+          "value": 170.36,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "fetched_at": "2026-11-25T02:31:28.189381Z",
+            "name": "yerevan_water_last_official"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "170,36 AMD за м³ с НДС — питьевая вода, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
+        }
+      ]
+    },
+    "sewage": {
+      "source_id": "yerevan_sewage_last_official",
+      "marks": [],
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "sewage",
+          "category": "utility",
+          "value": 30.06,
+          "unit": "AMD/m3",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+            "fetched_at": "2026-11-25T02:31:28.189891Z",
+            "name": "yerevan_sewage_last_official"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "30,06 AMD за м³ с НДС — водоотведение, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
+        }
+      ]
+    },
+    "waste": {
+      "source_id": "yerevan_waste_arlis",
+      "marks": [],
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "waste",
+          "category": "utility",
+          "value": 13.0,
+          "unit": "AMD/m2/month",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-01-01",
+          "valid_to": "2026-12-31",
+          "source": {
+            "kind": "official",
+            "url": "https://www.arlis.am/hy/acts/219208",
+            "fetched_at": "2026-11-25T02:31:28.539055Z",
+            "name": "yerevan_waste_arlis"
+          },
+          "method": "regex",
+          "reliability": "official",
+          "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
+        }
+      ]
+    }
+  },
+  "listings": []
+}

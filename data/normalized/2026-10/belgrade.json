@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "belgrade",
   "period": "2026-10",
-  "collected_at": "2026-11-24T22:54:23.227965+00:00",
+  "collected_at": "2026-11-25T02:30:24.574273+00:00",
   "sources": [
     {
       "source_id": "fx_rsd_eurostat",
@@ -23,7 +23,7 @@
           "source": {
             "kind": "official",
             "url": "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/ert_bil_eur_m?currency=RSD&statinfo=AVG&time=2026-10",
-            "fetched_at": "2026-11-24T22:56:06.155576Z",
+            "fetched_at": "2026-11-25T02:30:24.926430Z",
             "name": "Eurostat"
           },
           "method": "api",
