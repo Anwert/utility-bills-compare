@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import json
 import lzma
+import re
 import tarfile
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -47,20 +48,17 @@ NOW = datetime(2026, 11, 7, 6, 0, tzinfo=UTC)
 
 
 class NextMonth:
-    """Answers another month's weather and rate with the saved October ones."""
-
-    _DATES = (
-        ("2027-01-01", "2026-10-01"),
-        ("2027-01-31", "2026-10-31"),
-        ("2026-02-01", "2025-11-01"),
-    )
+    """Answers any month's weather and rate with the saved October ones."""
 
     def __init__(self, pages: SavedPages) -> None:
         self._pages = pages
 
     def _october(self, url: str) -> str:
-        for other, october in self._DATES:
-            url = url.replace(other, october)
+        asked = re.findall(r"\d{4}-\d\d-\d\d", url)
+        year = asked and date.fromisoformat(asked[1]) - date.fromisoformat(asked[0])
+        saved = ("2025-11-01" if year and year.days > 31 else "2026-10-01", "2026-10-31")
+        for day, october in zip(asked, saved, strict=False):
+            url = url.replace(day, october)
         return url
 
     def fetch_bytes(self, url: str) -> bytes:
@@ -68,11 +66,17 @@ class NextMonth:
 
     def fetch_text(self, url: str) -> str:
         text = self._pages.fetch_text(self._october(url))
-        if "open-meteo" in url:
-            for other, october in self._DATES:
-                text = text.replace(october, other)
-            text = text.replace('"2026-10-', '"2027-01-')
-        return text
+        if "open-meteo" not in url:
+            return text
+        start, end = map(date.fromisoformat, re.findall(r"\d{4}-\d\d-\d\d", url))
+        body = json.loads(text)
+        days = [start + timedelta(days=n) for n in range((end - start).days + 1)]
+        means = body["daily"]["temperature_2m_mean"]
+        body["daily"] = {
+            "time": [day.isoformat() for day in days],
+            "temperature_2m_mean": [means[n % len(means)] for n in range(len(days))],
+        }
+        return json.dumps(body)
 
     def post_text(self, url: str, body: str, *, headers: dict[str, str] | None = None) -> str:
         return self._pages.post_text(self._october(url), body, headers=headers)
@@ -735,6 +739,36 @@ def test_source_whose_tariff_has_expired_is_reported_and_the_value_is_stale(
     assert [
         alert.detail for alert in report.alerts if alert.source_id == "yerevan_waste_arlis"
     ] == ["тариф источника действует только по 2026-12-31"]
+    # The water decision is copied for 2026 only.
+    (water,) = [line for line in cell.lines if line.item is Item.water]
+    assert water.amount_eur == 0.84
+    assert Mark.stale in water.marks
+    assert "yerevan_water_last_official" in {alert.source_id for alert in report.alerts}
+
+
+@pytest.mark.parametrize("month", ["2026-01", "2026-02", "2026-09"])
+def test_yerevan_months_of_2026_before_october_are_billed_by_the_tariffs_in_force(
+    tmp_path: Path, month: str
+) -> None:
+    issues = Issues()
+    run_yerevan(
+        tmp_path,
+        period=YearMonth.parse(month),
+        issues=issues,
+        fetcher=NextMonth(SavedPages(*YEREVAN_PAGES)),
+    )
+
+    bill = lines(filled(tmp_path, month))
+    assert {item: line["valid_from"] for item, line in bill.items()} == {
+        "maintenance": "2026-01-01",
+        "electricity": "2022-02-01",
+        "gas": "2022-04-01",
+        "water": "2026-01-01",
+        "sewage": "2026-01-01",
+        "waste": "2026-01-01",
+    }
+    assert not any("stale" in line["marks"] for line in bill.values())
+    assert issues.titles == []
 
 
 # Secrets

@@ -9,8 +9,8 @@ spreads an annual consumption norm across months.
 The heating year is the twelve months that end on the last day of the collected
 month (October 2026 → 2025-11-01 .. 2026-10-31). The window is fixed by that
 month, so it does not depend on the clock, and every day is already in the
-archive once the month itself is. The archive runs a few days behind: a month
-with days still missing fails the source instead of looking warmer than it was.
+archive once the month itself is. The archive runs a few days behind: a month or
+a year with days missing fails the source instead of looking warmer than it was.
 """
 
 from __future__ import annotations
@@ -209,8 +209,8 @@ def _record(
     if present == 0:
         raise ValueError(f"Open-Meteo returned no daily temperatures for {url}")
     days = (end - start).days + 1
-    if not annual and present < days:
-        raise ValueError(f"Open-Meteo has {present} of {days} days of the month so far")
+    if present < days:
+        raise ValueError(f"Open-Meteo has {present} of {days} days of {start}..{end}")
     value = (
         annual_heating_degree_days(temperatures) if annual else heating_degree_days(temperatures)
     )

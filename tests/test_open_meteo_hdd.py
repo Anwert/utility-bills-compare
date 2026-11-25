@@ -225,6 +225,31 @@ def test_month_the_archive_has_not_finished_fails_the_source(tmp_path: Path) -> 
         get_adapter("open_meteo_hdd").collect(_context("yerevan", fetcher))
 
 
+@pytest.mark.parametrize("keep", [30, 364], ids=["one month of the year", "one day missing"])
+@pytest.mark.parametrize("how", ["null", "absent"])
+def test_heating_year_with_missing_days_fails_the_source(
+    tmp_path: Path, keep: int, how: str
+) -> None:
+    body = json.loads((_FIXTURES / "yerevan-2025-11_2026-10.json").read_text(encoding="utf-8"))
+    daily = body["daily"]
+    if how == "null":
+        daily["temperature_2m_mean"][keep:] = [None] * (365 - keep)
+    else:
+        daily["time"], daily["temperature_2m_mean"] = (
+            daily["time"][:keep],
+            daily["temperature_2m_mean"][:keep],
+        )
+    (tmp_path / "year.json").write_text(json.dumps(body), encoding="utf-8")
+    month = (_FIXTURES / "yerevan-2026-10.json").read_text(encoding="utf-8")
+    (tmp_path / "month.json").write_text(month, encoding="utf-8")
+    fetcher = FixtureFetcher(
+        tmp_path, {_MONTH_URL["yerevan"]: "month.json", _YEAR_URL["yerevan"]: "year.json"}
+    )
+
+    with pytest.raises(ValueError, match=f"{keep} of 365"):
+        get_adapter("open_meteo_hdd").collect(_context("yerevan", fetcher))
+
+
 class _Busy(FixtureFetcher):
     """Answers with ``status`` to the first ``refusals`` requests."""
 
