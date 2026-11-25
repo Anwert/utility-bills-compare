@@ -27,6 +27,7 @@ from pathlib import Path
 
 from ubc.adapter import CollectContext, load_adapters
 from ubc.alerts import GitHubIssues, GitHubRestClient
+from ubc.display_rates import collect_display_rate
 from ubc.fetch import ContentFetcher, HttpFetcher
 from ubc.load import ConfigError, load_cities, load_example_city_month, load_reference
 from ubc.monthly import MonthOptions, MonthReport, PublicationError, run_month
@@ -200,6 +201,7 @@ def _run(
         issues=None if args.no_alerts else _issues(env),
         secrets=SecretConfig.from_env(env),
         dry_run=args.dry_run,
+        display_rate=collect_display_rate,
         hide=tuple(filter(None, (_token(env),))),
         log=lambda line: print(line, flush=True),
     )

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "rates": [
+    {
+      "month": "2026-01",
+      "amd_per_eur": 445.1659,
+      "rub_per_eur": 91.4692,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-02",
+      "amd_per_eur": 446.491,
+      "rub_per_eur": 90.9719,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-03",
+      "amd_per_eur": 436.0718,
+      "rub_per_eur": 93.1236,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-04",
+      "amd_per_eur": 437.6605,
+      "rub_per_eur": 89.8935,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-05",
+      "amd_per_eur": 430.3839,
+      "rub_per_eur": 85.0929,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-06",
+      "amd_per_eur": 424.1973,
+      "rub_per_eur": 85.1476,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-07",
+      "amd_per_eur": 418.9809,
+      "rub_per_eur": 89.1158,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-08",
+      "amd_per_eur": 423.6186,
+      "rub_per_eur": 96.8768,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-09",
+      "amd_per_eur": 418.6076,
+      "rub_per_eur": 97.9795,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    },
+    {
+      "month": "2026-10",
+      "amd_per_eur": 405.045,
+      "rub_per_eur": 92.8591,
+      "source_url": "https://www.cba.am/",
+      "source_name": "Центральный банк Армении"
+    }
+  ]
+}

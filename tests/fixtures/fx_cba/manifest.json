@@ -1,3 +1,4 @@
 {
-  "https://api.cba.am/exchangerates.asmx?DateFrom=2026-10-01&DateTo=2026-10-31": "2026-10.xml"
+  "https://api.cba.am/exchangerates.asmx?DateFrom=2026-10-01&DateTo=2026-10-31": "2026-10.xml",
+  "https://api.cba.am/exchangerates.asmx?ISOCodes=EUR,RUB&DateFrom=2026-10-01&DateTo=2026-10-31": "2026-10-eur-rub.xml"
 }
