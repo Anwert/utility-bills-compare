@@ -795,7 +795,7 @@ def test_consumption_norms_live_in_data_with_sources() -> None:
             ]
             assert len(electricity) == 1
             assert electricity[0].basis is Basis.per_person
-            assert electricity[0].annual_value == 950
+            assert electricity[0].annual_value == (781 if city is CityId.yerevan else 950)
             assert electricity[0].heating is None
 
     warsaw_panel = next(
