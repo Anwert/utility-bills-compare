@@ -24,6 +24,7 @@ from ubc.schemas import (
     CellBuilding,
     CellStatus,
     CityId,
+    ClassFee,
     ConsumptionNorm,
     Currency,
     ExtractionMethod,
@@ -94,12 +95,15 @@ def calculate_cell(
     apartment: ReferenceApartment | None = None,
     extra_marks: Mapping[Item, Sequence[Mark]] | None = None,
     empty_reason: str | None = None,
+    class_fees: Sequence[ClassFee] = (),
 ) -> Cell:
     """Price one cell for ``period``.
 
     ``extra_marks`` carries badges the source-selection policy already decided
     (``stale``). Fixed, norm-based, statistics, third-party, and model-extracted
     badges are derived here. ``empty_reason`` is shown when there is no house.
+    Maintenance is the fee from the listing, then the ``class_fees`` entry of this
+    class in force on the 1st, then the official rate.
     """
 
     city_id = CityId(city)
@@ -134,6 +138,18 @@ def calculate_cell(
             Item.maintenance,
             _housing_fee_line(house, dwelling, month, marks),
         )
+    class_fee = next(
+        (
+            fee
+            for fee in class_fees
+            if fee.house_class is row
+            and fee.valid_from <= period.first_day
+            and not house.housing_fees
+        ),
+        None,
+    )
+    if class_fee is not None:
+        add(Item.maintenance, _class_fee_line(class_fee, dwelling, month))
 
     present = {
         record.item
@@ -149,7 +165,7 @@ def calculate_cell(
             continue
         if item is Item.heating and column is not HeatingType.district:
             continue
-        if item is Item.maintenance and house.housing_fees:
+        if item is Item.maintenance and (house.housing_fees or class_fee is not None):
             continue
         if item is Item.gas and column is not HeatingType.gas_boiler:
             if not _cooking_gas(norms, city_id, row):
@@ -556,6 +572,20 @@ def _housing_fee_line(
         valid_from=house.last_seen,
         marks=[mark for mark in _MARK_ORDER if mark in found],
         note=house.note,
+    )
+
+
+def _class_fee_line(fee: ClassFee, dwelling: ReferenceApartment, month: _Month) -> LineItem:
+    local = Decimal(str(fee.amount_per_m2)) * Decimal(dwelling.area_m2)
+    return LineItem(
+        item=Item.maintenance,
+        category=Category.housing,
+        amount_eur=_euros(month.to_eur(local, fee.currency)),
+        source_url=fee.source_url,
+        source_kind="official",
+        valid_from=fee.valid_from,
+        marks=[Mark.fixed],
+        note=fee.note,
     )
 
 

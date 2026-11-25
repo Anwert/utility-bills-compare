@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "yerevan",
   "period": "2026-06",
-  "collected_at": "2026-11-25T07:42:13.152106+00:00",
+  "collected_at": "2026-11-25T08:04:14.743767+00:00",
   "sources": [
     {
       "source_id": "yerevan_maintenance_arlis",
@@ -23,7 +23,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-25T07:42:13.353094Z",
+            "fetched_at": "2026-11-25T08:04:14.964771Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
@@ -51,7 +51,7 @@
           "source": {
             "kind": "official",
             "url": "https://api.cba.am/exchangerates.asmx",
-            "fetched_at": "2026-11-25T07:42:13.492522Z",
+            "fetched_at": "2026-11-25T08:04:15.091522Z",
             "name": "Central Bank of Armenia"
           },
           "method": "api",
@@ -79,7 +79,7 @@
           "source": {
             "kind": "third_party",
             "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-06-01&end_date=2026-06-30&daily=temperature_2m_mean&timezone=auto&models=era5",
-            "fetched_at": "2026-11-25T07:42:13.499091Z",
+            "fetched_at": "2026-11-25T08:04:15.098081Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",
@@ -99,7 +99,7 @@
           "source": {
             "kind": "third_party",
             "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-07-01&end_date=2026-06-30&daily=temperature_2m_mean&timezone=auto&models=era5",
-            "fetched_at": "2026-11-25T07:42:13.499091Z",
+            "fetched_at": "2026-11-25T08:04:15.098081Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",

@@ -44,6 +44,7 @@ from ubc.schemas import (
     ListingSite,
     Mark,
     OpenDataKind,
+    Reading,
     ReferenceApartment,
     ReferenceData,
     SourceConfig,
@@ -141,7 +142,10 @@ def _city(city: CityConfig, reference: ReferenceData) -> dict[str, Any]:
             {
                 "item": article.item.value,
                 "label": ITEM_LABELS_RU[article.item],
-                "sources": _sources(article.sources),
+                "sources": [
+                    *(_class_fees(city) if article.item is Item.maintenance else []),
+                    *_sources(article.sources),
+                ],
                 "note": None
                 if article.sources
                 else _no_source_note(city.id, article.item, reference),
@@ -191,6 +195,21 @@ def _source(source: SourceConfig) -> dict[str, Any]:
         "enabled": source.enabled,
         "reading": READING_LABELS_RU[source.reading] if source.reading else None,
     }
+
+
+def _class_fees(city: CityConfig) -> list[dict[str, Any]]:
+    return [
+        {
+            "title": (
+                f"{fee.building}: {_number(fee.amount_per_m2)} {fee.currency.value} за м² в месяц"
+            ),
+            "url": fee.source_url,
+            "kind": f"сбор реального дома, класс «{HOUSE_CLASS_LABELS_RU[fee.house_class]}»",
+            "enabled": True,
+            "reading": READING_LABELS_RU[Reading.manual],
+        }
+        for fee in city.class_fees
+    ]
 
 
 def _site(site: ListingSite) -> dict[str, Any]:
@@ -387,8 +406,8 @@ def _sections(apartment: ReferenceApartment) -> list[dict[str, Any]]:
                 "На сам расчёт он не влияет.",
                 "Фиксированные платежи (обслуживание дома, мусор и подобное) расход не учитывают: "
                 "это ставка за м², за человека или за квартиру.",
-                "Сбор за дом берётся из объявления, если он там есть, иначе — официальная ставка "
-                "города.",
+                "Сбор за дом берётся из объявления, если он там есть. Если нет — сбор другого "
+                "реального дома того же класса, если он найден, иначе официальная ставка города.",
                 "Если цена растёт ступенями, каждая ступень действует только на свою часть "
                 "расхода.",
                 "Если отопление идёт на том же газе или электричестве, что и обычный расход, "
