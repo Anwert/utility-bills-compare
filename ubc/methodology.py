@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -29,12 +30,15 @@ from ubc.schemas import (
     ITEM_LABELS_RU,
     MARK_LABELS_RU,
     READING_LABELS_RU,
+    Amenity,
     Basis,
     CityConfig,
     CityId,
     ConsumptionNorm,
     Currency,
+    HeatingType,
     HouseClass,
+    HouseClassRule,
     HouseRules,
     Item,
     ListingSite,
@@ -63,6 +67,13 @@ _OPEN_DATA_RU: dict[OpenDataKind, str] = {
     OpenDataKind.berlin_building_age: "Umweltatlas Берлина: годы застройки и вид квартала",
 }
 
+_AMENITY_RU: dict[Amenity, str] = {
+    Amenity.swimming_pool: "бассейн",
+    Amenity.gym: "спортзал",
+    Amenity.tennis: "теннисный корт",
+    Amenity.concierge: "консьерж",
+}
+
 _MARK_TEXT_RU: dict[Mark, str] = {
     Mark.fixed: "сумма не зависит от расхода и погоды",
     Mark.norm_based: "тариф умножен на типичный расход, это не показания счётчика",
@@ -72,13 +83,14 @@ _MARK_TEXT_RU: dict[Mark, str] = {
     Mark.stale: "в этом месяце нового значения нет или оно не подтвердилось, показано прошлое",
 }
 
-_NO_SOURCE_RU: dict[Item, str] = {
-    Item.heating: (
-        "Отдельного тарифа нет: отопление газовым котлом считается по цене газа, "
-        "электрическое — по цене электричества."
-    ),
-}
-_NO_SOURCE_DEFAULT_RU = "Отдельный источник не подключён."
+_NO_HEATING_RU = (
+    "Отдельного тарифа нет: отопление газовым котлом считается по цене газа, "
+    "электрическое — по цене электричества."
+)
+_GAS_HOT_WATER_RU = (
+    "Отдельного тарифа нет. Если воду греет газ, она входит в норму газа на плиту и горячую воду."
+)
+_NO_SOURCE_RU = "Отдельный источник не подключён, в сумму не входит."
 
 _COMMODITY_RU = {"kwh": "кВт·ч", "m3": "м³", "gj": "ГДж"}
 _BASIS_RU = {
@@ -132,7 +144,7 @@ def _city(city: CityConfig, reference: ReferenceData) -> dict[str, Any]:
                 "sources": _sources(article.sources),
                 "note": None
                 if article.sources
-                else _NO_SOURCE_RU.get(article.item, _NO_SOURCE_DEFAULT_RU),
+                else _no_source_note(city.id, article.item, reference),
             }
             for article in city.articles
         ],
@@ -147,6 +159,18 @@ def _city(city: CityConfig, reference: ReferenceData) -> dict[str, Any]:
         "norms": _norms(city.id, reference),
         "limits": list(city.limits_ru),
     }
+
+
+def _no_source_note(city: CityId, item: Item, reference: ReferenceData) -> str:
+    if item is Item.heating:
+        return _NO_HEATING_RU
+    everyday_gas = any(
+        norm.city is city and norm.item is Item.gas and norm.heating is None
+        for norm in reference.norms
+    )
+    if item is Item.hot_water and everyday_gas:
+        return _GAS_HOT_WATER_RU
+    return _NO_SOURCE_RU
 
 
 def _sources(sources: Sequence[SourceConfig]) -> list[dict[str, Any]]:
@@ -195,7 +219,7 @@ def _houses(city: CityConfig) -> dict[str, Any]:
         "open_data": [_OPEN_DATA_RU[source.kind] for source in city.open_data if source.enabled],
         "classes": _reasons((rule.house_class, rule.reason) for rule in rules.classes),
         "heatings": _reasons((rule.heating, rule.reason) for rule in rules.heatings),
-        "price_note": _price_note(rules),
+        "class_note": _class_note(rules),
         "prices": _prices(rules),
         "unavailable": [
             {"label": HEATING_LABELS_RU[heating], "text": text}
@@ -204,11 +228,16 @@ def _houses(city: CityConfig) -> dict[str, Any]:
     }
 
 
+# The rules cite the project's tickets; a reader of the site has no use for the number.
+_TICKET = re.compile(r" \((?:решение|исследование) #\d+\)")
+
+
 def _reasons(pairs: Iterable[tuple[Any, str]]) -> list[dict[str, Any]]:
     """Reasons without repeats, in the order of the grid's rows or columns."""
 
     found: dict[Any, list[str]] = {}
-    for key, reason in pairs:
+    for key, text in pairs:
+        reason = _TICKET.sub("", text)
         reasons = found.setdefault(key, [])
         if reason not in reasons:
             reasons.append(reason)
@@ -218,22 +247,37 @@ def _reasons(pairs: Iterable[tuple[Any, str]]) -> list[dict[str, Any]]:
     ]
 
 
-def _price_note(rules: HouseRules) -> str | None:
-    parts: list[str] = []
-    for rule in rules.classes:
-        bounds = [
-            f"{word} {_number(bound)}"
-            for word, bound in (("от", rule.price_ratio_from), ("до", rule.price_ratio_to))
-            if bound is not None
-        ]
-        if bounds:
-            parts.append(f"{HOUSE_CLASS_LABELS_RU[rule.house_class]} — {' '.join(bounds)}")
+def _class_note(rules: HouseRules) -> str | None:
+    """The class rules that are this project's own yardstick, with their numbers."""
+
+    parts = [
+        f"{HOUSE_CLASS_LABELS_RU[rule.house_class]} — {' и '.join(conditions)}."
+        for rule in rules.classes
+        if (conditions := _own_conditions(rule))
+    ]
     if not parts:
         return None
-    return (
-        f"Цена м² из объявления делится на среднюю цену м² в районе: {'; '.join(parts)}. "
-        "Эти пороги — договорённость этого проекта, а не официальная классификация."
+    parts.append(
+        "Эти признаки и пороги — договорённость этого проекта, а не официальная классификация."
     )
+    return " ".join(parts)
+
+
+def _own_conditions(rule: HouseClassRule) -> list[str]:
+    conditions: list[str] = []
+    if rule.price_ratio_from is not None:
+        conditions.append(f"цена м² не ниже {_number(rule.price_ratio_from)} средней по району")
+    if rule.price_ratio_to is not None:
+        conditions.append(f"цена м² не выше {_number(rule.price_ratio_to)} средней по району")
+    if rule.amenities_any:
+        conditions.append(f"в объявлении названо хотя бы одно: {_amenities(rule.amenities_any)}")
+    if rule.amenities_none:
+        conditions.append(f"в объявлении не названы: {_amenities(rule.amenities_none)}")
+    return conditions
+
+
+def _amenities(amenities: Sequence[Amenity]) -> str:
+    return ", ".join(_AMENITY_RU[amenity] for amenity in amenities)
 
 
 def _prices(rules: HouseRules) -> list[dict[str, str]]:
@@ -250,17 +294,17 @@ def _prices(rules: HouseRules) -> list[dict[str, str]]:
 
 
 def _norms(city: CityId, reference: ReferenceData) -> list[dict[str, Any]]:
-    groups: dict[tuple[Item, Any], dict[tuple[str, ...], list[HouseClass]]] = {}
+    groups: dict[tuple[Item, str | None], dict[tuple[str, ...], list[HouseClass]]] = {}
     for norm in reference.norms:
         if norm.city is not city:
             continue
-        rows = groups.setdefault((norm.item, norm.heating), {})
+        rows = groups.setdefault((norm.item, _scope(norm)), {})
         rows.setdefault(_norm_row(norm, reference.apartment), []).append(norm.house_class)
     ordered = sorted(groups.items(), key=lambda group: list(Item).index(group[0][0]))
     return [
         {
             "label": ITEM_LABELS_RU[item],
-            "heating": HEATING_LABELS_RU[heating] if heating else None,
+            "scope": scope,
             "rows": [
                 {
                     "classes": _class_names(classes),
@@ -272,8 +316,24 @@ def _norms(city: CityId, reference: ReferenceData) -> list[dict[str, Any]]:
                 for (value, flat, source, note), classes in rows.items()
             ],
         }
-        for (item, heating), rows in ordered
+        for (item, scope), rows in ordered
     ]
+
+
+def _scope(norm: ConsumptionNorm) -> str | None:
+    """Which columns of the grid the norm is billed in, when not in all of them."""
+
+    if norm.heating is not None:
+        column = _columns([norm.heating])
+        return column if norm.item is Item.heating else f"на отопление, {column}"
+    if norm.applies_to:
+        return f"кроме отопления, только {_columns(norm.applies_to)}"
+    return None
+
+
+def _columns(heatings: Sequence[HeatingType]) -> str:
+    names = ", ".join(f"«{HEATING_LABELS_RU[heating]}»" for heating in heatings)
+    return f"столбец {names}" if len(heatings) == 1 else f"столбцы {names}"
 
 
 def _norm_row(norm: ConsumptionNorm, apartment: ReferenceApartment) -> tuple[str, str, str, str]:
@@ -314,8 +374,8 @@ def _sections(apartment: ReferenceApartment) -> list[dict[str, Any]]:
             ),
             "items": [
                 f"Квартира везде одна и та же, эталонная: {flat}.",
-                "Норма — сколько такая квартира обычно расходует за год. "
-                "Нормы с источниками показаны выше, в части про город.",
+                "Норма — сколько расходует за год такая квартира: по статистике или по расчёту "
+                "для домов этого класса. Нормы с источниками показаны выше, в части про город.",
                 "Расход, который от погоды не зависит (например, свет и вода), "
                 "делится на 12 месяцев поровну.",
                 "Расход на отопление делится по холоду: доля месяца = его градусо-сутки / "
@@ -327,8 +387,10 @@ def _sections(apartment: ReferenceApartment) -> list[dict[str, Any]]:
                 "Сбор за дом берётся из объявления, если он там есть, иначе — официальная ставка "
                 "города.",
                 "Если цена растёт ступенями, каждая ступень действует только на свою часть "
-                "расхода. Если отопление и обычный расход идут на одном ресурсе, ступень "
-                "определяется по их сумме.",
+                "расхода.",
+                "Если отопление идёт на том же газе или электричестве, что и обычный расход, "
+                "ступень определяется по их сумме, а в разбивке это две строки: обычный расход и "
+                "то, что добавило отопление.",
                 "Если тариф сменился посреди месяца, старая и новая цена берутся "
                 "пропорционально дням.",
             ],
@@ -339,11 +401,14 @@ def _sections(apartment: ReferenceApartment) -> list[dict[str, Any]]:
             "lead": "Каждая заполненная ячейка таблицы — реальный дом из объявления.",
             "items": [
                 "Программа читает сайты объявлений города, недостающие координаты и этажность "
-                "дополняет открытыми данными.",
+                "дополняет открытыми данными. Объявления об одной и той же квартире объединяются.",
                 "Класс дома и тип отопления определяются по правилам города: материал, серия, "
-                "год, этажность, цена м². Чего в объявлении нет, то не угадывается.",
-                "На ячейку берётся один дом: тот, о котором известно больше, а при равенстве — "
-                f"с площадью ближе к {apartment.area_m2} м². Он остаётся и в следующие месяцы.",
+                "год, этажность, цена м², удобства комплекса, слова об отоплении. Если правил не "
+                "хватило или объявления противоречат друг другу, дом не берётся.",
+                "На ячейку берётся один дом: сначала тот, где отопление прямо названо в тексте, "
+                "потом тот, о котором известно больше, потом с площадью ближе к "
+                f"{apartment.area_m2} м². Он остаётся и в следующие месяцы, если новые данные не "
+                "отнесли его к другой ячейке.",
                 "Если подходящего дома нет, ячейка пустая с объяснением. Оценкой она не "
                 "заполняется.",
             ],
@@ -352,8 +417,8 @@ def _sections(apartment: ReferenceApartment) -> list[dict[str, Any]]:
             "id": "updates",
             "title": "Когда обновляется и что при сбое",
             "lead": (
-                "7-го числа каждого месяца GitHub Actions собирает данные за прошлый месяц и "
-                "публикует их."
+                "7-го числа каждого месяца программа сама собирает данные за прошлый месяц и "
+                "публикует их. Она запускается по расписанию на GitHub (GitHub Actions)."
             ),
             "items": [
                 "Источники статьи опрашиваются по порядку: официальные, затем сторонние сайты, "
