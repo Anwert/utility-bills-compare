@@ -513,7 +513,7 @@ def _line(
             found.add(Mark.llm_extracted)
     for key in (item, *also):
         found.update(marks.get(key, ()))
-    note_parts = [part for part in (closing.note, f"Норма: {norm.source}" if norm else "") if part]
+    note_parts = [part for part in (closing.note, f"Норма: {norm.source}." if norm else "") if part]
     distinct = {id(record) for record in chosen}
     if len(distinct) > 1:
         note_parts.append("Тариф сменился внутри месяца, сумма пропорциональна дням.")
