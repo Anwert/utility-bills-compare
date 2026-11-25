@@ -115,7 +115,7 @@
     var html = info.sites.length
       ? list(info.sites, sourceItem)
       : "<p>Сайты объявлений не подключены.</p>";
-    if (info.price_note) html += "<p>" + prose(info.price_note) + "</p>";
+    if (info.class_note) html += "<p>" + prose(info.class_note) + "</p>";
     html += details("Правила: какой дом к какому классу относится", list(info.classes, reasons));
     html += details(
       "Правила: как определяется отопление",
@@ -149,7 +149,7 @@
       html +=
         '<div class="src-article"><b>' +
         escapeHtml(group.label) +
-        (group.heating ? " · " + escapeHtml(group.heating.toLowerCase()) : "") +
+        (group.scope ? " · " + escapeHtml(group.scope) : "") +
         "</b>" +
         list(group.rows, function (row) {
           return (

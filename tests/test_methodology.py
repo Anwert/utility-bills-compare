@@ -218,6 +218,15 @@ def test_norms_are_grouped_and_written_in_russian_units(data_root: Path) -> None
                 norm(row, 950, item="electricity", **person)
                 for row in ("soviet_panel", "typical_newbuild", "business")
             ),
+            norm(
+                "business",
+                131,
+                unit="m3/person/year",
+                basis="per_person",
+                heating=None,
+                applies_to=["gas_boiler"],
+            ),
+            norm("business", 80, item="heating", heating="electric", unit="kWh/m2/year"),
             norm("business", 1, city="tbilisi"),
         ]
 
@@ -225,8 +234,21 @@ def test_norms_are_grouped_and_written_in_russian_units(data_root: Path) -> None
 
     assert _city(build_methodology(data_root), "yerevan")["norms"] == [
         {
+            "label": "Отопление",
+            "scope": "столбец «Электрическое»",
+            "rows": [
+                {
+                    "classes": "Бизнес-класс",
+                    "value": "80 кВт·ч на м² в год",
+                    "flat": "4800 кВт·ч в год на эталонную квартиру",
+                    "source": "отчёт",
+                    "note": "примечание",
+                }
+            ],
+        },
+        {
             "label": "Электричество",
-            "heating": None,
+            "scope": None,
             "rows": [
                 {
                     "classes": "все классы домов",
@@ -239,7 +261,7 @@ def test_norms_are_grouped_and_written_in_russian_units(data_root: Path) -> None
         },
         {
             "label": "Газ",
-            "heating": "Индивидуальный газовый котёл",
+            "scope": "на отопление, столбец «Индивидуальный газовый котёл»",
             "rows": [
                 {
                     "classes": "Советский / панельный фонд",
@@ -257,10 +279,23 @@ def test_norms_are_grouped_and_written_in_russian_units(data_root: Path) -> None
                 },
             ],
         },
+        {
+            "label": "Газ",
+            "scope": "кроме отопления, только столбец «Индивидуальный газовый котёл»",
+            "rows": [
+                {
+                    "classes": "Бизнес-класс",
+                    "value": "131 м³ на человека в год",
+                    "flat": "262 м³ в год на эталонную квартиру",
+                    "source": "отчёт",
+                    "note": "примечание",
+                }
+            ],
+        },
     ]
 
 
-def test_house_rules_carry_reasons_and_call_the_price_thresholds_a_convention(
+def test_house_rules_carry_reasons_and_call_their_thresholds_a_convention(
     data_root: Path,
 ) -> None:
     def rule(house_class: str, reason: str, **extra: object) -> dict:
@@ -272,10 +307,16 @@ def test_house_rules_carry_reasons_and_call_the_price_thresholds_a_convention(
     def change(document: dict) -> None:
         document["house_rules"] = {
             "classes": [
-                rule("business", "дорогой монолит", price_ratio_from=2.5),
+                rule("business", "дорогой монолит (решение #9): да", price_ratio_from=2.5),
+                rule("business", "удобства", amenities_any=["gym", "concierge"]),
                 rule("soviet_panel", "панель", building_types=["panel"]),
                 rule("soviet_panel", "панель", building_types=["stone"]),
-                rule("typical_newbuild", "новый монолит", price_ratio_to=1.6),
+                rule(
+                    "typical_newbuild",
+                    "новый монолит",
+                    price_ratio_to=1.6,
+                    amenities_none=["gym"],
+                ),
             ],
             "heatings": [
                 {"heating": "gas_boiler", "all_of": ["a"], "reason": "свой котёл"},
@@ -293,20 +334,24 @@ def test_house_rules_carry_reasons_and_call_the_price_thresholds_a_convention(
     assert houses["classes"] == [
         {"label": "Советский / панельный фонд", "reasons": ["панель"]},
         {"label": "Типовая новостройка 2000–2010-х", "reasons": ["новый монолит"]},
-        {"label": "Бизнес-класс", "reasons": ["дорогой монолит"]},
+        {"label": "Бизнес-класс", "reasons": ["дорогой монолит: да", "удобства"]},
     ]
     assert houses["heatings"] == [
         {"label": "Индивидуальный газовый котёл", "reasons": ["свой котёл"]}
     ]
     assert houses["unavailable"] == [{"label": "Центральное", "text": "тарифа нет"}]
-    assert "от 2,5" in houses["price_note"]
-    assert "до 1,6" in houses["price_note"]
-    assert "договорённость этого проекта" in houses["price_note"]
+    assert houses["class_note"] == (
+        "Бизнес-класс — цена м² не ниже 2,5 средней по району. "
+        "Бизнес-класс — в объявлении названо хотя бы одно: спортзал, консьерж. "
+        "Типовая новостройка 2000–2010-х — цена м² не выше 1,6 средней по району "
+        "и в объявлении не названы: спортзал. "
+        "Эти признаки и пороги — договорённость этого проекта, а не официальная классификация."
+    )
     assert houses["prices"] == [
         {"districts": "Center", "price": "2671 USD/м²", "source": "статкомитет"},
         {"districts": "Avan, Awan", "price": "1307 USD/м²", "source": "статкомитет"},
     ]
-    assert _city(document, "lisbon")["houses"]["price_note"] is None
+    assert _city(document, "lisbon")["houses"]["class_note"] is None
 
 
 def test_general_text_explains_marks_schedule_and_limits() -> None:
@@ -351,3 +396,19 @@ def test_a_broken_city_file_is_a_config_error(data_root: Path) -> None:
 
     with pytest.raises(ConfigError, match="berlin.json"):
         build_methodology(data_root)
+
+
+def test_the_yerevan_page_matches_its_rules_norms_and_hand_copied_water() -> None:
+    yerevan = _city(build_methodology(data_dir()), "yerevan")
+
+    for word in ("бассейн", "спортзал", "теннисный корт", "консьерж", "не выше 1,6"):
+        assert word in yerevan["houses"]["class_note"]
+    assert "не ниже" not in yerevan["houses"]["class_note"]
+    for item in ("water", "sewage"):
+        acting = _article(yerevan, item)["sources"][0]
+        assert acting["kind"] == "официальный"
+        assert "вручную" in acting["reading"]
+    limits = " ".join(yerevan["limits"])
+    assert "Вода и канализация переписаны вручную" in limits
+    assert "2026" in limits
+    assert "плиту и горячую воду" in _article(yerevan, "hot_water")["note"]

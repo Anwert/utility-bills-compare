@@ -81,14 +81,14 @@ def _methodology(**city: object) -> dict:
                     "open_data": ["карта: координаты"],
                     "classes": [{"label": "Бизнес-класс", "reasons": ["дорого"]}],
                     "heatings": [{"label": "Котёл", "reasons": ["газ"]}],
-                    "price_note": "пороги — договорённость",
+                    "class_note": "пороги — договорённость",
                     "prices": [{"districts": "Center", "price": "1 USD/м²", "source": "стат"}],
                     "unavailable": [{"label": "Центральное", "text": "нет тарифа"}],
                 },
                 "norms": [
                     {
                         "label": "Газ",
-                        "heating": "Котёл",
+                        "scope": "столбец «Котёл»",
                         "rows": [
                             {
                                 "classes": "Панель",
@@ -139,6 +139,7 @@ def test_the_tab_shows_sources_calculation_and_limits_of_the_selected_city() -> 
         "пороги — договорённость",
         "дорого",
         "нет тарифа",
+        "Газ · столбец «Котёл»",
         "22,5 м³ на м² в год",
         "1350 м³ в год на эталонную квартиру",
         "подробности",
