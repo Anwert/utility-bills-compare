@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import pytest
 
+from saved_ads import saved_ad, saved_ads
 from ubc.adapter import CollectContext, get_adapter
 from ubc.fetch import FixtureFetcher
 from ubc.houses import PinResult, pin_houses
@@ -23,6 +24,7 @@ from ubc.schemas import (
 _SOVIET_GAS = (HouseClass.soviet_panel, HeatingType.gas_boiler)
 _TYPICAL_GAS = (HouseClass.typical_newbuild, HeatingType.gas_boiler)
 _BUSINESS_GAS = (HouseClass.business, HeatingType.gas_boiler)
+_SOVIET_ELECTRIC = (HouseClass.soviet_panel, HeatingType.electric)
 _TYPICAL_DISTRICT = (HouseClass.typical_newbuild, HeatingType.district)
 _SOVIET_DISTRICT = (HouseClass.soviet_panel, HeatingType.district)
 _NOT_FOUND = "дом такого класса с таким отоплением автоматически не найден"
@@ -124,11 +126,20 @@ def test_yerevan_panel_with_gas_becomes_the_soviet_gas_house() -> None:
 @pytest.mark.parametrize(
     ("facts", "expected"),
     [
-        # Arabkir averages about 2000 USD/m2: 3055 is 1.5 of it, 4500 is 2.3 of it.
+        # Arabkir averages 1911 USD/m2: 3055 is just under 1.6 of it.
         ({}, [_TYPICAL_GAS]),
-        ({"price_per_m2": {"amount": 4500, "currency": "USD"}}, [_BUSINESS_GAS]),
-        # Between the two thresholds the site's facts do not decide.
-        ({"price_per_m2": {"amount": 3500, "currency": "USD"}}, []),
+        # A high price alone is a renovation or a view, not a business-class house.
+        ({"price_per_m2": {"amount": 3100, "currency": "USD"}}, []),
+        ({"price_per_m2": {"amount": 4500, "currency": "USD"}}, []),
+        # A pool, a gym, a tennis court or a concierge of the complex is.
+        ({"amenities": ["swimming_pool"]}, [_BUSINESS_GAS]),
+        ({"amenities": ["gym"], "price_per_m2": None}, [_BUSINESS_GAS]),
+        ({"amenities": ["concierge"], "address": None}, [_BUSINESS_GAS]),
+        ({"amenities": ["tennis"], "is_newbuild": False}, []),
+        ({"amenities": ["gym"], "building_type": "Panel", "is_newbuild": False}, [_SOVIET_GAS]),
+        # The price of a bare shell proves nothing either way, the building still counts.
+        ({"unfinished": True}, []),
+        ({"unfinished": True, "amenities": ["gym"]}, [_BUSINESS_GAS]),
         ({"price_per_m2": None}, []),
         ({"price_per_m2": {"amount": 1100000, "currency": "AMD"}}, []),
         ({"address": "Anastas Mikoyan street, Davtashen, Yerevan"}, []),
@@ -138,7 +149,7 @@ def test_yerevan_panel_with_gas_becomes_the_soviet_gas_house() -> None:
         ({"building_type": "Panel"}, []),
     ],
 )
-def test_yerevan_monolith_needs_a_price_to_tell_typical_from_business(
+def test_yerevan_monolith_class_needs_amenities_or_an_ordinary_price(
     facts: dict, expected: list
 ) -> None:
     assert cells(pin("yerevan", monolith(**facts))) == expected
@@ -148,6 +159,8 @@ def test_yerevan_monolith_needs_a_price_to_tell_typical_from_business(
     ("facts", "expected"),
     [
         ({"building_type": "Stone", "floors": 5}, [_SOVIET_GAS]),
+        ({"building_type": "Stone", "floors": 5, "series": "stalinka"}, []),
+        ({"series": "stalinka"}, [_SOVIET_GAS]),
         ({"building_type": "Stone", "floors": 2}, []),
         ({"building_type": "Stone", "floors": 9}, []),
         ({"building_type": "Stone", "floors": None}, []),
@@ -159,6 +172,19 @@ def test_yerevan_monolith_needs_a_price_to_tell_typical_from_business(
         ({"heating_raw": "Heating | Central heating"}, []),
         ({"heating_raw": "Heating | Gas | Central heating"}, []),
         ({"heating_raw": None, "heating": "gas_boiler"}, [_SOVIET_GAS]),
+        # The text says how the flat is heated, the gas is for the stove.
+        ({"heating_raw": "Heating | Gas | text_air_heating | text_floor_heating"}, []),
+        ({"heating_raw": "Heating | Gas | text_electric_heating"}, [_SOVIET_ELECTRIC]),
+        ({"heating_raw": "text_electric_heating"}, [_SOVIET_ELECTRIC]),
+        ({"heating_raw": "Heating | text_gas_boiler"}, [_SOVIET_GAS]),
+        ({"heating_raw": "text_gas_boiler"}, [_SOVIET_GAS]),
+        ({"heating_raw": "text_gas_boiler | text_electric_heating"}, []),
+        ({"heating_raw": "text_gas_boiler | Central heating"}, []),
+        ({"heating_raw": "text_gas_boiler | text_air_heating"}, []),
+        ({"heating_raw": "Gas | text_individual_heating"}, [_SOVIET_GAS]),
+        ({"heating_raw": "text_individual_heating | text_gas_supply"}, [_SOVIET_GAS]),
+        ({"heating_raw": "Heating | text_individual_heating"}, []),
+        ({"heating_raw": "Heating | text_gas_supply"}, []),
     ],
 )
 def test_yerevan_old_stock_and_heating_words(facts: dict, expected: list) -> None:
@@ -307,6 +333,129 @@ def test_the_house_with_the_most_complete_facts_is_pinned() -> None:
     assert pin("yerevan", bare, far_from_reference, full).houses[_SOVIET_GAS].id == "full"
 
 
+def test_an_explicitly_stated_gas_boiler_wins_over_the_tags_alone() -> None:
+    complete = panel(id="a-complete", area_m2=60)
+    stated = panel(id="stated", area_m2=80, latitude=None, longitude=None)
+    stated = stated.model_copy(update={"heating_raw": "text_gas_boiler"})
+
+    assert pin("yerevan", complete, stated).houses[_SOVIET_GAS].id == "stated"
+
+
+def test_the_same_flat_on_two_sites_is_one_candidate() -> None:
+    real_estate, myrealty = sorted(
+        saved_ads("real-estate-427597", "myrealty-162327"), key=lambda ad: ad.id, reverse=True
+    )
+    poorer = myrealty.model_copy(update={"building_type": None})
+
+    assert pin("yerevan", poorer, real_estate).houses[_TYPICAL_GAS].id == "real-estate-427597"
+    # A pool or bare walls that only one of the two ads mentions belong to the flat.
+    pool = poorer.model_copy(update={"amenities": ["swimming_pool"]})
+    shell = poorer.model_copy(update={"unfinished": True})
+    assert pin("yerevan", real_estate, pool).houses[_BUSINESS_GAS].id == "real-estate-427597"
+    assert cells(pin("yerevan", real_estate, shell)) == []
+
+
+@pytest.mark.parametrize(
+    ("facts", "same"),
+    [
+        ({}, True),
+        # 136 m north of the first point, still the pin of the same house.
+        ({"latitude": 40.16556}, True),
+        ({"latitude": 40.1693}, False),
+        ({"area_m2": 73}, False),
+        ({"floor": 6}, False),
+        ({"floor": None}, False),
+        ({"floors": 10}, False),
+        ({"price_per_m2": {"amount": 2000, "currency": "USD"}}, False),
+        ({"price_per_m2": {"amount": 1929, "currency": "EUR"}}, False),
+        ({"price_per_m2": None}, False),
+        ({"latitude": None, "longitude": None}, False),
+    ],
+)
+def test_what_makes_two_ads_the_same_flat(facts: dict, same: bool) -> None:
+    flat = panel(floor=5, price_per_m2={"amount": 1929, "currency": "USD"})
+    other: dict = {"floor": 5, "price_per_m2": {"amount": 1929, "currency": "USD"}, **facts}
+    # The other ad names central heating. One flat cannot have both, two flats can.
+    contradicting = panel(id="real-estate-1", heating_raw="centralized_heating", **other)
+
+    result = pin("yerevan", flat, contradicting)
+
+    assert cells(result) == ([] if same else [_SOVIET_GAS])
+
+
+@pytest.mark.parametrize(
+    "ads",
+    [
+        # Stalinka on one site, an ordinary stone house on the other.
+        ("real-estate-427448", "myrealty-162276"),
+        ("myrealty-161828", "myrealty-161872"),
+        # One ad says Shengavit, the other says Center.
+        ("myrealty-162221", "myrealty-162226"),
+    ],
+)
+def test_ads_of_one_flat_that_contradict_each_other_are_not_classified(
+    ads: tuple[str, str],
+) -> None:
+    assert cells(pin("yerevan", *saved_ads(*ads))) == []
+
+
+def test_one_of_those_ads_alone_would_have_been_pinned() -> None:
+    assert cells(pin("yerevan", saved_ad("myrealty-162276"))) == [_SOVIET_GAS]
+    assert cells(pin("yerevan", saved_ad("myrealty-162226"))) == [_SOVIET_GAS]
+
+
+@pytest.mark.parametrize(
+    "other",
+    [
+        {"building_type": "STONE"},
+        {"is_newbuild": True},
+        {"heating": "electric", "heating_raw": None},
+    ],
+)
+def test_one_flat_with_different_construction_or_heating_is_not_classified(other: dict) -> None:
+    facts: dict = {"floor": 5, "price_per_m2": {"amount": 1929, "currency": "USD"}}
+    flat = panel(is_newbuild=False, heating="gas_boiler", **facts)
+    again = panel(id="real-estate-1", **{"is_newbuild": False, **facts, **other})
+
+    assert cells(pin("yerevan", flat, again)) == []
+
+
+def test_a_duplicate_does_not_move_the_pinned_house() -> None:
+    pages = saved_ads("real-estate-427597", "myrealty-162327")
+    november = pin("yerevan", pages[0]).houses[_TYPICAL_GAS]
+
+    december = pin("yerevan", *pages, previous=(november,), period="2026-12")
+
+    assert cells(december) == [_TYPICAL_GAS]
+    assert december.houses[_TYPICAL_GAS].id == november.id
+
+
+@pytest.mark.parametrize(
+    ("ad", "expected"),
+    [
+        ("real-estate-427597", [_TYPICAL_GAS]),
+        ("real-estate-427307", [_BUSINESS_GAS]),
+        ("real-estate-427630", [_BUSINESS_GAS]),
+        ("real-estate-427650", [_BUSINESS_GAS]),
+        ("myrealty-162352", [_SOVIET_GAS]),
+        # Furnished flats in ordinary buildings, dear but without amenities.
+        ("real-estate-425338", []),
+        ("real-estate-427354", []),
+        # A bare shell in an ordinary building.
+        ("real-estate-426106", []),
+        # Air conditioner, fan coils, a house boiler room.
+        ("myrealty-159730", []),
+        ("real-estate-427396", []),
+        ("myrealty-162353", []),
+        # Stalin-era stone.
+        ("myrealty-161828", []),
+        ("real-estate-427448", []),
+    ],
+)
+def test_saved_ad_reaches_the_cell_a_person_would_choose(ad: str, expected: list) -> None:
+    assert cells(pin("yerevan", saved_ad(ad))) == expected
+
+
 def test_candidates_and_pins_of_another_city_are_ignored() -> None:
     result = pin("warsaw", panel(), previous=(pin("yerevan", panel()).houses[_SOVIET_GAS],))
 
@@ -372,7 +521,7 @@ def test_a_listing_that_lost_the_deciding_facts_keeps_its_house() -> None:
 
 def test_a_house_whose_listing_now_belongs_to_another_cell_is_replaced() -> None:
     november = pin("yerevan", monolith()).houses[_TYPICAL_GAS]
-    repriced = monolith(price_per_m2={"amount": 4500, "currency": "USD"})
+    repriced = monolith(amenities=["swimming_pool"])
     replacement = monolith(id="real-estate-2")
 
     december = pin("yerevan", repriced, replacement, previous=(november,), period="2026-12")

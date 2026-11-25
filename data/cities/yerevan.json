@@ -169,9 +169,12 @@
           "stone"
         ],
         "exclude_newbuild": true,
+        "exclude_series": [
+          "stalinka"
+        ],
         "floors_from": 4,
         "floors_to": 5,
-        "reason": "Каменный дом в 4–5 этажей — массовая советская застройка; ниже бывают дома до 1917 года, выше — новые, поэтому их не относим."
+        "reason": "Каменный дом в 4–5 этажей — массовая советская застройка; ниже бывают дома до 1917 года, выше — новые. Сталинку, которую так назвало объявление, не относим."
       },
       {
         "house_class": "business",
@@ -180,8 +183,13 @@
           "monolit"
         ],
         "is_newbuild": true,
-        "price_ratio_from": 2.0,
-        "reason": "Года на сайтах нет. Монолитная новостройка с ценой от 2,0 средней цены квартиры в районе. Порог — решение проекта, не официальная классификация."
+        "amenities_any": [
+          "swimming_pool",
+          "gym",
+          "tennis",
+          "concierge"
+        ],
+        "reason": "Монолитная новостройка; объявление называет бассейн, спортзал, теннисный корт или консьержа комплекса. Решение проекта, не официальная классификация."
       },
       {
         "house_class": "typical_newbuild",
@@ -190,8 +198,14 @@
           "monolit"
         ],
         "is_newbuild": true,
+        "amenities_none": [
+          "swimming_pool",
+          "gym",
+          "tennis",
+          "concierge"
+        ],
         "price_ratio_to": 1.6,
-        "reason": "Монолитная новостройка с ценой до 1,6 средней цены квартиры в районе: средняя включает старый фонд, новый дом с ремонтом дороже неё. Между 1,6 и 2,0 класс не определяем."
+        "reason": "Монолитная новостройка без таких удобств с ценой до 1,6 средней по району: средняя включает старый фонд. Дороже без удобств или голые стены — класс не определяем."
       }
     ],
     "heatings": [
@@ -203,95 +217,155 @@
         ],
         "none_of": [
           "centralized_heating",
+          "central heating",
+          "text_air_heating",
+          "text_floor_heating",
+          "text_electric_heating"
+        ],
+        "reason": "Отопление и газ в списке удобств — квартирный газовый котёл, если текст не называет кондиционер, тёплый пол или электричество. «Centralized heating» — домовая котельная."
+      },
+      {
+        "heating": "gas_boiler",
+        "explicit": true,
+        "all_of": [
+          "text_gas_boiler"
+        ],
+        "none_of": [
+          "centralized_heating",
+          "central heating",
+          "text_air_heating"
+        ],
+        "reason": "В тексте объявления назван газовый котёл."
+      },
+      {
+        "heating": "gas_boiler",
+        "explicit": true,
+        "all_of": [
+          "text_individual_heating",
+          "gas"
+        ],
+        "none_of": [
+          "centralized_heating",
+          "central heating",
+          "text_air_heating",
+          "text_floor_heating",
+          "text_electric_heating"
+        ],
+        "reason": "В тексте индивидуальное отопление, в списке удобств газ."
+      },
+      {
+        "heating": "gas_boiler",
+        "explicit": true,
+        "all_of": [
+          "text_individual_heating",
+          "text_gas_supply"
+        ],
+        "none_of": [
+          "centralized_heating",
+          "central heating",
+          "text_air_heating",
+          "text_floor_heating",
+          "text_electric_heating"
+        ],
+        "reason": "В тексте индивидуальное отопление и газификация."
+      },
+      {
+        "heating": "electric",
+        "explicit": true,
+        "all_of": [
+          "text_electric_heating"
+        ],
+        "none_of": [
+          "centralized_heating",
           "central heating"
         ],
-        "reason": "Газ вместе с отоплением — квартирный газовый котёл; «centralized heating» — домовая котельная."
+        "reason": "В тексте электрическое отопление или электрокотёл. Кондиционера или тёплого пола для этого мало."
       }
     ],
     "price_references": [
       {
         "district": "Center",
-        "amount": 2671,
+        "amount": 2628,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 966.9 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 966.9 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Arabkir",
-        "amount": 1942,
+        "amount": 1911,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 703 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 703 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Nork-Marash",
-        "amount": 1552,
+        "amount": 1528,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 562 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 562 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Davtashen",
-        "amount": 1533,
+        "amount": 1509,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 555 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 555 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Kanaker-Zeytun",
-        "amount": 1461,
+        "amount": 1438,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 529 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 529 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Kanaqer-Zeytun",
-        "amount": 1461,
+        "amount": 1438,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 529 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 529 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Ajapnyak",
-        "amount": 1356,
+        "amount": 1335,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 491 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 491 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Malatia-Sebastia",
-        "amount": 1331,
+        "amount": 1310,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 482 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 482 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Shengavit",
-        "amount": 1334,
+        "amount": 1313,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Nor-Nork",
-        "amount": 1334,
+        "amount": 1313,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Nor Nork",
-        "amount": 1334,
+        "amount": 1313,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 483 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Erebuni",
-        "amount": 1329,
+        "amount": 1307,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 481 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 481 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Avan",
-        "amount": 1307,
+        "amount": 1286,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 473 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 473 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       },
       {
         "district": "Nubarashen",
-        "amount": 749,
+        "amount": 737,
         "currency": "USD",
-        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 271 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу 362 AMD из публикации Кадастрового комитета (553 000 AMD = 1527 USD)"
+        "source": "Статкомитет Армении, средняя цена м² в многоквартирных домах, июнь 2026: 271 тыс. AMD, по публикации https://www.euromedia24.com/en/post/61445; в доллары по курсу ЦБ Армении на 30.06.2026: 367.89 AMD (https://armenpress.am/en/article/1254363, api.cba.am)"
       }
     ],
     "unavailable_heating": {
