@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "yerevan",
   "period": "2026-10",
-  "collected_at": "2026-11-24T23:00:43.883197+00:00",
+  "collected_at": "2026-11-25T02:30:24.574273+00:00",
   "sources": [
     {
       "source_id": "yerevan_maintenance_arlis",
@@ -23,12 +23,12 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T23:00:44.111868Z",
+            "fetched_at": "2026-11-25T02:30:39.996191Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "п.22 решения о местных платежах 2026 года, жилое помещение, 25 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+          "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
         }
       ]
     },
@@ -65,17 +65,17 @@
               "label": "day, above 400 kWh/month"
             }
           ],
-          "valid_from": "2026-01-26",
+          "valid_from": "2022-02-01",
           "valid_to": null,
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
-            "fetched_at": "2026-11-24T23:01:30.611572Z",
+            "fetched_at": "2026-11-25T02:31:10.154267Z",
             "name": "yerevan_electricity_psrc"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26."
+          "note": "Дневной тариф для населения, AMD за кВт·ч с НДС: 46,48 при расходе до 200 кВт·ч в месяц, 48,48 при 201–400, 53,48 выше 400. Весь расход посчитан по дневной цене: какая его часть приходится на ночь, неизвестно. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025."
         },
         {
           "city": "yerevan",
@@ -104,17 +104,17 @@
               "label": "night, above 400 kWh/month"
             }
           ],
-          "valid_from": "2026-01-26",
+          "valid_from": "2022-02-01",
           "valid_to": null,
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
-            "fetched_at": "2026-11-24T23:01:30.611572Z",
+            "fetched_at": "2026-11-25T02:31:10.154267Z",
             "name": "yerevan_electricity_psrc"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "ночной бытовой тариф 0,38 кВ, те же ступени, что у дневного: 36.48 / 38.48 / 43.48 AMD/кВт·ч."
+          "note": "Ночной тариф для населения, AMD за кВт·ч с НДС: 36,48 при расходе до 200 кВт·ч в месяц, 38,48 при 201–400, 43,48 выше 400. В счёт не входит. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025."
         }
       ]
     },
@@ -132,17 +132,17 @@
           "unit": "AMD/m3",
           "currency": "AMD",
           "tiers": [],
-          "valid_from": "2026-10-06",
+          "valid_from": "2022-04-01",
           "valid_to": null,
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
-            "fetched_at": "2026-11-24T23:02:10.262397Z",
+            "fetched_at": "2026-11-25T02:31:28.160934Z",
             "name": "yerevan_gas_psrc"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06."
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026."
         }
       ]
     },
@@ -163,14 +163,14 @@
           "valid_from": "2026-01-01",
           "valid_to": null,
           "source": {
-            "kind": "statistics",
+            "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T23:02:10.326286Z",
+            "fetched_at": "2026-11-25T02:31:28.189381Z",
             "name": "yerevan_water_last_official"
           },
           "method": "regex",
-          "reliability": "statistics",
-          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+          "reliability": "official",
+          "note": "170,36 AMD за м³ с НДС — питьевая вода, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
         }
       ]
     },
@@ -191,14 +191,14 @@
           "valid_from": "2026-01-01",
           "valid_to": null,
           "source": {
-            "kind": "statistics",
+            "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T23:02:10.326791Z",
+            "fetched_at": "2026-11-25T02:31:28.189891Z",
             "name": "yerevan_sewage_last_official"
           },
           "method": "regex",
-          "reliability": "statistics",
-          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+          "reliability": "official",
+          "note": "30,06 AMD за м³ с НДС — водоотведение, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
         }
       ]
     },
@@ -221,12 +221,12 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T23:02:10.486418Z",
+            "fetched_at": "2026-11-25T02:31:28.539055Z",
             "name": "yerevan_waste_arlis"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "п.20 решения о местных платежах 2026 года, жилое помещение, 13 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+          "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
         }
       ]
     },
@@ -249,7 +249,7 @@
           "source": {
             "kind": "official",
             "url": "https://api.cba.am/exchangerates.asmx",
-            "fetched_at": "2026-11-24T23:02:10.620872Z",
+            "fetched_at": "2026-11-25T02:31:29.035215Z",
             "name": "Central Bank of Armenia"
           },
           "method": "api",
@@ -268,7 +268,7 @@
           "city": "yerevan",
           "item": "hdd",
           "category": "context",
-          "value": 54.9,
+          "value": 46.4,
           "unit": "K*day",
           "currency": null,
           "tiers": [],
@@ -276,8 +276,8 @@
           "valid_to": "2026-10-31",
           "source": {
             "kind": "third_party",
-            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-            "fetched_at": "2026-11-24T23:02:10.630119Z",
+            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+            "fetched_at": "2026-11-25T02:31:29.044266Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",
@@ -288,7 +288,7 @@
           "city": "yerevan",
           "item": "hdd_annual",
           "category": "context",
-          "value": 2556.6,
+          "value": 2296.8,
           "unit": "K*day",
           "currency": null,
           "tiers": [],
@@ -296,8 +296,8 @@
           "valid_to": "2026-10-31",
           "source": {
             "kind": "third_party",
-            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-            "fetched_at": "2026-11-24T23:02:10.630119Z",
+            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+            "fetched_at": "2026-11-25T02:31:29.044266Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",
@@ -325,12 +325,12 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:46:07.541378Z",
+            "fetched_at": "2026-11-25T02:30:39.996191Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "п.22 решения о местных платежах 2026 года, жилое помещение, 25 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+          "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
         }
       ]
     },
@@ -365,17 +365,17 @@
               "label": "day, above 400 kWh/month"
             }
           ],
-          "valid_from": "2026-01-26",
+          "valid_from": "2022-02-01",
           "valid_to": null,
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
-            "fetched_at": "2026-11-24T22:46:26.390410Z",
+            "fetched_at": "2026-11-25T02:31:10.154267Z",
             "name": "yerevan_electricity_psrc"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / больше 400 кВт·ч в месяц: 46.48 / 48.48 / 53.48. Строка 1 (29.99/19.99) — льготная для социально уязвимых, не этот тариф. Счёт считается по дневной цене на весь расход: для доли ночного расхода источника нет. Подписей в текстовом слое нет. Дата действия в тексте PDF не указана, PDF создан 2026-01-26."
+          "note": "Дневной тариф для населения, AMD за кВт·ч с НДС: 46,48 при расходе до 200 кВт·ч в месяц, 48,48 при 201–400, 53,48 выше 400. Весь расход посчитан по дневной цене: какая его часть приходится на ночь, неизвестно. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025."
         }
       ]
     },
@@ -391,17 +391,17 @@
           "unit": "AMD/m3",
           "currency": "AMD",
           "tiers": [],
-          "valid_from": "2026-10-01",
+          "valid_from": "2022-04-01",
           "valid_to": null,
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
-            "fetched_at": "2026-11-24T22:46:45.299052Z",
+            "fetched_at": "2026-11-25T02:31:28.160934Z",
             "name": "yerevan_gas_psrc"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "строка 1.2, столбец с НДС: 143700 AMD за 1000 м³ (143.7 AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. Дата действия в тексте PDF не указана, PDF создан 2026-10-06. Источник датирует тариф 2026-10-06, более ранняя цена неизвестна: весь месяц посчитан по этой."
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026."
         }
       ]
     },
@@ -420,14 +420,14 @@
           "valid_from": "2026-01-01",
           "valid_to": null,
           "source": {
-            "kind": "statistics",
+            "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:46:45.360313Z",
+            "fetched_at": "2026-11-25T02:31:28.189381Z",
             "name": "yerevan_water_last_official"
           },
           "method": "regex",
-          "reliability": "statistics",
-          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+          "reliability": "official",
+          "note": "170,36 AMD за м³ с НДС — питьевая вода, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
         }
       ]
     },
@@ -446,14 +446,14 @@
           "valid_from": "2026-01-01",
           "valid_to": null,
           "source": {
-            "kind": "statistics",
+            "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-24T22:46:45.360696Z",
+            "fetched_at": "2026-11-25T02:31:28.189891Z",
             "name": "yerevan_sewage_last_official"
           },
           "method": "regex",
-          "reliability": "statistics",
-          "note": "записанное официальное значение решения PSRC №397-Н с 01.01.2026: питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС (вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. Индекс цен на воду не применён: Eurostat не включает Армению, на странице ИПЦ Armstat отдельного ряда на воду нет. оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)"
+          "reliability": "official",
+          "note": "30,06 AMD за м³ с НДС — водоотведение, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025."
         }
       ]
     },
@@ -474,12 +474,12 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-24T22:46:45.666608Z",
+            "fetched_at": "2026-11-25T02:31:28.539055Z",
             "name": "yerevan_waste_arlis"
           },
           "method": "regex",
           "reliability": "official",
-          "note": "п.20 решения о местных платежах 2026 года, жилое помещение, 13 AMD/м² в месяц. Следующий год — новый акт; поиск arlis /hy/search/page/ с этой машины отвечает 403, поэтому URL акта задан в конфигурации города."
+          "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
         }
       ]
     }
@@ -505,7 +505,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 15,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 65.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -522,7 +525,7 @@
           "address": "N. Tigranyan dead end, Arabkir, Yerevan",
           "latitude": 40.21263,
           "longitude": 44.517388,
-          "heating_raw": "Heating | Gas",
+          "heating_raw": "Heating | Gas | text_gas_supply",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -531,7 +534,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 6,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 55.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -557,7 +563,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 66.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -583,7 +592,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 6,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 78.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -609,7 +621,13 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 3,
           "floors": 22,
+          "amenities": [
+            "swimming_pool",
+            "gym"
+          ],
+          "unfinished": false,
           "area_m2": 65.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -635,7 +653,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 70.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -661,7 +682,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 13,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 53.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -687,7 +711,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 7,
           "floors": 8,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 47.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -709,11 +736,14 @@
           "year_built": null,
           "year_from": null,
           "year_to": null,
-          "series": null,
+          "series": "stalinka",
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 4,
           "floors": 4,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 61.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -739,7 +769,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 14,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 64.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -765,7 +798,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 7,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 76.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -791,7 +827,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 7,
           "floors": 16,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 65.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -817,7 +856,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 3,
           "floors": 5,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 69.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -843,7 +885,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 7,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 66.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -869,7 +914,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 3,
           "floors": 10,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 58.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -895,7 +943,10 @@
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 4,
           "floors": 4,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 61.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -921,7 +972,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 5,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 61.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -947,7 +1001,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 7,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 73.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -964,7 +1021,7 @@
           "address": "Vardanants St, Center, Yerevan",
           "latitude": 40.1786933,
           "longitude": 44.5183482,
-          "heating_raw": "Heating | Gas",
+          "heating_raw": "Heating | Gas | text_air_heating | text_floor_heating",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -973,7 +1030,10 @@
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 5,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 54.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -999,7 +1059,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 22,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 66.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1016,7 +1079,7 @@
           "address": "Vardanants St, Center, Yerevan",
           "latitude": 40.1786933,
           "longitude": 44.5183482,
-          "heating_raw": "Heating | Gas",
+          "heating_raw": "Heating | Gas | text_air_heating | text_floor_heating",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -1025,7 +1088,10 @@
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 5,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 54.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1051,7 +1117,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 22,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 66.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1077,7 +1146,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 12,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 60.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1103,7 +1175,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 6,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 62.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1129,7 +1204,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 14,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 49.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1155,7 +1233,10 @@
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 2,
           "floors": 3,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 52.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1181,7 +1262,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 16,
           "floors": 16,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 49.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1207,7 +1291,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 6,
           "floors": 16,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 66.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1233,7 +1320,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 6,
           "floors": 16,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 66.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1259,7 +1349,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 10,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 43.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1285,7 +1378,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 11,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 38.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1311,7 +1407,10 @@
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 3,
           "floors": 5,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 43.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1337,7 +1436,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 42.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1363,7 +1465,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 85.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1380,7 +1485,7 @@
           "address": "Saryan St, Center, Yerevan",
           "latitude": 40.187399,
           "longitude": 44.508953,
-          "heating_raw": "Heating | Gas",
+          "heating_raw": "Heating | Gas | text_gas_supply",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -1389,7 +1494,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 8,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 42.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1415,7 +1523,10 @@
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 3,
           "floors": 4,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 88.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1441,7 +1552,10 @@
           "building_type": "Stone",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 3,
           "floors": 5,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 35.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1467,7 +1581,10 @@
           "building_type": "Panel",
           "block_type": null,
           "is_newbuild": null,
+          "floor": 5,
           "floors": 11,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 38.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1493,7 +1610,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 16,
           "floors": 16,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 36.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1519,7 +1639,10 @@
           "building_type": "Monolit",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 9,
           "floors": 18,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 82.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1543,7 +1666,7 @@
           "address": "Antarayin street, Center, Yerevan",
           "latitude": 40.195507,
           "longitude": 44.51308,
-          "heating_raw": null,
+          "heating_raw": "text_gas_boiler",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -1552,7 +1675,12 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 3,
           "floors": 3,
+          "amenities": [
+            "swimming_pool"
+          ],
+          "unfinished": false,
           "area_m2": 53.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1578,7 +1706,10 @@
           "building_type": "STONE",
           "block_type": null,
           "is_newbuild": false,
+          "floor": 2,
           "floors": 7,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 74.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1604,7 +1735,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 10,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 66.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1630,7 +1764,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 5,
           "floors": 12,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 59.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1656,7 +1793,10 @@
           "building_type": "PANEL",
           "block_type": null,
           "is_newbuild": false,
+          "floor": 6,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 45.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1682,7 +1822,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 8,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 68.5,
           "housing_fee": null,
           "price_per_m2": {
@@ -1708,7 +1851,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 7,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 57.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1734,7 +1880,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 15,
           "floors": 17,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 68.67,
           "housing_fee": null,
           "price_per_m2": {
@@ -1760,7 +1909,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 12,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 60.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1786,7 +1938,10 @@
           "building_type": "PANEL",
           "block_type": null,
           "is_newbuild": false,
+          "floor": 1,
           "floors": 9,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 67.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1812,7 +1967,12 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 1,
           "floors": 6,
+          "amenities": [
+            "swimming_pool"
+          ],
+          "unfinished": false,
           "area_m2": 64.5,
           "housing_fee": null,
           "price_per_m2": {
@@ -1838,7 +1998,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 8,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 54.4,
           "housing_fee": null,
           "price_per_m2": {
@@ -1864,7 +2027,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 3,
           "floors": 9,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 70.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1881,7 +2047,7 @@
           "address": "Davit Anhaght street, Kanaker-Zeytun, Yerevan",
           "latitude": 40.198015,
           "longitude": 44.536673,
-          "heating_raw": null,
+          "heating_raw": "text_air_heating",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -1890,7 +2056,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 16,
           "floors": 19,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 63.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1907,7 +2076,7 @@
           "address": "Lvovyan street, Nor-Nork, Yerevan",
           "latitude": 40.199394,
           "longitude": 44.556112,
-          "heating_raw": "heating | gas",
+          "heating_raw": "heating | gas | text_individual_heating | text_gas_supply",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -1916,7 +2085,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 6,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 56.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1942,7 +2114,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 12,
           "floors": 18,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 45.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1968,7 +2143,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 15,
           "floors": 16,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 64.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -1994,7 +2172,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 3,
           "floors": 10,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 58.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2020,7 +2201,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 9,
           "floors": 11,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 69.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2046,7 +2230,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 15,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 59.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2063,7 +2250,7 @@
           "address": "N. Tigranyan street deadlock, Arabkir, Yerevan",
           "latitude": 40.21282,
           "longitude": 44.5174,
-          "heating_raw": "heating | gas",
+          "heating_raw": "heating | gas | text_gas_supply",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -2072,7 +2259,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 6,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 55.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2098,7 +2288,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 6,
           "floors": 18,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 46.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2124,7 +2317,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 5,
           "floors": 18,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 68.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2150,7 +2346,14 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 14,
+          "amenities": [
+            "swimming_pool",
+            "gym",
+            "tennis"
+          ],
+          "unfinished": false,
           "area_m2": 76.6,
           "housing_fee": null,
           "price_per_m2": {
@@ -2176,7 +2379,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 12,
           "floors": 19,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 58.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2193,7 +2399,7 @@
           "address": "Davtashen 1st district, Davtashen, Yerevan",
           "latitude": 40.218915,
           "longitude": 44.486239,
-          "heating_raw": "heating",
+          "heating_raw": "heating | text_gas_boiler | text_individual_heating",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -2202,7 +2408,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 6,
           "floors": 13,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 67.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2228,7 +2437,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 16,
           "floors": 17,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 65.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2254,7 +2466,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 4,
           "floors": 6,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 53.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2280,7 +2495,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 16,
           "floors": 16,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 49.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2306,7 +2524,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": false,
+          "floor": 8,
           "floors": 14,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 53.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2332,7 +2553,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 7,
           "floors": 18,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 55.5,
           "housing_fee": null,
           "price_per_m2": {
@@ -2358,7 +2582,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 5,
           "floors": 18,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 80.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2384,7 +2611,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 3,
           "floors": 6,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 67.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2410,7 +2640,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 5,
           "floors": 16,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 57.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2427,7 +2660,7 @@
           "address": "Qrqoryan street (Leningradyan street), Malatia-Sebastia, Yerevan",
           "latitude": 40.188559,
           "longitude": 44.47024,
-          "heating_raw": "heating | gas",
+          "heating_raw": "heating | gas | text_individual_heating | text_gas_supply",
           "heating": null,
           "year_built": null,
           "year_from": null,
@@ -2436,7 +2669,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 14,
           "floors": 16,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 54.3,
           "housing_fee": null,
           "price_per_m2": {
@@ -2462,7 +2698,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 8,
           "floors": 17,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 67.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2488,7 +2727,10 @@
           "building_type": "PANEL",
           "block_type": null,
           "is_newbuild": false,
+          "floor": 8,
           "floors": 10,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": null,
           "housing_fee": null,
           "price_per_m2": null,
@@ -2507,11 +2749,14 @@
           "year_built": null,
           "year_from": null,
           "year_to": null,
-          "series": null,
+          "series": "stalinka",
           "building_type": "STONE",
           "block_type": null,
           "is_newbuild": false,
+          "floor": 3,
           "floors": 5,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 35.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2537,7 +2782,10 @@
           "building_type": "MONOLITH",
           "block_type": null,
           "is_newbuild": true,
+          "floor": 2,
           "floors": 14,
+          "amenities": [],
+          "unfinished": true,
           "area_m2": 40.0,
           "housing_fee": null,
           "price_per_m2": {
@@ -2563,7 +2811,10 @@
           "building_type": "STONE",
           "block_type": null,
           "is_newbuild": false,
+          "floor": 5,
           "floors": 6,
+          "amenities": [],
+          "unfinished": false,
           "area_m2": 42.0,
           "housing_fee": null,
           "price_per_m2": {

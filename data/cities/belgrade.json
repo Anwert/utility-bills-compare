@@ -150,6 +150,9 @@
   "fx_sources": [
     {
       "id": "fx_rsd_eurostat",
+      "title_ru": "Eurostat, среднемесячный курс по данным Национального банка Сербии",
+      "page_url": "https://ec.europa.eu/eurostat/databrowser/view/ert_bil_eur_m/default/table",
+      "reading": "api",
       "adapter": "fx_eurostat",
       "kind": "official",
       "priority": 0,
@@ -162,6 +165,8 @@
     },
     {
       "id": "fx_rsd_nbs",
+      "title_ru": "Национальный банк Сербии, курс на сегодня (среднемесячный не заменяет)",
+      "reading": "page",
       "adapter": "fx_nbs",
       "kind": "official",
       "priority": 1,
@@ -176,6 +181,9 @@
   "hdd_sources": [
     {
       "id": "hdd_open_meteo",
+      "title_ru": "Open-Meteo: архив погоды ERA5",
+      "page_url": "https://open-meteo.com/en/docs/historical-weather-api",
+      "reading": "api",
       "adapter": "open_meteo_hdd",
       "kind": "third_party",
       "priority": 0,

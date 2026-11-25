@@ -17,6 +17,7 @@ import lzma
 import tarfile
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from urllib.parse import quote
 
 from ubc.fetch import ContentFetcher
 
@@ -30,7 +31,13 @@ class Redactor:
 
     def __init__(self, values: Iterable[str | None] = ()) -> None:
         kept = {value for value in values if value is not None and len(value) >= _MIN_HIDDEN}
-        self._values = sorted(kept, key=len, reverse=True)
+        # Inside a URL and inside a JSON string the same value is spelled differently.
+        forms = {
+            form
+            for value in kept
+            for form in (value, quote(value, safe=""), json.dumps(value, ensure_ascii=False)[1:-1])
+        }
+        self._values = sorted(forms, key=len, reverse=True)
 
     def text(self, text: str) -> str:
         for value in self._values:

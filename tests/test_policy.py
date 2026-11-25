@@ -374,7 +374,9 @@ def test_all_sources_failing_keeps_the_previous_value_and_marks_it_stale() -> No
         ("waste_third", AlertReason.unavailable, 80, None),
     ]
     assert decision.acting is not None
-    assert decision.acting.pending_record is None
+    # A rerun of this month may still confirm the jump held in September.
+    assert decision.acting.pending_record is not None
+    assert str(decision.acting.pending_period) == "2026-09"
     assert [alert.url for alert in decision.alerts if alert.action is AlertAction.open] == [
         "https://example.test/official",
         "https://example.test/third",
@@ -622,3 +624,195 @@ def test_github_client_requires_a_token(monkeypatch: pytest.MonkeyPatch) -> None
 
     with pytest.raises(AlertDeliveryError):
         github_client_from_env("acme", "bills")
+
+
+# What counts as a move of more than 30%
+
+
+def _priced(value: float = 10, *, tiers: Sequence[tuple[float | None, float]] = (), **changes):
+    data = _record(value, "https://example.test/official").model_dump(mode="json")
+    data |= {"item": "electricity", "unit": "AMD/kWh"} | changes
+    data["tiers"] = [{"up_to": up_to, "value": price} for up_to, price in tiers]
+    return NormalizedRecord.model_validate(data)
+
+
+def _power(
+    published: Sequence[NormalizedRecord],
+    answered: Sequence[NormalizedRecord],
+    *,
+    period: str = "2026-10",
+    source: SourceConfig | None = None,
+    previous: ActingValue | None = None,
+) -> ArticleDecision:
+    chosen = source or _source("power", "official")
+    return choose_article(
+        city=CityId.yerevan,
+        item=Item.electricity,
+        period=YearMonth.parse(period),
+        sources=[chosen],
+        attempts=[SourceAttempt(chosen, AttemptStatus.ok, answered[0], others=tuple(answered[1:]))],
+        previous=previous
+        or ActingValue(
+            record=published[0],
+            others=tuple(published[1:]),
+            period=YearMonth.parse("2026-09"),
+            source_id="power",
+        ),
+    )
+
+
+STEPS = ((201, 10), (401, 11), (None, 12))
+FEE = {"unit": "AMD/month"}
+
+
+@pytest.mark.parametrize(
+    ("published", "answered"),
+    [
+        ([_priced(tiers=STEPS)], [_priced(tiers=((201, 10), (401, 110), (None, 120)))]),
+        ([_priced(tiers=STEPS)], [_priced(tiers=((201, 100), (401, 110), (None, 120)))]),
+        ([_priced(tiers=STEPS)], [_priced(tiers=((201, 10), (None, 20)))]),
+        ([_priced()], [_priced(tiers=((201, 10), (None, 20)))]),
+        ([_priced()], [_priced(unit="local/kWh", currency="EUR")]),
+        ([_priced()], [_priced(unit="AMD/GJ")]),
+        ([_priced()], [_priced(unit="AMD/1000kWh")]),
+        ([_priced()], [_priced(), _priced(500, **FEE)]),
+        ([_priced(), _priced(500, **FEE)], [_priced(), _priced(700, **FEE)]),
+        ([_priced(), _priced(500, **FEE)], [_priced()]),
+        ([_priced()], [_priced(), _priced(20, valid_from="2026-10-15")]),
+    ],
+    ids=[
+        "upper steps",
+        "every step, same value",
+        "a step is gone",
+        "steps appeared",
+        "currency",
+        "energy unit",
+        "unknown unit",
+        "standing fee appeared",
+        "standing fee moved",
+        "standing fee is gone",
+        "later price of the same source",
+    ],
+)
+def test_a_jump_anywhere_in_the_tariff_is_held(
+    published: list[NormalizedRecord], answered: list[NormalizedRecord]
+) -> None:
+    decision = _power(published, answered)
+
+    assert decision.stale is True
+    assert decision.record == published[0]
+    (alert,) = decision.alerts
+    assert alert.reason is AlertReason.jump
+    assert alert.detail
+
+
+@pytest.mark.parametrize(
+    ("published", "answered"),
+    [
+        ([_priced()], [_priced(unit="local/kWh")]),
+        ([_priced()], [_priced(unit="amd / KWH")]),
+        ([_priced(36)], [_priced(10000, unit="AMD/GJ")]),
+        ([_priced(120, **FEE)], [_priced(1440, unit="AMD/year")]),
+        ([_priced(120, **FEE)], [_priced(120, unit="AMD/dwelling/month")]),
+        (
+            [_priced(0.2, unit="GEL/kWh", currency="GEL")],
+            [_priced(20, unit="tetri/kWh", currency="GEL")],
+        ),
+        ([_priced(tiers=STEPS)], [_priced(tiers=((251, 10), (401, 11.5), (None, 12)))]),
+        ([_priced()], [_priced(tiers=((201, 10), (None, 12)))]),
+        (
+            [_priced(), _priced(500, **FEE)],
+            [_priced(500, **FEE), _priced()],
+        ),
+        ([_priced()], [_priced(), _priced(12, valid_from="2027-01-01")]),
+        (
+            [_priced(), _priced(20, valid_from="2027-01-01")],
+            [_priced(20, valid_from="2027-01-01")],
+        ),
+    ],
+    ids=[
+        "local currency",
+        "spelling",
+        "GJ instead of kWh",
+        "year instead of month",
+        "dwelling spelled out",
+        "subunit",
+        "moved step bound",
+        "steps close to the flat price",
+        "order",
+        "announced price",
+        "announced price came into force",
+    ],
+)
+def test_the_same_price_written_differently_is_not_a_jump(
+    published: list[NormalizedRecord], answered: list[NormalizedRecord]
+) -> None:
+    decision = _power(published, answered)
+
+    assert decision.stale is False
+    assert decision.record == answered[0]
+
+
+def test_a_fallback_without_the_standing_fee_is_not_a_jump_of_its_own() -> None:
+    decision = _power(
+        [_priced(), _priced(500, **FEE)], [_priced(11)], source=_source("other", "third_party")
+    )
+
+    assert decision.stale is False
+
+
+def test_a_repeated_jump_of_the_standing_fee_is_published_only_if_it_is_the_same_one() -> None:
+    published = [_priced(), _priced(500, **FEE)]
+    held = _power(published, [_priced(), _priced(900, **FEE)])
+    assert held.acting is not None
+    previous = load_acting(json.loads(json.dumps(dump_acting(held.acting))))
+
+    again = _power([], [_priced(), _priced(900, **FEE)], period="2026-11", previous=previous)
+    other = _power([], [_priced(), _priced(9000, **FEE)], period="2026-11", previous=previous)
+
+    assert again.stale is False
+    assert other.stale is True
+
+
+def test_state_saved_before_the_standing_fee_was_compared_still_loads() -> None:
+    saved = dump_acting(
+        ActingValue(record=_priced(), period=YearMonth.parse("2026-09"), source_id="power")
+    )
+    for key in ("others", "pending_others", "jump_period"):
+        del saved[key]
+
+    assert load_acting(saved).others == ()
+
+
+# Reruns of the same month
+
+
+@pytest.mark.parametrize("outage", ["2026-10", "2026-11"])
+def test_an_outage_does_not_make_the_held_jump_start_over(outage: str) -> None:
+    official = _source("waste_official", "official")
+    jump = [_ok(official, 140, "https://example.test/official")]
+    held = _choose("2026-10", [official], jump, _published(100, "https://example.test/previous"))
+    broken = _choose(outage, [official], [_failed(official, AttemptStatus.error)], held.acting)
+    assert broken.stale is True
+
+    decision = _choose("2026-11", [official], jump, broken.acting)
+
+    assert decision.record is not None
+    assert decision.record.value == 140
+    assert decision.stale is False
+
+
+def test_rerun_after_a_confirmed_jump_leaves_its_alert_open_until_next_month() -> None:
+    official = _source("waste_official", "official")
+    jump = [_ok(official, 140, "https://example.test/official")]
+    held = _choose("2026-10", [official], jump, _published(100, "https://example.test/previous"))
+    confirmed = _choose("2026-11", [official], jump, held.acting)
+    assert [alert.reason for alert in confirmed.alerts] == [AlertReason.jump]
+    assert confirmed.acting is not None
+
+    rerun = _choose("2026-11", [official], jump, load_acting(dump_acting(confirmed.acting)))
+    later = _choose("2026-12", [official], jump, rerun.acting)
+
+    assert rerun.stale is False
+    assert rerun.alerts == ()
+    assert [alert.reason for alert in later.alerts] == [AlertReason.recovered]

@@ -8,13 +8,16 @@ from __future__ import annotations
 
 import json
 import lzma
+import re
 import tarfile
-from collections.abc import Sequence
-from datetime import UTC, datetime
+from collections.abc import Callable, Sequence
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 
+from ubc.adapter import AdapterOutput, CollectContext, get_adapter
 from ubc.alerts import IssueSnapshot
 from ubc.fetch import FetchError, FixtureFetcher
 from ubc.houses import PinResult
@@ -47,20 +50,17 @@ NOW = datetime(2026, 11, 7, 6, 0, tzinfo=UTC)
 
 
 class NextMonth:
-    """Answers another month's weather and rate with the saved October ones."""
-
-    _DATES = (
-        ("2027-01-01", "2026-10-01"),
-        ("2027-01-31", "2026-10-31"),
-        ("2026-02-01", "2025-11-01"),
-    )
+    """Answers any month's weather and rate with the saved October ones."""
 
     def __init__(self, pages: SavedPages) -> None:
         self._pages = pages
 
     def _october(self, url: str) -> str:
-        for other, october in self._DATES:
-            url = url.replace(other, october)
+        asked = re.findall(r"\d{4}-\d\d-\d\d", url)
+        year = asked and date.fromisoformat(asked[1]) - date.fromisoformat(asked[0])
+        saved = ("2025-11-01" if year and year.days > 31 else "2026-10-01", "2026-10-31")
+        for day, october in zip(asked, saved, strict=False):
+            url = url.replace(day, october)
         return url
 
     def fetch_bytes(self, url: str) -> bytes:
@@ -68,11 +68,17 @@ class NextMonth:
 
     def fetch_text(self, url: str) -> str:
         text = self._pages.fetch_text(self._october(url))
-        if "open-meteo" in url:
-            for other, october in self._DATES:
-                text = text.replace(october, other)
-            text = text.replace('"2026-10-', '"2027-01-')
-        return text
+        if "open-meteo" not in url:
+            return text
+        start, end = map(date.fromisoformat, re.findall(r"\d{4}-\d\d-\d\d", url))
+        body = json.loads(text)
+        days = [start + timedelta(days=n) for n in range((end - start).days + 1)]
+        means = body["daily"]["temperature_2m_mean"]
+        body["daily"] = {
+            "time": [day.isoformat() for day in days],
+            "temperature_2m_mean": [means[n % len(means)] for n in range(len(days))],
+        }
+        return json.dumps(body)
 
     def post_text(self, url: str, body: str, *, headers: dict[str, str] | None = None) -> str:
         return self._pages.post_text(self._october(url), body, headers=headers)
@@ -277,6 +283,15 @@ def run_yerevan(data_root: Path, *, dead: Sequence[str] = (), **overrides: objec
     return run(data_root, [load_city("yerevan")], fetcher, **options)
 
 
+def run_january(data_root: Path, *, dead: Sequence[str] = (), **overrides: object) -> MonthReport:
+    return run_yerevan(
+        data_root,
+        period=YearMonth.parse("2027-01"),
+        fetcher=NextMonth(SavedPages(*YEREVAN_PAGES, dead=dead)),
+        **overrides,
+    )
+
+
 def filled(data_root: Path, month: str = "2026-10") -> dict:
     cells = published(data_root, f"yerevan-{month}.json")["cells"]
     (cell,) = [cell for cell in cells if cell["status"] == "ok"]
@@ -301,16 +316,16 @@ def test_yerevan_is_billed_by_the_day_price(tmp_path: Path) -> None:
     cell = filled(tmp_path)
     amounts = {item: line["amount_eur"] for item, line in lines(cell).items()}
     # 405.045 AMD/EUR. Electricity: 100 kWh x 46.48 (day), not 36.48 (night).
-    # Gas: 300 m3 x 54.9/2556.6 = 6.4421 m3 x 143.7.
+    # Gas: 300 m3 x 46.4/2296.8 = 6.0606 m3 x 143.7.
     assert amounts == {
         "maintenance": 3.70,
         "electricity": 11.48,
-        "gas": 2.29,
+        "gas": 2.15,
         "water": 0.84,
         "sewage": 0.15,
         "waste": 1.93,
     }
-    assert cell["total_eur"] == 20.39
+    assert cell["total_eur"] == 20.25
 
 
 def test_empty_cells_carry_the_classifier_reason(tmp_path: Path) -> None:
@@ -390,13 +405,169 @@ def test_unchanged_answers_give_identical_raw_files(tmp_path: Path) -> None:
 def test_dead_source_keeps_the_previous_value_as_stale_and_reports_it(tmp_path: Path) -> None:
     run_yerevan(tmp_path)
     issues = Issues()
-    run_yerevan(tmp_path, dead=[GAS_PAGE], issues=issues)
+    run_january(tmp_path, dead=[GAS_PAGE], issues=issues)
 
-    gas = lines(filled(tmp_path))["gas"]
-    assert gas["amount_eur"] == 2.29
+    gas = lines(filled(tmp_path, "2027-01"))["gas"]
+    assert gas["amount_eur"] == 2.15
     assert "stale" in gas["marks"]
     assert "показано прошлое значение" in gas["note"]
+    assert "data-alert: Ереван — Газ — yerevan_gas_psrc" in issues.titles
+
+    run_january(tmp_path)
+
+    assert "stale" not in lines(filled(tmp_path, "2027-01"))["gas"]["marks"]
+
+
+def test_outage_in_a_rerun_keeps_what_the_first_run_of_the_month_collected(tmp_path: Path) -> None:
+    run_yerevan(tmp_path)
+    before = tree(tmp_path)
+    listed = published(tmp_path, "normalized/2026-10/yerevan.json")["listings"]
+    issues = Issues()
+    dead = [GAS_PAGE, "https://myrealty.am/en/apartments-for-sale/yerevan"]
+    run_yerevan(tmp_path, dead=dead, issues=issues)
+
+    gas = lines(filled(tmp_path))["gas"]
+    assert gas["amount_eur"] == 2.15
+    assert "stale" not in gas["marks"]
     assert issues.titles == ["data-alert: Ереван — Газ — yerevan_gas_psrc"]
+    raw = "raw/2026-10/yerevan/yerevan_gas_psrc.tar.xz"
+    assert tree(tmp_path)[raw] == before[raw]
+    normalized = published(tmp_path, "normalized/2026-10/yerevan.json")
+    (reading,) = [
+        entry for entry in normalized["sources"] if entry["source_id"] == "yerevan_gas_psrc"
+    ]
+    assert reading["status"] == "ok"
+    assert len(reading["records"]) == 1
+    assert reading["detail"].startswith("повторный сбор не удался")
+    assert [site["candidates"] for site in normalized["listings"]] == [
+        site["candidates"] for site in listed
+    ]
+
+
+def test_failed_first_collection_is_replaced_by_a_later_one(tmp_path: Path) -> None:
+    run_yerevan(tmp_path)
+    run_january(tmp_path, dead=[GAS_PAGE])
+    run_january(tmp_path)
+
+    (reading,) = [
+        entry
+        for entry in published(tmp_path, "normalized/2027-01/yerevan.json")["sources"]
+        if entry["source_id"] == "yerevan_gas_psrc"
+    ]
+    assert (reading["status"], reading["detail"]) == ("ok", "")
+
+
+class Answers:
+    """Stands in for the PSRC gas adapter."""
+
+    name = "yerevan_psrc_gas"
+
+    def __init__(self, change: Callable[[AdapterOutput], object]) -> None:
+        self._change = change
+        self._real = get_adapter(self.name)
+
+    def collect(self, ctx: CollectContext) -> object:
+        return self._change(self._real.collect(ctx))
+
+
+def gas_answers(monkeypatch: pytest.MonkeyPatch, change: Callable[[AdapterOutput], object]) -> None:
+    fake = Answers(change)
+    monkeypatch.setattr(
+        "ubc.monthly.get_adapter",
+        lambda name: fake if name == fake.name else get_adapter(name),
+    )
+
+
+def gas_record(output: AdapterOutput, **changes: object) -> AdapterOutput:
+    return AdapterOutput(records=[output.records[0].model_copy(update=changes)])
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda output: None,
+        lambda output: {"records": output.records},
+        lambda output: gas_record(output, value=float("nan")),
+        lambda output: gas_record(output, currency=None),
+    ],
+    ids=["nothing", "not an output", "not a number", "no currency"],
+)
+def test_an_answer_that_breaks_the_contract_is_a_failed_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: Callable[[AdapterOutput], object]
+) -> None:
+    run_yerevan(tmp_path)
+    gas_answers(monkeypatch, change)
+    issues = Issues()
+    run_january(tmp_path, issues=issues)
+
+    assert "stale" in lines(filled(tmp_path, "2027-01"))["gas"]["marks"]
+    assert "data-alert: Ереван — Газ — yerevan_gas_psrc" in issues.titles
+
+
+# Files of earlier runs
+
+
+@pytest.mark.parametrize(
+    ("name", "body"),
+    [
+        ("state/yerevan.json", b"{"),
+        ("state/yerevan.json", b"\xff\xfe"),
+        ("state/yerevan.json", b'{"schema_version": 1, "city": "tbilisi", "articles": []}'),
+        ("houses/yerevan.json", b"\xff\xfe"),
+        (
+            "houses/yerevan.json",
+            b'{"schema_version": 1, "city": "tbilisi", "period": "2026-09"}',
+        ),
+        ("houses/yerevan.json", b'{"schema_version": 1, "city": "yerevan", "period": "soon"}'),
+        ("normalized/2026-10/yerevan.json", b"{"),
+        ("normalized/2026-10/yerevan.json", b"[]"),
+        ("normalized/2026-10/yerevan.json", b'{"sources": [{}]}'),
+        ("normalized/2026-10/yerevan.json", b"\xff"),
+        ("tbilisi-2026-10.json", b"{"),
+        ("tbilisi-2026-10.json", b"\xff"),
+    ],
+)
+def test_a_damaged_file_of_an_earlier_run_stops_the_run(
+    tmp_path: Path, name: str, body: bytes
+) -> None:
+    run_yerevan(tmp_path)
+    (tmp_path / name).write_bytes(body)
+    before = tree(tmp_path)
+
+    with pytest.raises(ConfigError, match=Path(name).name):
+        run_yerevan(tmp_path)
+
+    assert tree(tmp_path) == before
+
+
+def test_saved_houses_that_do_not_cover_the_grid_stop_a_one_article_run(tmp_path: Path) -> None:
+    run_yerevan(tmp_path)
+    saved = published(tmp_path, "houses/yerevan.json")
+    saved["empty"].pop()
+    (tmp_path / "houses/yerevan.json").write_text(json.dumps(saved), encoding="utf-8")
+
+    with pytest.raises(PublicationError, match="девять ячеек"):
+        run_yerevan(tmp_path, item=Item.gas)
+
+
+def test_a_failed_write_leaves_every_file_as_it_was(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_yerevan(tmp_path)
+    before = tree(tmp_path)
+    real = Path.replace
+
+    def replace(self: Path, target: Path) -> Path:
+        if Path(target).name == "site-index.json":
+            raise PermissionError("the file is open elsewhere")
+        return real(self, target)
+
+    monkeypatch.setattr(Path, "replace", replace)
+
+    with pytest.raises(PublicationError, match="open elsewhere"):
+        run_january(tmp_path)
+
+    assert tree(tmp_path) == before
 
 
 def test_dead_source_without_a_previous_value_publishes_nothing_but_still_alerts(
@@ -539,7 +710,7 @@ def test_one_article_run_takes_the_rest_from_the_saved_state(tmp_path: Path) -> 
     assert ARLIS not in pages.asked
     assert not any("myrealty" in url for url in pages.asked)
     cell = filled(tmp_path)
-    assert cell["total_eur"] == 20.39
+    assert cell["total_eur"] == 20.25
     assert not any("stale" in line["marks"] for line in cell["lines"])
     normalized = published(tmp_path, "normalized/2026-10/yerevan.json")
     assert {"yerevan_waste_arlis", "yerevan_gas_psrc"} <= {
@@ -620,8 +791,17 @@ def test_first_known_price_that_starts_inside_the_month_covers_it_whole(tmp_path
 
 
 def test_first_known_price_that_starts_after_the_month_is_not_used(tmp_path: Path) -> None:
-    with pytest.raises(PublicationError, match="electricity"):
+    with pytest.raises(PublicationError, match="electricity: .*действует с 2026-11-01"):
         run_lisbon(tmp_path, 0.20, "2026-11-01")
+
+
+def test_a_month_before_any_known_price_says_since_when_it_is_known(tmp_path: Path) -> None:
+    november_state(tmp_path, "2026-11-01")
+
+    with pytest.raises(PublicationError, match="electricity: .*действует с 2026-11-01") as caught:
+        run_lisbon(tmp_path, 0.20, "2026-11-01")
+
+    assert "прошлого значения нет" not in str(caught.value)
 
 
 def test_changed_tariff_is_split_by_days_and_the_old_one_is_kept(tmp_path: Path) -> None:
@@ -735,6 +915,36 @@ def test_source_whose_tariff_has_expired_is_reported_and_the_value_is_stale(
     assert [
         alert.detail for alert in report.alerts if alert.source_id == "yerevan_waste_arlis"
     ] == ["тариф источника действует только по 2026-12-31"]
+    # The water decision is copied for 2026 only.
+    (water,) = [line for line in cell.lines if line.item is Item.water]
+    assert water.amount_eur == 0.84
+    assert Mark.stale in water.marks
+    assert "yerevan_water_last_official" in {alert.source_id for alert in report.alerts}
+
+
+@pytest.mark.parametrize("month", ["2026-01", "2026-02", "2026-09"])
+def test_yerevan_months_of_2026_before_october_are_billed_by_the_tariffs_in_force(
+    tmp_path: Path, month: str
+) -> None:
+    issues = Issues()
+    run_yerevan(
+        tmp_path,
+        period=YearMonth.parse(month),
+        issues=issues,
+        fetcher=NextMonth(SavedPages(*YEREVAN_PAGES)),
+    )
+
+    bill = lines(filled(tmp_path, month))
+    assert {item: line["valid_from"] for item, line in bill.items()} == {
+        "maintenance": "2026-01-01",
+        "electricity": "2022-02-01",
+        "gas": "2022-04-01",
+        "water": "2026-01-01",
+        "sewage": "2026-01-01",
+        "waste": "2026-01-01",
+    }
+    assert not any("stale" in line["marks"] for line in bill.values())
+    assert issues.titles == []
 
 
 # Secrets
@@ -763,6 +973,28 @@ def test_secret_values_never_reach_the_stored_files_or_the_issue(tmp_path: Path)
             body = lzma.decompress(body)
         assert b"hunter2secret" not in body, name
     assert issues.bodies and not any("hunter2secret" in body for body in issues.bodies)
+
+
+@pytest.mark.parametrize("secret", ["hunter2secret", 'hun"ter\\2', "hunter 2/secret"])
+def test_a_secret_inside_a_record_is_blanked_everywhere(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, secret: str
+) -> None:
+    note = f"via http://user:{quote(secret, safe='')}@host and {secret}"
+    gas_answers(monkeypatch, lambda output: gas_record(output, note=note))
+    run_yerevan(tmp_path, secrets=SecretConfig(proxy_password=secret))
+
+    assert "***" in lines(filled(tmp_path))["gas"]["note"]
+    for name, body in tree(tmp_path).items():
+        if name.endswith(".json"):
+            for form in (secret, quote(secret, safe=""), json.dumps(secret)[1:-1]):
+                assert form.encode() not in body, name
+
+
+def test_a_secret_equal_to_ordinary_data_does_not_publish_damaged_files(tmp_path: Path) -> None:
+    with pytest.raises(PublicationError, match="секрет"):
+        run_yerevan(tmp_path, secrets=SecretConfig(proxy_login="yerevan"))
+
+    assert tree(tmp_path) == {}
 
 
 # The repository keeps the new directories away from the site and the city loader

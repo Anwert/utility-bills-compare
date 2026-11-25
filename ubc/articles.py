@@ -8,7 +8,9 @@ for one article, so this module decides which of them belong to the bill:
   measure, ``AMD/month`` is another) with the same ``valid_from`` the first one
   stays. Adapters put the price of ordinary household use first, so the Yerevan
   night rate, which comes after the day rate, does not replace it;
-- the first remaining record represents the source in the policy.
+- the first remaining record represents the source in the policy, which compares
+  the others with it;
+- a price of zero is not a tariff: such an answer is a refusal.
 
 A value that was in force earlier fills only the days before the newer one starts.
 """
@@ -53,7 +55,8 @@ class Reading:
 class ArticleOutcome:
     """Records and badges for the calculation, alerts to send, state to keep.
 
-    ``records`` is empty when nothing was ever published for the article.
+    ``records`` is empty when nothing was ever published for the article, or when
+    the earliest known price begins after the month: ``known_from`` is that date.
     ``dated`` maps a record stretched back to the first day of the month (by
     source URL) to the date the source itself gives.
     """
@@ -65,6 +68,7 @@ class ArticleOutcome:
     state: ArticleState | None = None
     source_id: str | None = None
     dated: dict[str, date] = field(default_factory=dict)
+    known_from: date | None = None
 
 
 def decide_article(
@@ -94,9 +98,15 @@ def decide_article(
         previous=previous.acting_value() if previous is not None else None,
     )
     if decision.record is None or decision.acting is None:
-        return ArticleOutcome(item=item, alerts=decision.alerts)
+        answered = [record for records in billable.values() for record in records]
+        return ArticleOutcome(
+            item=item, alerts=decision.alerts, known_from=_starts_after(answered, period)
+        )
     recount = previous is not None and _later(previous.checked_month(), period)
-    if previous is not None and recount and _covers(previous.history, period):
+    if previous is not None and (
+        (recount and (decision.stale or _covers(previous.history, period)))
+        or _already_verified(previous, period, attempts)
+    ):
         return replace(keep_article(previous, period), alerts=decision.alerts)
     history = list(previous.history) if previous is not None else []
     if not decision.stale and decision.source_id is not None:
@@ -114,6 +124,18 @@ def decide_article(
         # A recount of an older month must not move the policy state back in time.
         state = previous
     return replace(outcome, alerts=decision.alerts, state=state, source_id=decision.source_id)
+
+
+def _already_verified(
+    previous: ArticleState, period: YearMonth, attempts: Sequence[SourceAttempt]
+) -> bool:
+    """An earlier run of this month got the value, and this one got no answer at all."""
+
+    return (
+        previous.checked_month() == period
+        and not previous.stale
+        and all(attempt.status is not AttemptStatus.ok for attempt in attempts)
+    )
 
 
 def keep_article(state: ArticleState, period: YearMonth) -> ArticleOutcome:
@@ -170,6 +192,8 @@ def _attempt(
             AttemptStatus.invalid,
             detail=f"тариф источника действует только по {ended}",
         )
+    if any(price <= 0 for record in billable for price in _prices(record)):
+        return SourceAttempt(reading.source, AttemptStatus.invalid, detail="цена не больше нуля")
     starts = min(record.valid_from for record in billable)
     if first and starts > period.last_day:
         return SourceAttempt(
@@ -177,7 +201,11 @@ def _attempt(
             AttemptStatus.invalid,
             detail=f"тариф источника действует с {starts}, позже месяца сбора",
         )
-    return SourceAttempt(reading.source, AttemptStatus.ok, billable[0])
+    return SourceAttempt(reading.source, AttemptStatus.ok, billable[0], others=tuple(billable[1:]))
+
+
+def _prices(record: NormalizedRecord) -> list[float]:
+    return [record.value, *(tier.value for tier in record.tiers)]
 
 
 def _append(
@@ -218,7 +246,17 @@ def _bill(state: ArticleState, period: YearMonth, *, stale: bool, note: str) -> 
         state=state,
         source_id=state.history[-1].source_id,
         dated=dated,
+        known_from=None
+        if records
+        else _starts_after([record for entry in state.history for record in entry.records], period),
     )
+
+
+def _starts_after(records: Sequence[NormalizedRecord], period: YearMonth) -> date | None:
+    """The date the earliest known price begins, when that is after the month."""
+
+    earliest = min((record.valid_from for record in records), default=None)
+    return earliest if earliest is not None and earliest > period.last_day else None
 
 
 def _month_records(

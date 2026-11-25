@@ -1,0 +1,387 @@
+{
+  "schema_version": 1,
+  "city": "yerevan",
+  "month": "2026-07",
+  "updated_at": "2026-11-25T02:36:49.077432Z",
+  "apartment": {
+    "rooms": 2,
+    "area_m2": 60,
+    "occupants": 2
+  },
+  "exchange_rate": {
+    "currency": "AMD",
+    "per_eur": 418.9809,
+    "month": "2026-07",
+    "source_url": "https://api.cba.am/exchangerates.asmx",
+    "source_name": "Central Bank of Armenia"
+  },
+  "paid_data_note": "оценка по статистике; точные данные поставщика возможны за доплату (~$1–2 в месяц на страну через резидентный прокси)",
+  "cells": [
+    {
+      "house_class": "soviet_panel",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "soviet_panel",
+      "heating": "gas_boiler",
+      "status": "ok",
+      "empty_reason": null,
+      "total_eur": 30.33,
+      "housing_eur": 3.58,
+      "utility_eur": 26.75,
+      "lines": [
+        {
+          "item": "maintenance",
+          "category": "housing",
+          "amount_eur": 3.58,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
+        },
+        {
+          "item": "heating",
+          "category": "utility",
+          "amount_eur": 0.0,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-04-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026. Норма: 22,5 м³ газа на м² в год: расчётная потребность неутеплённой девятиэтажной панели при полном отоплении (UNDP-GEF, Ереван), 178 кВт·ч/м² в год; средний расход по счетам в Ереване заметно ниже; с 1 м³ газа получается 9,3 × 0,85 = 7,9 кВт·ч тепла (теплота сгорания и КПД котла — Karamyan, Avetisyan, Noack, JAER 2023)."
+        },
+        {
+          "item": "electricity",
+          "category": "utility",
+          "amount_eur": 14.44,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-02-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "Дневной тариф для населения, AMD за кВт·ч с НДС: 46,48 при расходе до 200 кВт·ч в месяц, 48,48 при 201–400, 53,48 выше 400. Весь расход посчитан по дневной цене: какая его часть приходится на ночь, неизвестно. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025. Норма: 781 кВт·ч на человека в год: Армстат, энергетический баланс Армении за 2024 год — население 203,6 тыс. т н.э. ÷ 3,03 млн человек; в эту цифру входит и часть электрического отопления."
+        },
+        {
+          "item": "gas",
+          "category": "utility",
+          "amount_eur": 7.49,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-04-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026. Норма: 131 м³ газа на человека в год на плиту и горячую воду — производная по отчёту R2E2 «Clean Heating», 2022: газ населения Армении вне отопления за 2020 год 3090 ГВт·ч ÷ 9,5 кВт·ч/м³ ÷ (2,96 млн человек × 84 % домов с газом)."
+        },
+        {
+          "item": "water",
+          "category": "utility",
+          "amount_eur": 2.52,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "170,36 AMD за м³ с НДС — питьевая вода, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025. Норма: 37,2 м³ на человека в год: Армстат, вода, отпущенная населению Армении из водопровода за 2024 год, 112,6 млн м³ ÷ 3,03 млн человек."
+        },
+        {
+          "item": "sewage",
+          "category": "utility",
+          "amount_eur": 0.44,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "30,06 AMD за м³ с НДС — водоотведение, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025. Норма: 37,2 м³ на человека в год: Армстат, вода, отпущенная населению Армении из водопровода за 2024 год, 112,6 млн м³ ÷ 3,03 млн человек."
+        },
+        {
+          "item": "waste",
+          "category": "utility",
+          "amount_eur": 1.86,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
+        }
+      ],
+      "building": {
+        "id": "real-estate-415249",
+        "address": "Khaghagh Doni street, Erebuni, Yerevan",
+        "url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/erebuni/khaghagh-doni-street/2-room/415249"
+      }
+    },
+    {
+      "house_class": "soviet_panel",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "дом такого класса с таким отоплением автоматически не найден",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "gas_boiler",
+      "status": "ok",
+      "empty_reason": null,
+      "total_eur": 30.33,
+      "housing_eur": 3.58,
+      "utility_eur": 26.75,
+      "lines": [
+        {
+          "item": "maintenance",
+          "category": "housing",
+          "amount_eur": 3.58,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
+        },
+        {
+          "item": "heating",
+          "category": "utility",
+          "amount_eur": 0.0,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-04-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026. Норма: 12,1 м³ газа на м² в год: цель проекта UNDP-GEF для новых домов, 96 кВт·ч/м² в год (верх диапазона 80–96); распределение по классам — наше допущение; с 1 м³ газа получается 9,3 × 0,85 = 7,9 кВт·ч тепла (теплота сгорания и КПД котла — Karamyan, Avetisyan, Noack, JAER 2023)."
+        },
+        {
+          "item": "electricity",
+          "category": "utility",
+          "amount_eur": 14.44,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-02-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "Дневной тариф для населения, AMD за кВт·ч с НДС: 46,48 при расходе до 200 кВт·ч в месяц, 48,48 при 201–400, 53,48 выше 400. Весь расход посчитан по дневной цене: какая его часть приходится на ночь, неизвестно. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025. Норма: 781 кВт·ч на человека в год: Армстат, энергетический баланс Армении за 2024 год — население 203,6 тыс. т н.э. ÷ 3,03 млн человек; в эту цифру входит и часть электрического отопления."
+        },
+        {
+          "item": "gas",
+          "category": "utility",
+          "amount_eur": 7.49,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-04-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026. Норма: 131 м³ газа на человека в год на плиту и горячую воду — производная по отчёту R2E2 «Clean Heating», 2022: газ населения Армении вне отопления за 2020 год 3090 ГВт·ч ÷ 9,5 кВт·ч/м³ ÷ (2,96 млн человек × 84 % домов с газом)."
+        },
+        {
+          "item": "water",
+          "category": "utility",
+          "amount_eur": 2.52,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "170,36 AMD за м³ с НДС — питьевая вода, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025. Норма: 37,2 м³ на человека в год: Армстат, вода, отпущенная населению Армении из водопровода за 2024 год, 112,6 млн м³ ÷ 3,03 млн человек."
+        },
+        {
+          "item": "sewage",
+          "category": "utility",
+          "amount_eur": 0.44,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "30,06 AMD за м³ с НДС — водоотведение, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025. Норма: 37,2 м³ на человека в год: Армстат, вода, отпущенная населению Армении из водопровода за 2024 год, 112,6 млн м³ ÷ 3,03 млн человек."
+        },
+        {
+          "item": "waste",
+          "category": "utility",
+          "amount_eur": 1.86,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
+        }
+      ],
+      "building": {
+        "id": "myrealty-162327",
+        "address": "N. Tigranyan dead end, Arabkir, Yerevan",
+        "url": "https://myrealty.am/en/norakaruyc-bnakaran/2-senyakanoc/N.+Tigranyan+dead+end/Arabkir/Yerevan/162327"
+      }
+    },
+    {
+      "house_class": "typical_newbuild",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "дом такого класса с таким отоплением автоматически не найден",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "business",
+      "heating": "district",
+      "status": "empty",
+      "empty_reason": "в Ереване нет городского тарифа центрального отопления: «центральное» в объявлениях — домовая котельная, её тариф не публикуется",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    },
+    {
+      "house_class": "business",
+      "heating": "gas_boiler",
+      "status": "ok",
+      "empty_reason": null,
+      "total_eur": 30.33,
+      "housing_eur": 3.58,
+      "utility_eur": 26.75,
+      "lines": [
+        {
+          "item": "maintenance",
+          "category": "housing",
+          "amount_eur": 3.58,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
+        },
+        {
+          "item": "heating",
+          "category": "utility",
+          "amount_eur": 0.0,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-04-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026. Норма: 10,1 м³ газа на м² в год: цель проекта UNDP-GEF для новых домов, 80 кВт·ч/м² в год (низ диапазона 80–96); распределение по классам — наше допущение; с 1 м³ газа получается 9,3 × 0,85 = 7,9 кВт·ч тепла (теплота сгорания и КПД котла — Karamyan, Avetisyan, Noack, JAER 2023)."
+        },
+        {
+          "item": "electricity",
+          "category": "utility",
+          "amount_eur": 14.44,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-02-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "Дневной тариф для населения, AMD за кВт·ч с НДС: 46,48 при расходе до 200 кВт·ч в месяц, 48,48 при 201–400, 53,48 выше 400. Весь расход посчитан по дневной цене: какая его часть приходится на ночь, неизвестно. Действует с 01.02.2022: решение КРОУ 478-Н от 29.12.2021 с изменениями 466-Н от 30.12.2025. Норма: 781 кВт·ч на человека в год: Армстат, энергетический баланс Армении за 2024 год — население 203,6 тыс. т н.э. ÷ 3,03 млн человек; в эту цифру входит и часть электрического отопления."
+        },
+        {
+          "item": "gas",
+          "category": "utility",
+          "amount_eur": 7.49,
+          "source_url": "https://www.psrc.am/uploads/files/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/%D4%B2%D5%B6%D5%A1%D5%AF%D5%A1%D5%B6%20%D5%A3%D5%A1%D5%A6%D5%AB%20%D5%BD%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80%D5%A8%20%D5%AF%D5%A1%D5%B5%D6%84%D5%AB%20%D5%B0%D5%A1%D5%B4%D5%A1%D6%80.pdf",
+          "source_kind": "official",
+          "valid_from": "2022-04-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "143,7 AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ в месяц (строка 5.1 таблицы КРОУ). Действует с 01.04.2022: решение КРОУ 83-Н от 01.03.2022 с изменениями 174-Н от 01.07.2026. Норма: 131 м³ газа на человека в год на плиту и горячую воду — производная по отчёту R2E2 «Clean Heating», 2022: газ населения Армении вне отопления за 2020 год 3090 ГВт·ч ÷ 9,5 кВт·ч/м³ ÷ (2,96 млн человек × 84 % домов с газом)."
+        },
+        {
+          "item": "water",
+          "category": "utility",
+          "amount_eur": 2.52,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "170,36 AMD за м³ с НДС — питьевая вода, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025. Норма: 37,2 м³ на человека в год: Армстат, вода, отпущенная населению Армении из водопровода за 2024 год, 112,6 млн м³ ÷ 3,03 млн человек."
+        },
+        {
+          "item": "sewage",
+          "category": "utility",
+          "amount_eur": 0.44,
+          "source_url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "norm_based"
+          ],
+          "note": "30,06 AMD за м³ с НДС — водоотведение, обычные абоненты. Цифра переписана вручную со скана решения КРОУ 397-Н от 26.11.2025. Норма: 37,2 м³ на человека в год: Армстат, вода, отпущенная населению Армении из водопровода за 2024 год, 112,6 млн м³ ÷ 3,03 млн человек."
+        },
+        {
+          "item": "waste",
+          "category": "utility",
+          "amount_eur": 1.86,
+          "source_url": "https://www.arlis.am/hy/acts/219208",
+          "source_kind": "official",
+          "valid_from": "2026-01-01",
+          "marks": [
+            "fixed"
+          ],
+          "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
+        }
+      ],
+      "building": {
+        "id": "real-estate-427650",
+        "address": "Antarayin street, Center, Yerevan",
+        "url": "https://www.real-estate.am/en/prp/apartment/buy/yerevan/center/antarayin-street/2-room/427650"
+      }
+    },
+    {
+      "house_class": "business",
+      "heating": "electric",
+      "status": "empty",
+      "empty_reason": "дом такого класса с таким отоплением автоматически не найден",
+      "total_eur": null,
+      "housing_eur": null,
+      "utility_eur": null,
+      "lines": [],
+      "building": null
+    }
+  ]
+}

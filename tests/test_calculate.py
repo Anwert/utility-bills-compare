@@ -563,6 +563,154 @@ def test_electric_heating_is_priced_on_the_electricity_tariff_and_split_out() ->
     assert cents(cell.total_eur) == "33.90"
 
 
+def _gas(**overrides: object) -> NormalizedRecord:
+    return record(
+        **{
+            "item": "gas",
+            "value": 0.1,
+            "unit": "EUR/kWh",
+            "source": {
+                "kind": "official",
+                "url": "https://example.test/gas",
+                "fetched_at": "2026-11-24T00:00:00+00:00",
+                "name": "gas",
+            },
+        }
+        | overrides
+    )
+
+
+def _boiler(*norms: ConsumptionNorm, tariff: NormalizedRecord | None = None, **overrides: object):
+    return bill(
+        heating=HeatingType.gas_boiler,
+        house=house(heating="gas_boiler"),
+        records=[tariff or _gas(), hdd(200, month="2026-01"), hdd(1000, annual=True)],
+        norms=list(norms),
+        **overrides,
+    )
+
+
+def _base_gas(**overrides: object) -> ConsumptionNorm:
+    return norm(
+        **{
+            "item": "gas",
+            "annual_value": 1200,
+            "unit": "kWh/dwelling/year",
+            "basis": "per_dwelling",
+            "source": "плита и горячая вода",
+        }
+        | overrides
+    )
+
+
+HEATING_GAS = norm(
+    item="gas",
+    heating="gas_boiler",
+    annual_value=10,
+    unit="kWh/m2/year",
+    basis="per_m2",
+    source="котёл",
+)
+
+
+def test_gas_for_cooking_and_for_the_boiler_are_two_lines_of_one_stepped_tariff() -> None:
+    # Base: 1 200 kWh / 12 = 100 kWh.
+    # Boiler: 10 kWh/m2/year * 60 m2 * 200/1000 = 120 kWh.
+    # 220 kWh on tiers 101 at 0.10 then 0.20: 101 * 0.10 + 119 * 0.20 = 33.90.
+    # Base alone is 10.00, so heating is 23.90.
+    cell = _boiler(
+        _base_gas(),
+        HEATING_GAS,
+        tariff=_gas(tiers=[{"up_to": 101, "value": 0.1}, {"up_to": None, "value": 0.2}]),
+        extra_marks={Item.gas: [Mark.stale]},
+    )
+
+    assert cents(line(cell, Item.gas).amount_eur) == "10.00"
+    assert cents(line(cell, Item.heating).amount_eur) == "23.90"
+    assert cents(cell.total_eur) == "33.90"
+    assert "плита и горячая вода" in line(cell, Item.gas).note
+    assert "котёл" in line(cell, Item.heating).note
+    for item in (Item.gas, Item.heating):
+        assert line(cell, item).source_url == "https://example.test/gas"
+        assert line(cell, item).marks == [Mark.norm_based, Mark.stale]
+
+
+def test_gas_norms_of_different_energy_units_are_added_up() -> None:
+    # Base: 4.32 GJ / 12 = 0.36 GJ = 100 kWh, 10.00 EUR. Boiler: 120 kWh, 12.00 EUR.
+    cell = _boiler(_base_gas(annual_value=4.32, unit="GJ/dwelling/year"), HEATING_GAS)
+
+    assert cents(line(cell, Item.gas).amount_eur) == "10.00"
+    assert cents(line(cell, Item.heating).amount_eur) == "12.00"
+
+
+def test_summer_gas_of_a_boiler_cell_is_the_base_use() -> None:
+    cell = bill(
+        period=YearMonth.parse("2026-07"),
+        heating=HeatingType.gas_boiler,
+        house=house(heating="gas_boiler"),
+        records=[_gas(), hdd(0, month="2026-07"), hdd(1000, annual=True, month="2026-07")],
+        norms=[_base_gas(), HEATING_GAS],
+    )
+
+    assert cents(line(cell, Item.gas).amount_eur) == "10.00"
+    assert cents(line(cell, Item.heating).amount_eur) == "0.00"
+
+
+def test_boiler_without_a_base_norm_keeps_one_gas_line() -> None:
+    cell = _boiler(HEATING_GAS)
+
+    assert [row.item for row in cell.lines] == [Item.gas]
+    assert cents(line(cell, Item.gas).amount_eur) == "12.00"
+
+
+def test_base_gas_norm_alone_does_not_heat_the_flat() -> None:
+    with pytest.raises(CalculationError, match="норм"):
+        _boiler(_base_gas())
+
+
+def test_electric_heating_needs_the_everyday_use_norm_too() -> None:
+    with pytest.raises(CalculationError, match="норм"):
+        bill(
+            heating=HeatingType.electric,
+            house=house(heating="electric"),
+            records=[_gas(item="electricity"), hdd(200), hdd(1000, annual=True)],
+            norms=[norm()],
+        )
+
+
+@pytest.mark.parametrize(
+    ("applies_to", "expected"),
+    [([], "10.00"), (["electric"], "10.00"), (["gas_boiler"], None)],
+)
+def test_base_gas_is_billed_in_the_columns_its_norm_names(
+    applies_to: list[str], expected: str | None
+) -> None:
+    cell = bill(
+        heating=HeatingType.electric,
+        house=house(heating="electric"),
+        records=[
+            _gas(),
+            _gas(item="electricity"),
+            hdd(200, month="2026-01"),
+            hdd(1000, annual=True),
+        ],
+        norms=[
+            _base_gas(applies_to=applies_to),
+            norm(
+                item="electricity",
+                annual_value=600,
+                unit="kWh/person/year",
+                basis="per_person",
+            ),
+            norm(),
+        ],
+    )
+
+    assert [cents(row.amount_eur) for row in cell.lines if row.item is Item.gas] == (
+        [expected] if expected else []
+    )
+
+
 def test_gigajoule_tariff_converts_a_kilowatt_hour_norm() -> None:
     # 100 kWh/m2 * 60 m2 * 360/1000 = 2 160 kWh = 7.776 GJ.
     # 7.776 * 10 EUR/GJ = 77.76 EUR.
@@ -647,7 +795,7 @@ def test_consumption_norms_live_in_data_with_sources() -> None:
             ]
             assert len(electricity) == 1
             assert electricity[0].basis is Basis.per_person
-            assert electricity[0].annual_value == 950
+            assert electricity[0].annual_value == (781 if city is CityId.yerevan else 950)
             assert electricity[0].heating is None
 
     warsaw_panel = next(

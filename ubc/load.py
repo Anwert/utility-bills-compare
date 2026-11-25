@@ -17,7 +17,7 @@ class ConfigError(Exception):
 def read_document[T: BaseModel](path: Path, model: type[T]) -> T:
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise ConfigError(f"{path}: {exc}") from exc
     try:
         return model.model_validate_json(text)

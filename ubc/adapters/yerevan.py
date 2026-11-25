@@ -1,15 +1,14 @@
-"""Yerevan gas, electricity, waste, maintenance, and the water fallback.
+"""Yerevan gas, electricity, water, waste and maintenance tariffs.
 
 PSRC tariff sections are empty without JavaScript, so collection starts from
 ``render_html`` (a saved DOM in tests). The consumer PDF is the link whose
-text is the tariff table, not a yearly review slide. Armenian row labels are
-not in the PDF text layer; gas and electricity are read by position.
+text is the tariff table, not a yearly review slide. Armenian row labels and
+the effective dates are not in the PDF text layer: gas and electricity are read
+by position, and the dates come from ``settings.effective``.
 
-The drinking-water decision is a scan. That source stays disabled and refuses
-to invent a tariff (``llm_vision`` is off). Water and sewage then come from the
-recorded official split in decision 397-N (1 January 2026). No water price
-index is applied: Eurostat has no Armenia series, and the Armstat CPI page
-checked on 24 November 2026 has no water-tariff row.
+The drinking-water decision is a scan. Its prices are copied by hand for one
+year, and any other month is a failed source, so the policy keeps the last value
+as stale and opens an alert until the next decision is copied.
 """
 
 from __future__ import annotations
@@ -31,7 +30,13 @@ from ubc.schemas import (
 )
 
 _GAS_PAIR = re.compile(r"(?m)([\d,]+\.\d{2})[ \t]+([\d,]+\.\d{2})[ \t]*$")
-_GAS_LABEL = re.compile(r"(?m)^\s*1\.2\b")
+_GAS_LABEL = re.compile(r"(?m)^[ \t]*(\d\.\d)(?!\d)")
+# Rows of the gas table that carry two prices, and the labels the text layer keeps.
+# Row 2.2 has two sub-rows, «ա» and «բ», whose labels it loses.
+_GAS_ROWS = ("1.1", "1.2", "2.1", "2.2ա", "2.2բ", "3", "4.1", "4.2", "5.1", "5.2")
+# Priced in drams per 1000 m³; the other rows are in dollars, hundreds at most.
+_GAS_DRAM_ROWS = {"1.1", "1.2", "2.2ա", "5.1"}
+_GAS_LABELS = ["1.1", "1.2", "2.1", "2.2", "4.1", "4.2", "5.1", "5.2"]
 _CREATED = re.compile(rb"CreationDate\(D:(\d{4})(\d{2})(\d{2})")
 _RENDER_BUDGETS_MS = (15_000, 30_000, 60_000)
 _ACT_YEAR = re.compile(r"ՏԵՂԱԿԱՆ ՎՃԱՐՆԵՐԻ (\d{4}) ԹՎԱԿԱՆԻ")
@@ -47,10 +52,12 @@ _STEP_BOUNDS: tuple[tuple[float | None, str], ...] = (
     (None, "above 400 kWh/month"),
 )
 
-# Decision 397-N, metered subscribers, with VAT. The PDF has no text layer.
-_RECORDED_WATER: dict[str, tuple[Item, float]] = {
-    "water": (Item.water, 170.36),
-    "sewage": (Item.sewage, 30.06),
+# Decision 397-N of 26.11.2025, rows 1.1 and 1.2, ordinary subscribers, with VAT.
+# The PDF has no text layer: for the next year copy its decision and move the year.
+_RECORDED_WATER_YEAR = 2026
+_RECORDED_WATER: dict[str, tuple[Item, float, str]] = {
+    "water": (Item.water, 170.36, "питьевая вода"),
+    "sewage": (Item.sewage, 30.06, "водоотведение"),
 }
 
 
@@ -158,33 +165,77 @@ def _created_on(pdf: bytes) -> date:
     return date(year, month, day)
 
 
-def _dated(created: date) -> str:
-    """Note for a PDF that prints no effective date: its creation date stands in.
+def _effective(
+    ctx: CollectContext, source: SourceConfig, pdf_url: str, prices: list[float]
+) -> tuple[date, str]:
+    """When these prices came into force, and the sentence that says so.
 
-    The pipeline prorates by it, and stretches a first-known price to the 1st.
+    The PDF prints the date outside its text layer. ``settings.effective`` holds the
+    dates read by eye, each tied to exact prices; a price nobody has checked yet is
+    dated by the PDF itself.
     """
 
-    return f"Дата действия в тексте PDF не указана, PDF создан {created.isoformat()}."
+    for entry in _recorded_dates(source):
+        recorded, valid_from, basis = entry
+        if recorded == prices:
+            return valid_from, f"Действует с {valid_from:%d.%m.%Y}: {basis}."
+    created = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
+    return created, (
+        "Дата начала действия в тексте документа не указана: "
+        f"взята дата создания файла, {created:%d.%m.%Y}."
+    )
+
+
+def _recorded_dates(source: SourceConfig) -> list[tuple[list[float], date, str]]:
+    entries = source.settings.get("effective", [])
+    if not isinstance(entries, list):
+        raise ValueError(f"{source.adapter}: settings.effective must be a list")
+    return [_recorded_date(source, entry) for entry in entries]
+
+
+def _recorded_date(source: SourceConfig, entry: object) -> tuple[list[float], date, str]:
+    bad = f"{source.adapter}: settings.effective needs prices, valid_from and basis, got {entry!r}"
+    if not isinstance(entry, dict):
+        raise ValueError(bad)
+    prices, start, basis = (entry.get(key) for key in ("prices", "valid_from", "basis"))
+    if not isinstance(prices, list) or not prices:
+        raise ValueError(bad)
+    if any(isinstance(price, bool) or not isinstance(price, int | float) for price in prices):
+        raise ValueError(bad)
+    if not isinstance(start, str) or not isinstance(basis, str) or not basis:
+        raise ValueError(bad)
+    try:
+        valid_from = date.fromisoformat(start)
+    except ValueError as exc:
+        raise ValueError(bad) from exc
+    return [float(price) for price in prices], valid_from, basis
 
 
 def _household_gas(text: str) -> float:
-    """AMD per 1000 m³ with VAT from row 1.2.
+    """AMD per 1000 m³ with VAT from row 5.1, consumers of up to 10,000 m³ a month.
 
-    Row labels and numbers sit on different baselines, so a label lands beside
-    its own pair with poppler but beside another one with xpdf. The pairs keep
-    their order in both: 1.1 first, 1.2 second.
+    Rows 1.1 and 1.2 are for socially vulnerable families; an ordinary household is
+    one of the "other consumers" of row 5. Row labels and numbers sit on different
+    baselines, so a label lands beside its own pair with poppler but beside another
+    one with xpdf. The pairs keep the order of the rows in both, so the price is read
+    by place, and only from a table of exactly the rows known here.
     """
 
+    if _GAS_LABEL.findall(text) != _GAS_LABELS:
+        raise ValueError("gas PDF does not have the known rows")
     pairs = [
         (float(net.replace(",", "")), float(gross.replace(",", "")))
         for net, gross in _GAS_PAIR.findall(text)
     ]
-    if len(pairs) < 2 or _GAS_LABEL.search(text) is None:
-        raise ValueError("gas PDF has no row 1.2 with two tariff columns")
-    net, gross = pairs[1]
-    if not 10_000 <= gross <= 1_000_000 or abs(net * 1.2 - gross) > 1:
-        raise ValueError(f"gas PDF row 1.2 is not AMD per 1000 m³ with 20% VAT: {net}, {gross}")
-    return gross
+    if len(pairs) != len(_GAS_ROWS):
+        raise ValueError(f"gas PDF has {len(pairs)} priced rows, not {len(_GAS_ROWS)}")
+    for row, (net, gross) in zip(_GAS_ROWS, pairs, strict=True):
+        if abs(net * 1.2 - gross) > 1 or (gross >= 10_000) != (row in _GAS_DRAM_ROWS):
+            raise ValueError(f"gas PDF row {row} is not its currency with 20% VAT: {net}, {gross}")
+    price = pairs[_GAS_ROWS.index("5.1")][1]
+    if price > 1_000_000:
+        raise ValueError(f"gas PDF row 5.1 is not AMD per 1000 m³: {price}")
+    return price
 
 
 def _table_rows(text: str) -> dict[int, list[float]]:
@@ -210,8 +261,13 @@ def _steps(prices: list[float], when: str) -> list[Tier]:
     ]
 
 
-def _slashed(prices: list[float]) -> str:
-    return " / ".join(f"{price:g}" for price in prices)
+def _number(value: float) -> str:
+    return f"{value:g}".replace(".", ",")
+
+
+def _by_steps(prices: list[float]) -> str:
+    low, middle, high = (_number(price) for price in prices)
+    return f"{low} при расходе до 200 кВт·ч в месяц, {middle} при 201–400, {high} выше 400"
 
 
 def _record(
@@ -257,7 +313,7 @@ def _plain(html: str) -> str:
 
 
 class YerevanPsrcGas:
-    """Household natural gas, row 1.2, column with VAT, AMD per m³."""
+    """Household natural gas, row 5.1, column with VAT, AMD per m³."""
 
     name = "yerevan_psrc_gas"
 
@@ -266,12 +322,11 @@ class YerevanPsrcGas:
         page = _require_url(source)
         pdf_url = _pick_pdf(ctx, page, _is_gas_tariff)
         per_thousand = _household_gas(ctx.fetcher.pdf_to_text(pdf_url))
-        valid_from = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
+        valid_from, dated = _effective(ctx, source, pdf_url, [per_thousand])
         value = per_thousand / 1000
         note = (
-            f"строка 1.2, столбец с НДС: {per_thousand:.0f} AMD за 1000 м³ "
-            f"({value} AMD/м³). Подписи строк в текстовом слое нет, разбор позиционный. "
-            f"{_dated(valid_from)}"
+            f"{_number(value)} AMD за м³ с НДС — цена для обычных потребителей до 10 000 м³ "
+            f"в месяц (строка 5.1 таблицы КРОУ). {dated}"
         )
         record = _record(
             ctx,
@@ -301,7 +356,7 @@ class YerevanPsrcElectricity:
             night_prices = [rows[row][1] for row in (2, 3, 4)]
         except (KeyError, IndexError) as exc:
             raise ValueError("electricity PDF has no household day/night steps") from exc
-        valid_from = _created_on(ctx.fetcher.fetch_bytes(pdf_url))
+        valid_from, dated = _effective(ctx, source, pdf_url, [*day_prices, *night_prices])
         # One timestamp: of two records equally fresh the calculation takes the
         # first, so a cell is billed at the day price on every machine.
         fetched_at = datetime.now(UTC)
@@ -316,11 +371,9 @@ class YerevanPsrcElectricity:
             tiers=_steps(day_prices, "day"),
             fetched_at=fetched_at,
             note=(
-                "дневной бытовой тариф 0,38 кВ, AMD/кВт·ч при расходе до 200 / 201–400 / "
-                f"больше 400 кВт·ч в месяц: {_slashed(day_prices)}. Строка 1 (29.99/19.99) — "
-                "льготная для социально уязвимых, не этот тариф. Счёт считается по дневной "
-                "цене на весь расход: для доли ночного расхода источника нет. Подписей в "
-                f"текстовом слое нет. {_dated(valid_from)}"
+                f"Дневной тариф для населения, AMD за кВт·ч с НДС: {_by_steps(day_prices)}. "
+                "Весь расход посчитан по дневной цене: какая его часть приходится на ночь, "
+                f"неизвестно. {dated}"
             ),
         )
         night = _record(
@@ -334,15 +387,15 @@ class YerevanPsrcElectricity:
             tiers=_steps(night_prices, "night"),
             fetched_at=fetched_at,
             note=(
-                "ночной бытовой тариф 0,38 кВ, те же ступени, что у дневного: "
-                f"{_slashed(night_prices)} AMD/кВт·ч."
+                f"Ночной тариф для населения, AMD за кВт·ч с НДС: {_by_steps(night_prices)}. "
+                f"В счёт не входит. {dated}"
             ),
         )
         return AdapterOutput(records=[day, night])
 
 
 class YerevanPsrcScan:
-    """Official water decision. Disabled: the PDF is a scan and vision is off."""
+    """Official water decision. Disabled: the PDF is a scan and cannot be read."""
 
     name = "yerevan_psrc_scan"
 
@@ -351,7 +404,7 @@ class YerevanPsrcScan:
         page = _require_url(source)
         pdf_url = _pick_pdf(ctx, page, _is_drinking_water)
         ctx.fetcher.pdf_to_text(pdf_url)
-        raise ValueError("PSRC water decision is a scan; llm_vision is disabled")
+        raise ValueError("PSRC water decision is a scan without a text layer")
 
 
 class YerevanArlis:
@@ -372,10 +425,18 @@ class YerevanArlis:
             found = _WASTE_FEE.search(text)
             item = Item.waste
             point = "20"
+            caveat = (
+                "Периода в решении нет, плата считается помесячно по закону "
+                "о вывозе мусора HO-237-N (статьи 15 и 18)."
+            )
         elif item_name == "maintenance":
             found = _MAINTENANCE_FEE.search(text)
             item = Item.maintenance
             point = "22"
+            caveat = (
+                "Это ставка домов под управлением мэрии, то есть минимум: в домах с другим "
+                "управляющим, а это большинство новостроек, обычно платят больше."
+            )
         else:
             raise ValueError("yerevan_arlis requires settings.item waste or maintenance")
         if found is None:
@@ -391,43 +452,41 @@ class YerevanArlis:
             valid_to=date(year, 12, 31),
             url=url,
             note=(
-                f"п.{point} решения о местных платежах {year} года, жилое помещение, "
-                f"{value:.0f} AMD/м² в месяц. Следующий год — новый акт; "
-                "поиск arlis /hy/search/page/ с этой машины отвечает 403, "
-                "поэтому URL акта задан в конфигурации города."
+                f"{_number(value)} AMD за м² жилья в месяц — решение Совета старейшин Еревана "
+                f"о местных платежах на {year} год, пункт {point}. {caveat}"
             ),
         )
         return AdapterOutput(records=[record])
 
 
-class YerevanWaterStat:
-    """Last official metered rates, used because the decision PDF cannot be read."""
+class YerevanWaterRecorded:
+    """Official metered rates copied by hand from the scan of the yearly decision."""
 
-    name = "yerevan_water_stat"
+    name = "yerevan_water_recorded"
 
     def collect(self, ctx: CollectContext) -> AdapterOutput:
         source = require_source(ctx)
         component = source.settings.get("component")
         recorded = _RECORDED_WATER.get(component) if isinstance(component, str) else None
         if recorded is None:
-            raise ValueError("yerevan_water_stat requires settings.component water or sewage")
-        item, value = recorded
-        note = (
-            "записанное официальное значение решения PSRC №397-Н с 01.01.2026: "
-            "питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС "
-            "(вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. "
-            "Индекс цен на воду не применён: Eurostat не включает Армению, "
-            "на странице ИПЦ Armstat отдельного ряда на воду нет. " + ctx.city.paid_data_note
-        )
+            raise ValueError("yerevan_water_recorded requires settings.component water or sewage")
+        if ctx.period.year != _RECORDED_WATER_YEAR:
+            raise ValueError(
+                f"the water decision is copied for {_RECORDED_WATER_YEAR} only, not {ctx.period}"
+            )
+        item, value, service = recorded
         record = _record(
             ctx,
             source,
             item=item,
             value=value,
             unit="AMD/m3",
-            valid_from=date(2026, 1, 1),
+            valid_from=date(_RECORDED_WATER_YEAR, 1, 1),
             url=_require_url(source),
-            note=note,
+            note=(
+                f"{_number(value)} AMD за м³ с НДС — {service}, обычные абоненты. Цифра переписана "
+                "вручную со скана решения КРОУ 397-Н от 26.11.2025."
+            ),
         )
         return AdapterOutput(records=[record])
 
@@ -436,4 +495,4 @@ register_adapter(YerevanPsrcGas())
 register_adapter(YerevanPsrcElectricity())
 register_adapter(YerevanPsrcScan())
 register_adapter(YerevanArlis())
-register_adapter(YerevanWaterStat())
+register_adapter(YerevanWaterRecorded())

@@ -124,6 +124,15 @@ class HeatingType(StrEnum):
     electric = "electric"
 
 
+class Amenity(StrEnum):
+    """What a residential complex offers its tenants beyond a yard and a lift."""
+
+    swimming_pool = "swimming_pool"
+    gym = "gym"
+    tennis = "tennis"
+    concierge = "concierge"
+
+
 class Item(StrEnum):
     maintenance = "maintenance"
     heating = "heating"
@@ -172,6 +181,16 @@ class ExtractionMethod(StrEnum):
     llm_text = "llm_text"
     llm_vision = "llm_vision"
     api = "api"
+
+
+class Reading(StrEnum):
+    """How a source is read, for the «Источники» tab. The calculation ignores it."""
+
+    page = "page"
+    pdf = "pdf"
+    api = "api"
+    scan = "scan"
+    manual = "manual"
 
 
 class Mark(StrEnum):
@@ -274,6 +293,14 @@ ITEM_LABELS_RU: dict[Item, str] = {
     Item.fx: "Курс",
     Item.hdd: "Градусо-сутки",
     Item.hdd_annual: "Градусо-сутки за отопительный год",
+}
+
+READING_LABELS_RU: dict[Reading, str] = {
+    Reading.page: "страница сайта",
+    Reading.pdf: "таблица в PDF",
+    Reading.api: "открытый программный доступ (API)",
+    Reading.scan: "скан документа, программа его не читает",
+    Reading.manual: "переписано вручную из документа, новая цена сама не подхватится",
 }
 
 MARK_LABELS_RU: dict[Mark, str] = {
@@ -486,6 +513,9 @@ class BuildingCandidate(ContractModel):
     set only when the adapter already knows the mapping. ``building_type`` is the
     site's construction word (Panel, MONOLITH), not a house class. ``block_type`` is
     the built form of the whole block from open data (Berlin Umweltatlas).
+    ``amenities`` belong to the complex, not to the neighbourhood; an empty list means
+    the ad names none. ``unfinished`` is a bare shell, so its price says nothing about
+    the building.
     """
 
     id: str = Field(min_length=1, max_length=128)
@@ -502,7 +532,10 @@ class BuildingCandidate(ContractModel):
     building_type: str | None = None
     block_type: str | None = None
     is_newbuild: bool | None = None
+    floor: int | None = None
     floors: int | None = None
+    amenities: list[Amenity] = Field(default_factory=list)
+    unfinished: bool | None = None
     area_m2: float | None = None
     housing_fee: HousingFee | None = None
     price_per_m2: SalePrice | None = None
@@ -565,6 +598,8 @@ class SourceConfig(ContractModel):
     (usually a ``url``). ``priority`` breaks ties inside the same ``kind``;
     a lower number is tried first. Kind always outranks priority:
     proxy_direct, then official, then third_party, then statistics.
+    ``title_ru``, ``page_url``, and ``reading`` are shown to people on the
+    «Источники» tab; ``page_url`` replaces an API endpoint in the link.
     """
 
     id: str = Field(pattern=_ID.pattern)
@@ -573,6 +608,9 @@ class SourceConfig(ContractModel):
     priority: int = Field(default=0, ge=0, le=999)
     enabled: bool = True
     reliability: Reliability
+    title_ru: str | None = Field(default=None, min_length=1)
+    page_url: OptionalHttpUrlString = None
+    reading: Reading | None = None
     settings: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -591,6 +629,8 @@ class ListingSite(ContractModel):
     id: str = Field(pattern=_ID.pattern)
     adapter: str = Field(pattern=_ID.pattern)
     enabled: bool = True
+    title_ru: str | None = Field(default=None, min_length=1)
+    page_url: OptionalHttpUrlString = None
     url: OptionalHttpUrlString = None
     settings: dict[str, Any] = Field(default_factory=dict)
 
@@ -623,8 +663,9 @@ class HouseClassRule(ContractModel):
     never satisfies a condition. Words are compared without case; ``block_types``
     match a part of the text. Years must lie inside the bounds as a whole range.
     ``price_ratio_*`` compare the asking price with the district's ``PriceReference``.
-    ``fee_per_m2_from`` is a monthly fee in the city currency. ``exclude_newbuild``
-    only rejects a listing that says it is new.
+    ``fee_per_m2_from`` is a monthly fee in the city currency. ``amenities_any`` needs
+    one of them, ``amenities_none`` none of them. ``exclude_newbuild`` only rejects a
+    listing that says it is new, ``exclude_series`` one that names the series.
     """
 
     house_class: HouseClass
@@ -633,6 +674,9 @@ class HouseClassRule(ContractModel):
     block_types: list[str] = Field(default_factory=list)
     is_newbuild: bool | None = None
     exclude_newbuild: bool = False
+    exclude_series: list[str] = Field(default_factory=list)
+    amenities_any: list[Amenity] = Field(default_factory=list)
+    amenities_none: list[Amenity] = Field(default_factory=list)
     year_from: int | None = None
     year_to: int | None = None
     floors_from: int | None = None
@@ -645,7 +689,14 @@ class HouseClassRule(ContractModel):
     @model_validator(mode="after")
     def _has_a_condition(self) -> HouseClassRule:
         conditions = self.model_dump(
-            exclude={"house_class", "reason", "exclude_newbuild"}, exclude_defaults=True
+            exclude={
+                "house_class",
+                "reason",
+                "exclude_newbuild",
+                "exclude_series",
+                "amenities_none",
+            },
+            exclude_defaults=True,
         )
         if not conditions:
             raise ValueError("a class rule needs at least one condition")
@@ -653,9 +704,13 @@ class HouseClassRule(ContractModel):
 
 
 class HeatingRule(ContractModel):
-    """Site words that mean one heating type. ``heating_raw`` is split at ``|``."""
+    """Site words that mean one heating type. ``heating_raw`` is split at ``|``.
+
+    ``explicit``: the ad states this heating outright, so its house is preferred.
+    """
 
     heating: HeatingType
+    explicit: bool = False
     all_of: list[str] = Field(min_length=1)
     none_of: list[str] = Field(default_factory=list)
     reason: str = Field(min_length=1)
@@ -692,7 +747,11 @@ class OpenDataSource(ContractModel):
 
 
 class CityConfig(ContractModel):
-    """Everything that differs per city. Adding a city is a new file, not a calculation change."""
+    """Everything that differs per city. Adding a city is a new file, not a calculation change.
+
+    ``limits_ru`` is what this city's figures leave out, in plain Russian, for the
+    «Источники» tab. Edit it together with the source or norm it talks about.
+    """
 
     schema_version: Literal[1] = SCHEMA_VERSION
     id: CityId
@@ -702,6 +761,7 @@ class CityConfig(ContractModel):
     latitude: float
     longitude: float
     paid_data_note: str = Field(min_length=1)
+    limits_ru: list[str] = Field(default_factory=list)
     articles: list[ArticleSources]
     listing_sites: list[ListingSite] = Field(default_factory=list)
     house_rules: HouseRules = Field(default_factory=HouseRules)
@@ -742,7 +802,9 @@ class ConsumptionNorm(ContractModel):
     """Annual use for one article. Real TABULA/UNDP/INE figures replace the stubs.
 
     ``heating`` is null when the norm does not depend on the heating type
-    (electricity and water per person).
+    (electricity and water per person). ``applies_to`` names the columns such a
+    norm is billed in; empty means all of them. A gas norm without a heating type
+    is the stove and hot water, and not every flat has them on gas.
     """
 
     city: CityId
@@ -754,6 +816,7 @@ class ConsumptionNorm(ContractModel):
     basis: Basis
     source: str = Field(min_length=1)
     note: str = ""
+    applies_to: list[HeatingType] = Field(default_factory=list)
 
     @field_validator("item")
     @classmethod
