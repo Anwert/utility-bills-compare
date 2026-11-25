@@ -15,6 +15,7 @@ from ubc.schemas import (
     Category,
     CellStatus,
     CityId,
+    ClassFee,
     ConsumptionNorm,
     HeatingType,
     HouseClass,
@@ -193,6 +194,62 @@ def test_housing_fee_comes_from_the_listing_then_the_official_rate_then_is_absen
 
     lines = [line for line in cell.lines if line.category is Category.housing]
     assert [(line.amount_eur, line.source_url) for line in lines] == expected
+
+
+@pytest.mark.parametrize(
+    ("valid_from", "house_class", "listing_fee", "expected"),
+    [
+        # 8 PLN/m2 for 60 m2 at 4 PLN for 1 EUR, instead of the official 10 PLN/m2.
+        ("2026-01-01", "soviet_panel", False, (120.0, "https://example.test/minutes")),
+        ("2026-01-02", "soviet_panel", False, (150.0, "https://example.test/maintenance")),
+        ("2026-01-01", "business", False, (150.0, "https://example.test/maintenance")),
+        ("2026-01-01", "soviet_panel", True, (225.0, "https://example.test/listing")),
+    ],
+    ids=["class fee", "not in force yet", "other class", "listing fee wins"],
+)
+def test_fee_of_a_real_house_of_the_class_replaces_the_official_rate(
+    valid_from: str, house_class: str, listing_fee: bool, expected: tuple
+) -> None:
+    fee = HousingFee(amount=900, currency="PLN", period="month", per="per_dwelling")
+    cell = bill(
+        city=CityId.warsaw,
+        house=house(city="warsaw", housing_fees=[fee] if listing_fee else []),
+        records=[
+            record(city="warsaw", currency="PLN", unit="PLN/month", value=400),
+            fx(4, "PLN"),
+            record(
+                city="warsaw",
+                item="maintenance",
+                category="housing",
+                value=10,
+                unit="PLN/m2/month",
+                currency="PLN",
+                source={
+                    "kind": "official",
+                    "url": "https://example.test/maintenance",
+                    "fetched_at": "2026-11-24T00:00:00+00:00",
+                    "name": "official",
+                },
+            ),
+        ],
+        class_fees=[
+            ClassFee(
+                house_class=house_class,
+                amount_per_m2=8,
+                currency="PLN",
+                building="Дом 1",
+                source_url="https://example.test/minutes",
+                valid_from=valid_from,
+                note="сбор другого дома",
+            )
+        ],
+    )
+
+    (line,) = [line for line in cell.lines if line.category is Category.housing]
+    assert (line.amount_eur, line.source_url) == expected
+    if line.source_url.endswith("minutes"):
+        assert line.marks == [Mark.fixed]
+        assert line.note == "сбор другого дома"
 
 
 def test_missing_house_is_an_empty_cell_even_when_tariffs_exist() -> None:

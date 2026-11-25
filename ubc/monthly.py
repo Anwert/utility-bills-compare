@@ -547,6 +547,7 @@ class _Run:
                 apartment=self.options.reference.apartment,
                 extra_marks=marks,
                 empty_reason=reason,
+                class_fees=run.city.class_fees,
             )
         except (CalculationError, ValidationError) as exc:
             run.problems.append(f"{house_class.value} × {heating.value}: {exc}")

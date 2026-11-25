@@ -746,6 +746,22 @@ class OpenDataSource(ContractModel):
     url: HttpUrlString
 
 
+class ClassFee(ContractModel):
+    """A monthly maintenance fee a real house of this class charges, per square metre.
+
+    It is another house's fee: the pinned one rarely names its own. ``building`` says
+    which house, ``note`` where the figure is written; both are shown to the visitor.
+    """
+
+    house_class: HouseClass
+    amount_per_m2: Finite = Field(gt=0)
+    currency: Currency
+    building: str = Field(min_length=1)
+    source_url: HttpUrlString
+    valid_from: FlexDate
+    note: str = Field(min_length=1)
+
+
 class CityConfig(ContractModel):
     """Everything that differs per city. Adding a city is a new file, not a calculation change.
 
@@ -765,6 +781,7 @@ class CityConfig(ContractModel):
     articles: list[ArticleSources]
     listing_sites: list[ListingSite] = Field(default_factory=list)
     house_rules: HouseRules = Field(default_factory=HouseRules)
+    class_fees: list[ClassFee] = Field(default_factory=list)
     open_data: list[OpenDataSource] = Field(default_factory=list)
     fx_sources: list[SourceConfig] = Field(default_factory=list)
     hdd_sources: list[SourceConfig] = Field(default_factory=list)
@@ -787,6 +804,11 @@ class CityConfig(ContractModel):
         ids.extend(site.id for site in self.listing_sites)
         if len(ids) != len(set(ids)):
             raise ValueError("source and listing ids must be unique inside a city")
+        classes = [fee.house_class for fee in self.class_fees]
+        if len(classes) != len(set(classes)):
+            raise ValueError("one class fee per house class")
+        if any(fee.currency is not self.currency for fee in self.class_fees):
+            raise ValueError("a class fee is in the city currency")
         return self
 
 
