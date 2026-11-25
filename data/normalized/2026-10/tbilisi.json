@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "tbilisi",
   "period": "2026-10",
-  "collected_at": "2026-11-25T02:30:24.574273+00:00",
+  "collected_at": "2026-11-25T02:43:43.955528+00:00",
   "sources": [
     {
       "source_id": "fx_gel_nbg",
@@ -23,7 +23,7 @@
           "source": {
             "kind": "official",
             "url": "https://nbg.gov.ge/gw/api/ct/monetarypolicy/currencies/en/json/?currencies=EUR&date=",
-            "fetched_at": "2026-11-25T02:30:38.866010Z",
+            "fetched_at": "2026-11-25T02:44:15.386035Z",
             "name": "National Bank of Georgia"
           },
           "method": "api",

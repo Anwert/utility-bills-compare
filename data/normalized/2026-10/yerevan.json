@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "yerevan",
   "period": "2026-10",
-  "collected_at": "2026-11-25T02:30:24.574273+00:00",
+  "collected_at": "2026-11-25T02:43:43.955528+00:00",
   "sources": [
     {
       "source_id": "yerevan_maintenance_arlis",
@@ -23,7 +23,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-25T02:30:39.996191Z",
+            "fetched_at": "2026-11-25T02:44:18.153637Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
@@ -70,7 +70,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
-            "fetched_at": "2026-11-25T02:31:10.154267Z",
+            "fetched_at": "2026-11-25T02:44:36.185475Z",
             "name": "yerevan_electricity_psrc"
           },
           "method": "regex",
@@ -109,7 +109,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D4%B7%D5%AC%D5%A5%D5%AF%D5%BF%D6%80%D5%A1%D5%AF%D5%A1%D5%B6%20%D4%B7%D5%B6%D5%A5%D6%80%D5%A3%D5%AB%D5%A1/%D5%8D%D5%A1%D5%AF%D5%A1%D5%A3%D5%B6%D5%A5%D6%80/2025/Sakagner.pdf",
-            "fetched_at": "2026-11-25T02:31:10.154267Z",
+            "fetched_at": "2026-11-25T02:44:36.185475Z",
             "name": "yerevan_electricity_psrc"
           },
           "method": "regex",
@@ -122,7 +122,7 @@
       "source_id": "yerevan_gas_psrc",
       "item": "gas",
       "status": "ok",
-      "detail": "",
+      "detail": "повторный сбор не удался: no consumer tariff PDF on https://www.psrc.am/contents/fields/gas/gas_tariffs",
       "records": [
         {
           "city": "yerevan",
@@ -165,7 +165,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-25T02:31:28.189381Z",
+            "fetched_at": "2026-11-25T02:44:46.137647Z",
             "name": "yerevan_water_last_official"
           },
           "method": "regex",
@@ -193,7 +193,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
-            "fetched_at": "2026-11-25T02:31:28.189891Z",
+            "fetched_at": "2026-11-25T02:44:46.137941Z",
             "name": "yerevan_sewage_last_official"
           },
           "method": "regex",
@@ -221,7 +221,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-25T02:31:28.539055Z",
+            "fetched_at": "2026-11-25T02:44:47.671227Z",
             "name": "yerevan_waste_arlis"
           },
           "method": "regex",
@@ -249,7 +249,7 @@
           "source": {
             "kind": "official",
             "url": "https://api.cba.am/exchangerates.asmx",
-            "fetched_at": "2026-11-25T02:31:29.035215Z",
+            "fetched_at": "2026-11-25T02:44:48.744352Z",
             "name": "Central Bank of Armenia"
           },
           "method": "api",
@@ -277,7 +277,7 @@
           "source": {
             "kind": "third_party",
             "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
-            "fetched_at": "2026-11-25T02:31:29.044266Z",
+            "fetched_at": "2026-11-25T02:44:48.746054Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",
@@ -297,7 +297,7 @@
           "source": {
             "kind": "third_party",
             "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
-            "fetched_at": "2026-11-25T02:31:29.044266Z",
+            "fetched_at": "2026-11-25T02:44:48.746054Z",
             "name": "Open-Meteo ERA5"
           },
           "method": "api",
