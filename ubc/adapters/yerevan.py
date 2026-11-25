@@ -1,15 +1,14 @@
-"""Yerevan gas, electricity, waste, maintenance, and the water fallback.
+"""Yerevan gas, electricity, water, waste and maintenance tariffs.
 
 PSRC tariff sections are empty without JavaScript, so collection starts from
 ``render_html`` (a saved DOM in tests). The consumer PDF is the link whose
-text is the tariff table, not a yearly review slide. Armenian row labels are
-not in the PDF text layer; gas and electricity are read by position.
+text is the tariff table, not a yearly review slide. Armenian row labels and
+the effective dates are not in the PDF text layer: gas and electricity are read
+by position, and the dates come from ``settings.effective``.
 
-The drinking-water decision is a scan. That source stays disabled and refuses
-to invent a tariff (``llm_vision`` is off). Water and sewage then come from the
-recorded official split in decision 397-N (1 January 2026). No water price
-index is applied: Eurostat has no Armenia series, and the Armstat CPI page
-checked on 24 November 2026 has no water-tariff row.
+The drinking-water decision is a scan. Its prices are copied by hand for one
+year, and any other month is a failed source, so the policy keeps the last value
+as stale and opens an alert until the next decision is copied.
 """
 
 from __future__ import annotations
@@ -53,10 +52,12 @@ _STEP_BOUNDS: tuple[tuple[float | None, str], ...] = (
     (None, "above 400 kWh/month"),
 )
 
-# Decision 397-N, metered subscribers, with VAT. The PDF has no text layer.
-_RECORDED_WATER: dict[str, tuple[Item, float]] = {
-    "water": (Item.water, 170.36),
-    "sewage": (Item.sewage, 30.06),
+# Decision 397-N of 26.11.2025, rows 1.1 and 1.2, ordinary subscribers, with VAT.
+# The PDF has no text layer: for the next year copy its decision and move the year.
+_RECORDED_WATER_YEAR = 2026
+_RECORDED_WATER: dict[str, tuple[Item, float, str]] = {
+    "water": (Item.water, 170.36, "питьевая вода"),
+    "sewage": (Item.sewage, 30.06, "водоотведение"),
 }
 
 
@@ -394,7 +395,7 @@ class YerevanPsrcElectricity:
 
 
 class YerevanPsrcScan:
-    """Official water decision. Disabled: the PDF is a scan and vision is off."""
+    """Official water decision. Disabled: the PDF is a scan and cannot be read."""
 
     name = "yerevan_psrc_scan"
 
@@ -403,7 +404,7 @@ class YerevanPsrcScan:
         page = _require_url(source)
         pdf_url = _pick_pdf(ctx, page, _is_drinking_water)
         ctx.fetcher.pdf_to_text(pdf_url)
-        raise ValueError("PSRC water decision is a scan; llm_vision is disabled")
+        raise ValueError("PSRC water decision is a scan without a text layer")
 
 
 class YerevanArlis:
@@ -424,10 +425,18 @@ class YerevanArlis:
             found = _WASTE_FEE.search(text)
             item = Item.waste
             point = "20"
+            caveat = (
+                "Периода в решении нет, плата считается помесячно по закону "
+                "о вывозе мусора HO-237-N (статьи 15 и 18)."
+            )
         elif item_name == "maintenance":
             found = _MAINTENANCE_FEE.search(text)
             item = Item.maintenance
             point = "22"
+            caveat = (
+                "Это ставка домов под управлением мэрии, то есть минимум: в домах с другим "
+                "управляющим, а это большинство новостроек, обычно платят больше."
+            )
         else:
             raise ValueError("yerevan_arlis requires settings.item waste or maintenance")
         if found is None:
@@ -443,43 +452,41 @@ class YerevanArlis:
             valid_to=date(year, 12, 31),
             url=url,
             note=(
-                f"п.{point} решения о местных платежах {year} года, жилое помещение, "
-                f"{value:.0f} AMD/м² в месяц. Следующий год — новый акт; "
-                "поиск arlis /hy/search/page/ с этой машины отвечает 403, "
-                "поэтому URL акта задан в конфигурации города."
+                f"{_number(value)} AMD за м² жилья в месяц — решение Совета старейшин Еревана "
+                f"о местных платежах на {year} год, пункт {point}. {caveat}"
             ),
         )
         return AdapterOutput(records=[record])
 
 
-class YerevanWaterStat:
-    """Last official metered rates, used because the decision PDF cannot be read."""
+class YerevanWaterRecorded:
+    """Official metered rates copied by hand from the scan of the yearly decision."""
 
-    name = "yerevan_water_stat"
+    name = "yerevan_water_recorded"
 
     def collect(self, ctx: CollectContext) -> AdapterOutput:
         source = require_source(ctx)
         component = source.settings.get("component")
         recorded = _RECORDED_WATER.get(component) if isinstance(component, str) else None
         if recorded is None:
-            raise ValueError("yerevan_water_stat requires settings.component water or sewage")
-        item, value = recorded
-        note = (
-            "записанное официальное значение решения PSRC №397-Н с 01.01.2026: "
-            "питьевая вода 170.36 AMD/м³ и водоотведение 30.06 AMD/м³ с НДС "
-            "(вместе 200.42). Скан решения без текстового слоя, llm_vision выключен. "
-            "Индекс цен на воду не применён: Eurostat не включает Армению, "
-            "на странице ИПЦ Armstat отдельного ряда на воду нет. " + ctx.city.paid_data_note
-        )
+            raise ValueError("yerevan_water_recorded requires settings.component water or sewage")
+        if ctx.period.year != _RECORDED_WATER_YEAR:
+            raise ValueError(
+                f"the water decision is copied for {_RECORDED_WATER_YEAR} only, not {ctx.period}"
+            )
+        item, value, service = recorded
         record = _record(
             ctx,
             source,
             item=item,
             value=value,
             unit="AMD/m3",
-            valid_from=date(2026, 1, 1),
+            valid_from=date(_RECORDED_WATER_YEAR, 1, 1),
             url=_require_url(source),
-            note=note,
+            note=(
+                f"{_number(value)} AMD за м³ с НДС — {service}, обычные абоненты. Цифра переписана "
+                "вручную со скана решения КРОУ 397-Н от 26.11.2025."
+            ),
         )
         return AdapterOutput(records=[record])
 
@@ -488,4 +495,4 @@ register_adapter(YerevanPsrcGas())
 register_adapter(YerevanPsrcElectricity())
 register_adapter(YerevanPsrcScan())
 register_adapter(YerevanArlis())
-register_adapter(YerevanWaterStat())
+register_adapter(YerevanWaterRecorded())

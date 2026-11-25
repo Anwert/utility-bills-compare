@@ -429,10 +429,14 @@ def test_arlis_waste_and_maintenance_fees_for_2026() -> None:
     assert maintenance[0].valid_to is not None
     assert maintenance[0].valid_to.isoformat() == "2026-12-31"
     assert "2026" in maintenance[0].note
+    # The act sets 25 AMD only for buildings the municipality manages.
+    assert "минимум" in maintenance[0].note
+    # The act names no period for waste; the law on garbage collection bills by month.
+    assert "HO-237-N" in waste[0].note
 
 
-def test_water_scan_is_disabled_and_statistics_keeps_the_official_split() -> None:
-    with pytest.raises(ValueError, match="llm_vision"):
+def test_water_scan_itself_gives_no_tariff() -> None:
+    with pytest.raises(ValueError, match="scan"):
         _collect(
             "yerevan_psrc_scan",
             "yerevan_water_psrc_scan",
@@ -441,42 +445,50 @@ def test_water_scan_is_disabled_and_statistics_keeps_the_official_split() -> Non
             settings={"url": WATER_PAGE},
         )
 
-    water = _collect(
-        "yerevan_water_stat",
-        "yerevan_water_last_official",
-        kind=SourceKind.statistics,
-        reliability=Reliability.statistics,
-        settings={"url": WATER_PDF, "component": "water"},
-    ).records[0]
-    sewage = _collect(
-        "yerevan_water_stat",
-        "yerevan_sewage_last_official",
-        kind=SourceKind.statistics,
-        reliability=Reliability.statistics,
-        settings={"url": WATER_PDF, "component": "sewage"},
-    ).records[0]
+
+def _recorded_water(component: str, period: str) -> NormalizedRecord:
+    (record,) = _collect(
+        "yerevan_water_recorded",
+        f"yerevan_{component}_last_official",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": WATER_PDF, "component": component},
+        period=period,
+    ).records
+    return record
+
+
+@pytest.mark.parametrize("period", ["2026-01", "2026-12"])
+def test_water_and_sewage_are_the_decision_copied_by_hand_for_2026(period: str) -> None:
+    water = _recorded_water("water", period)
+    sewage = _recorded_water("sewage", period)
 
     assert water.item is Item.water and sewage.item is Item.sewage
     assert water.value == 170.36
     assert sewage.value == 30.06
-    assert water.unit == "AMD/m3" and sewage.unit == "AMD/m3"
-    assert water.currency is not None and water.currency.value == "AMD"
-    assert water.valid_from.isoformat() == "2026-01-01"
-    assert sewage.valid_from.isoformat() == "2026-01-01"
-    assert water.valid_to is None and sewage.valid_to is None
-    assert water.reliability is Reliability.statistics
-    assert sewage.reliability is Reliability.statistics
-    assert water.source.kind is SourceKind.statistics
-    assert water.source.url == WATER_PDF
-    assert sewage.source.url == WATER_PDF
-    assert water.method.value == "regex"
-    assert "397" in water.note
-    assert "200.42" in water.note
-    assert "доплату" in water.note
-    assert "доплату" in sewage.note
+    for record in (water, sewage):
+        assert record.unit == "AMD/m3"
+        assert record.currency is not None and record.currency.value == "AMD"
+        assert record.valid_from.isoformat() == "2026-01-01"
+        assert record.valid_to is None
+        assert record.source.kind is SourceKind.official
+        assert record.reliability is Reliability.official
+        assert record.source.url == WATER_PDF
+        assert "переписана вручную со скана решения" in record.note
+        assert "397-Н" in record.note
+        assert load_city("yerevan").paid_data_note not in record.note
+    assert "170,36" in water.note
+    assert "30,06" in sewage.note
 
 
-def test_yerevan_config_enables_the_fallbacks_and_leaves_the_scan_off() -> None:
+@pytest.mark.parametrize("period", ["2025-12", "2027-01"])
+@pytest.mark.parametrize("component", ["water", "sewage"])
+def test_decision_copied_by_hand_covers_no_other_year(component: str, period: str) -> None:
+    with pytest.raises(ValueError, match="2026"):
+        _recorded_water(component, period)
+
+
+def test_yerevan_config_takes_water_from_the_copied_decision_and_leaves_the_scan_off() -> None:
     city = load_city("yerevan")
     by_item = {article.item: article.sources for article in city.articles}
 
@@ -488,15 +500,10 @@ def test_yerevan_config_enables_the_fallbacks_and_leaves_the_scan_off() -> None:
     assert by_item[Item.hot_water] == []
 
     for item in (Item.water, Item.sewage):
-        sources = by_item[item]
-        assert [source.adapter for source in sources] == ["yerevan_psrc_scan", "yerevan_water_stat"]
-        assert sources[0].enabled is False
-        assert sources[0].kind is SourceKind.official
-        assert sources[1].enabled is True
-        assert sources[1].reliability is Reliability.statistics
-        assert [source.adapter for source in ordered_enabled_sources(sources)] == [
-            "yerevan_water_stat"
-        ]
+        (source,) = ordered_enabled_sources(by_item[item])
+        assert source.adapter == "yerevan_water_recorded"
+        assert source.kind is SourceKind.official
+        assert source.reliability is Reliability.official
 
 
 class _SlowPage(FixtureFetcher):

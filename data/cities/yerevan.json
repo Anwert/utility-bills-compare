@@ -91,11 +91,11 @@
         },
         {
           "id": "yerevan_water_last_official",
-          "adapter": "yerevan_water_stat",
-          "kind": "statistics",
-          "priority": 0,
+          "adapter": "yerevan_water_recorded",
+          "kind": "official",
+          "priority": 1,
           "enabled": true,
-          "reliability": "statistics",
+          "reliability": "official",
           "settings": {
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
             "component": "water"
@@ -123,11 +123,11 @@
         },
         {
           "id": "yerevan_sewage_last_official",
-          "adapter": "yerevan_water_stat",
-          "kind": "statistics",
-          "priority": 0,
+          "adapter": "yerevan_water_recorded",
+          "kind": "official",
+          "priority": 1,
           "enabled": true,
-          "reliability": "statistics",
+          "reliability": "official",
           "settings": {
             "url": "https://www.psrc.am/uploads/files/%D5%8B%D5%B8%D6%82%D6%80/2026/07-01-26/ed7237be2e8caac682d9207afc87ff938aecf2001ab7b3ef40906b217165a563.pdf",
             "component": "sewage"
