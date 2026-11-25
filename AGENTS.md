@@ -34,6 +34,7 @@
 | `ubc/state.py` | Схемы `data/state` и `data/houses` |
 | `ubc/recording.py` | Сырые ответы: запись, вымарывание секретов, архив |
 | `ubc/site_bundle.py` | Каталог, который отдаёт GitHub Pages |
+| `ubc/methodology.py` | Текст вкладки «Источники и расчёт»: города и нормы из `data/`, общая часть — в самом модуле |
 | `ubc/calculate.py` | Месячная плата одной ячейки из нормализованных записей |
 | `ubc/houses.py` | Классификатор: дом на ячейку и причина пустой ячейки. Правила — в `house_rules` города |
 | `ubc/enrichment.py` | Открытые данные о доме: Nominatim, OSM, ALKIS, Umweltatlas. Отказ ничего не меняет |
@@ -46,7 +47,7 @@
 | `data/normalized/<YYYY-MM>/<город>.json` | Что вернул каждый источник и по чему посчитан месяц |
 | `data/raw/<YYYY-MM>/<город>/<источник>.tar.xz` | Сырые ответы источника. Список внутри — `index.json` |
 | `.github/workflows/` | `ci.yml` — тесты; `monthly.yml` — месячный прогон; `pages.yml` — выкладка сайта |
-| `index.html`, `site/` | Сайт варианта 3: вкладки, сетка, разбивка. Без сборки |
+| `index.html`, `site/` | Сайт варианта 3: вкладки, сетка, разбивка (`app.js`); вкладка «Источники и расчёт» (`sources.js`, `#sources`). Без сборки |
 | `tests/` | Поведение через публичные функции. Сеть выключена фикстурой в `conftest.py` |
 
 ## Стабильные имена
@@ -66,6 +67,7 @@
 - `ubc.state.CityState`, `CityHouses`, `load_state`, `load_houses`
 - `ubc.recording.RecordingFetcher`, `Redactor`
 - `ubc.site_bundle.build_site_bundle`
+- `ubc.methodology.build_methodology`, `write_methodology`
 - `ubc.fetch.ContentFetcher`, `FixtureFetcher`, `HttpFetcher`, `FetchError`
 - `ubc.secrets.SecretConfig`, `eligible_sources`, `LLM_ADAPTER_NAME`, `SourceUnavailable`
 - `ubc.proxy.fetcher_for_source`, `ProxyFetcher`, `ProxyTransport`, `ProxyEndpoint`
@@ -238,3 +240,9 @@ python -m ubc.site_bundle _site
 С `--run` команда ходит в сеть и пишет `data/`. Без `--period` — прошедший месяц. `--dry-run` считает, но ничего не пишет и не отправляет; `--no-alerts` только не трогает issues; `--data-root` меняет каталог. Код 1 — не опубликовано, причины в stderr. Живой вывод с локальной машины не коммитить: данные коммитит бот Actions.
 
 Сайт — `index.html` и `site/`. Он сам не обходит каталог: читает `data/site-index.json`, затем каждый путь из него. В индекс входят `data/examples/<city>-<YYYY-MM>.json` (пометка «пример») и `data/<city>-<YYYY-MM>.json`, которые позже пишет конвейер. Файл конвейера заменяет пример того же города и месяца. После нового снимка индекс пересобирается командой `python -m ubc.site_index`. `reference.json`, `data/cities/`, `data/raw/`, `data/normalized/`, `data/state/` и `data/houses/` в индекс не входят.
+
+Вкладка «Источники и расчёт» читает `data/methodology.json`, когда её открыли. Файл собирает `ubc.site_bundle`; в git его нет, для локальной страницы — `python -m ubc.methodology`. Фактов в `site/sources.js` нет. Что держать в порядке при правках:
+
+- у нового источника и сайта объявлений — `title_ru`, у источника ещё `reading` (`page`, `pdf`, `api`, `scan`, `manual`); если `url` — адрес API, то `page_url` со страницей для человека. На расчёт эти поля не влияют;
+- `limits_ru` города — что не учтено именно в нём; правится вместе с источником или нормой, о которых там сказано;
+- меняются правила расчёта, выбора домов, политики или расписания — правится общая часть в `ubc/methodology.py`.
