@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from ubc.calculate import calculate_cell
 from ubc.load import load_reference
 from ubc.schemas import (
+    Cell,
     ConsumptionNorm,
     Item,
     NormalizedRecord,
@@ -75,8 +76,8 @@ def _yerevan_records() -> list[NormalizedRecord]:
     ]
 
 
-def _yerevan_lines(house_class: str, heating: str) -> dict[Item, float]:
-    cell = calculate_cell(
+def _yerevan_cell(house_class: str, heating: str) -> Cell:
+    return calculate_cell(
         period=YearMonth.parse("2026-10"),
         city="yerevan",
         house_class=house_class,
@@ -93,29 +94,97 @@ def _yerevan_lines(house_class: str, heating: str) -> dict[Item, float]:
         records=_yerevan_records(),
         norms=load_reference().norms,
     )
-    return {line.item: line.amount_eur for line in cell.lines}
+
+
+def _yerevan_lines(house_class: str, heating: str) -> dict[Item, float]:
+    return {line.item: line.amount_eur for line in _yerevan_cell(house_class, heating).lines}
 
 
 @pytest.mark.parametrize(
-    ("house_class", "gas_eur"),
+    ("house_class", "heating_eur"),
     # 22.5, 12.1 and 10.1 m3/m2 x 60 m2 x 10% of the year x 143.7 AMD / 400.
     [("soviet_panel", 48.50), ("typical_newbuild", 26.08), ("business", 21.77)],
 )
-def test_yerevan_gas_boiler_cell_has_every_norm_it_needs(house_class: str, gas_eur: float) -> None:
+def test_yerevan_gas_boiler_cell_has_every_norm_it_needs(
+    house_class: str, heating_eur: float
+) -> None:
     lines = _yerevan_lines(house_class, "gas_boiler")
 
-    assert lines[Item.gas] == gas_eur
+    assert lines[Item.heating] == heating_eur
+    # 131 m3 x 2 people / 12 months x 143.7 AMD / 400.
+    assert lines[Item.gas] == 7.84
     # 37.2 m3 x 2 people / 12 months = 6.2 m3.
     assert lines[Item.water] == 2.64
     assert lines[Item.sewage] == 0.47
-    assert Item.heating not in lines
 
 
 @pytest.mark.parametrize("house_class", ["soviet_panel", "typical_newbuild", "business"])
 def test_yerevan_electric_cell_has_every_norm_it_needs(house_class: str) -> None:
     lines = _yerevan_lines(house_class, "electric")
 
-    # 1900 kWh / 12 x 46.48 AMD / 400.
-    assert lines[Item.electricity] == 18.40
+    # 781 kWh x 2 people / 12 x 46.48 AMD / 400.
+    assert lines[Item.electricity] == 15.13
     assert lines[Item.heating] > 0
+    # Nothing says that an electrically heated flat cooks on gas.
     assert Item.gas not in lines
+
+
+@pytest.mark.parametrize("heating", ["gas_boiler", "electric"])
+@pytest.mark.parametrize(
+    ("house_class", "caveat"),
+    [
+        ("soviet_panel", "по счетам в Ереване заметно ниже"),
+        ("typical_newbuild", "допущение"),
+        ("business", "допущение"),
+    ],
+)
+def test_yerevan_heating_line_says_how_far_its_norm_can_be_trusted(
+    house_class: str, caveat: str, heating: str
+) -> None:
+    (line,) = [
+        line for line in _yerevan_cell(house_class, heating).lines if line.item is Item.heating
+    ]
+
+    assert caveat in line.note
+
+
+def test_published_norm_sources_are_written_for_a_reader() -> None:
+    for norm in load_reference().norms:
+        assert "#" not in norm.source
+        assert "403" not in norm.source
+
+
+def test_lisbon_boiler_flat_pays_for_cooking_and_for_heating() -> None:
+    # 1610 kWh / 12 and 1150 kWh x 10% of the year, 0.10 EUR per kWh.
+    gas = {"value": 0.1, "unit": "EUR/kWh", "currency": "EUR"}
+    records = [
+        NormalizedRecord.model_validate(
+            record.model_dump(mode="json")
+            | {"city": "lisbon"}
+            | (gas if record.item is Item.gas else {})
+        )
+        for record in _yerevan_records()
+        if record.item in {Item.gas, Item.hdd, Item.hdd_annual}
+    ]
+    cell = calculate_cell(
+        period=YearMonth.parse("2026-10"),
+        city="lisbon",
+        house_class="business",
+        heating="gas_boiler",
+        house=PinnedHouse(
+            id="house",
+            city="lisbon",
+            house_class="business",
+            heating="gas_boiler",
+            listing_url="https://example.test/house",
+            first_seen="2026-10-01",
+            last_seen="2026-10-01",
+        ),
+        records=records,
+        norms=load_reference().norms,
+    )
+
+    assert {line.item: line.amount_eur for line in cell.lines} == {
+        Item.heating: 11.50,
+        Item.gas: 13.42,
+    }

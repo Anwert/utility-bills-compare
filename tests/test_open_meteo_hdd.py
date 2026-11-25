@@ -1,8 +1,7 @@
 """Eurostat heating degree-days from saved Open-Meteo archive JSON.
 
-Expected HDD figures are the 24.11.2026 check values (and the heating-year
-totals read off those same saved responses). They are literals: the test does
-not add the temperatures up again.
+Expected HDD figures were read off the ERA5 archive on 25.11.2026, apart from
+this code. They are literals: the test does not add the temperatures up again.
 """
 
 from __future__ import annotations
@@ -24,42 +23,42 @@ from ubc.load import load_city
 from ubc.paths import REPO_ROOT
 from ubc.schemas import HDD_UNIT, Reliability, SourceConfig, SourceKind, YearMonth
 
-# Published 24.11.2026 check. Ticket #25 allows ±0.1; the saved archive matches exactly.
+# ERA5 (models=era5). Without the parameter Open-Meteo answers with its best-match model.
 OCTOBER_2026_HDD = {
-    "yerevan": 54.9,
-    "tbilisi": 49.1,
-    "belgrade": 134.5,
-    "warsaw": 237.1,
+    "yerevan": 46.4,
+    "tbilisi": 41.2,
+    "belgrade": 126.9,
+    "warsaw": 252.3,
     "lisbon": 0,
-    "berlin": 208.0,
+    "berlin": 219.4,
 }
 
 # Heating year 2025-11-01 .. 2026-10-31, read once from the saved archive.
 HEATING_YEAR_HDD = {
-    "yerevan": 2556.6,
-    "tbilisi": 2105.1,
-    "belgrade": 2203.4,
-    "warsaw": 3244.2,
-    "lisbon": 665.4,
-    "berlin": 2894.4,
+    "yerevan": 2296.8,
+    "tbilisi": 2067.6,
+    "belgrade": 2112.8,
+    "warsaw": 3347.9,
+    "lisbon": 666.5,
+    "berlin": 2965.6,
 }
 
 _MONTH_URL = {
-    "yerevan": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "tbilisi": "https://archive-api.open-meteo.com/v1/archive?latitude=41.72&longitude=44.79&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "belgrade": "https://archive-api.open-meteo.com/v1/archive?latitude=44.82&longitude=20.46&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "warsaw": "https://archive-api.open-meteo.com/v1/archive?latitude=52.23&longitude=21.01&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "lisbon": "https://archive-api.open-meteo.com/v1/archive?latitude=38.72&longitude=-9.14&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "berlin": "https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.4&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
+    "yerevan": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "tbilisi": "https://archive-api.open-meteo.com/v1/archive?latitude=41.72&longitude=44.79&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "belgrade": "https://archive-api.open-meteo.com/v1/archive?latitude=44.82&longitude=20.46&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "warsaw": "https://archive-api.open-meteo.com/v1/archive?latitude=52.23&longitude=21.01&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "lisbon": "https://archive-api.open-meteo.com/v1/archive?latitude=38.72&longitude=-9.14&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "berlin": "https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.4&start_date=2026-10-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
 }
 
 _YEAR_URL = {
-    "yerevan": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "tbilisi": "https://archive-api.open-meteo.com/v1/archive?latitude=41.72&longitude=44.79&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "belgrade": "https://archive-api.open-meteo.com/v1/archive?latitude=44.82&longitude=20.46&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "warsaw": "https://archive-api.open-meteo.com/v1/archive?latitude=52.23&longitude=21.01&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "lisbon": "https://archive-api.open-meteo.com/v1/archive?latitude=38.72&longitude=-9.14&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
-    "berlin": "https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.4&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto",
+    "yerevan": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "tbilisi": "https://archive-api.open-meteo.com/v1/archive?latitude=41.72&longitude=44.79&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "belgrade": "https://archive-api.open-meteo.com/v1/archive?latitude=44.82&longitude=20.46&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "warsaw": "https://archive-api.open-meteo.com/v1/archive?latitude=52.23&longitude=21.01&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "lisbon": "https://archive-api.open-meteo.com/v1/archive?latitude=38.72&longitude=-9.14&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
+    "berlin": "https://archive-api.open-meteo.com/v1/archive?latitude=52.52&longitude=13.4&start_date=2025-11-01&end_date=2026-10-31&daily=temperature_2m_mean&timezone=auto&models=era5",
 }
 
 _FIXTURES = REPO_ROOT / "tests" / "fixtures" / "open_meteo"
@@ -140,7 +139,6 @@ def test_october_2026_fixture_returns_monthly_and_annual_hdd(city_id: str) -> No
 
     month = by_item["hdd"]
     year = by_item["hdd_annual"]
-    # Ticket #25 allows ±0.1. These saved responses match the published figures exactly.
     assert month.value == OCTOBER_2026_HDD[city_id]
     assert year.value == HEATING_YEAR_HDD[city_id]
     for record, url in ((month, _MONTH_URL[city_id]), (year, _YEAR_URL[city_id])):
@@ -227,6 +225,31 @@ def test_month_the_archive_has_not_finished_fails_the_source(tmp_path: Path) -> 
         get_adapter("open_meteo_hdd").collect(_context("yerevan", fetcher))
 
 
+@pytest.mark.parametrize("keep", [30, 364], ids=["one month of the year", "one day missing"])
+@pytest.mark.parametrize("how", ["null", "absent"])
+def test_heating_year_with_missing_days_fails_the_source(
+    tmp_path: Path, keep: int, how: str
+) -> None:
+    body = json.loads((_FIXTURES / "yerevan-2025-11_2026-10.json").read_text(encoding="utf-8"))
+    daily = body["daily"]
+    if how == "null":
+        daily["temperature_2m_mean"][keep:] = [None] * (365 - keep)
+    else:
+        daily["time"], daily["temperature_2m_mean"] = (
+            daily["time"][:keep],
+            daily["temperature_2m_mean"][:keep],
+        )
+    (tmp_path / "year.json").write_text(json.dumps(body), encoding="utf-8")
+    month = (_FIXTURES / "yerevan-2026-10.json").read_text(encoding="utf-8")
+    (tmp_path / "month.json").write_text(month, encoding="utf-8")
+    fetcher = FixtureFetcher(
+        tmp_path, {_MONTH_URL["yerevan"]: "month.json", _YEAR_URL["yerevan"]: "year.json"}
+    )
+
+    with pytest.raises(ValueError, match=f"{keep} of 365"):
+        get_adapter("open_meteo_hdd").collect(_context("yerevan", fetcher))
+
+
 class _Busy(FixtureFetcher):
     """Answers with ``status`` to the first ``refusals`` requests."""
 
@@ -258,7 +281,7 @@ def test_too_many_requests_is_asked_again_after_a_minute() -> None:
 
     output = _busy_yerevan(_Busy(refusals=2, status=429), waits)
 
-    assert [record.value for record in output.records] == [54.9, 2556.6]
+    assert [record.value for record in output.records] == [46.4, 2296.8]
     assert len(waits) == 2
     assert min(waits) >= 60
 

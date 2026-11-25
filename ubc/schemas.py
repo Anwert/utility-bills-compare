@@ -802,7 +802,9 @@ class ConsumptionNorm(ContractModel):
     """Annual use for one article. Real TABULA/UNDP/INE figures replace the stubs.
 
     ``heating`` is null when the norm does not depend on the heating type
-    (electricity and water per person).
+    (electricity and water per person). ``applies_to`` names the columns such a
+    norm is billed in; empty means all of them. A gas norm without a heating type
+    is the stove and hot water, and not every flat has them on gas.
     """
 
     city: CityId
@@ -814,6 +816,7 @@ class ConsumptionNorm(ContractModel):
     basis: Basis
     source: str = Field(min_length=1)
     note: str = ""
+    applies_to: list[HeatingType] = Field(default_factory=list)
 
     @field_validator("item")
     @classmethod

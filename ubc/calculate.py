@@ -57,6 +57,8 @@ _SUBUNIT: dict[str, tuple[Decimal, Currency]] = {
     "grosz": (Decimal("0.01"), Currency.PLN),
     "gr": (Decimal("0.01"), Currency.PLN),
 }
+# The article that also pays for heating in a column without a heating bill.
+_HEATING_FUEL = {HeatingType.gas_boiler: Item.gas, HeatingType.electric: Item.electricity}
 _ENERGY = frozenset({"kwh", "gj"})
 _KWH_TO_GJ = Decimal("0.0036")
 
@@ -115,6 +117,7 @@ def calculate_cell(
     if not house.address and not house.listing_url:
         raise CalculationError("нет источника жилищных сборов")
 
+    norms = [norm for norm in norms if not norm.applies_to or column in norm.applies_to]
     dwelling = apartment or ReferenceApartment()
     marks = extra_marks or {}
     month = _Month(period, city_id, list(records))
@@ -311,44 +314,20 @@ def _price_family(
             )
         ]
 
-    if item is Item.electricity and column is HeatingType.electric:
-        base_norm = _need_norm(norms, city_id, row, Item.electricity, None)
-        heat_norm = _need_norm(norms, city_id, row, Item.heating, column)
-        base_qty, base_commodity = _monthly_quantity(base_norm, dwelling, month)
-        heat_qty, heat_commodity = _monthly_quantity(heat_norm, dwelling, month)
-        base = _as_commodity(base_qty, base_commodity, sample.commodity)
-        total = _as_commodity(
-            _to_kwh(base_qty, base_commodity) + _to_kwh(heat_qty, heat_commodity),
-            "kwh",
-            sample.commodity,
-        )
-        base_eur, total_eur = _weighted(month, chosen, [base, total], dwelling)
-        return [
-            (
-                Item.electricity,
-                _line(
-                    Item.electricity,
-                    base_eur,
-                    chosen,
-                    consumption=True,
-                    norm=base_norm,
-                    marks=marks,
-                    also=(),
-                ),
-            ),
-            (
-                Item.heating,
-                _line(
-                    Item.heating,
-                    total_eur - base_eur,
-                    chosen,
-                    consumption=True,
-                    norm=heat_norm,
-                    marks=marks,
-                    also=(Item.electricity,),
-                ),
-            ),
-        ]
+    if item is _HEATING_FUEL.get(column):
+        base_norm = _exact_norm(norms, city_id, row, item, None)
+        heat_norm = _fuel_heating_norm(norms, city_id, row, item, column)
+        if base_norm is not None:
+            return _fuel_and_heating(
+                item=item,
+                commodity=sample.commodity,
+                base_norm=base_norm,
+                heat_norm=heat_norm,
+                chosen=chosen,
+                dwelling=dwelling,
+                month=month,
+                marks=marks,
+            )
 
     quantity, norm = _consumption(
         item, sample.commodity, column, norms, city_id, row, dwelling, month
@@ -360,6 +339,71 @@ def _price_family(
             _line(item, amount, chosen, consumption=True, norm=norm, marks=marks, also=()),
         )
     ]
+
+
+def _fuel_and_heating(
+    *,
+    item: Item,
+    commodity: str,
+    base_norm: ConsumptionNorm,
+    heat_norm: ConsumptionNorm,
+    chosen: list[NormalizedRecord],
+    dwelling: ReferenceApartment,
+    month: _Month,
+    marks: Mapping[Item, Sequence[Mark]],
+) -> list[tuple[Item, LineItem]]:
+    """The fuel that also heats: its everyday use, and what heating adds to the bill.
+
+    Steps of the tariff apply to the sum, so heating costs the more expensive steps.
+    """
+
+    base, heat = (
+        _as_commodity(*_monthly_quantity(norm, dwelling, month), commodity)
+        for norm in (base_norm, heat_norm)
+    )
+    base_eur, total_eur = _weighted(month, chosen, [base, base + heat], dwelling)
+    return [
+        (
+            item,
+            _line(
+                item,
+                base_eur,
+                chosen,
+                consumption=True,
+                norm=base_norm,
+                marks=marks,
+                also=(),
+            ),
+        ),
+        (
+            Item.heating,
+            _line(
+                Item.heating,
+                total_eur - base_eur,
+                chosen,
+                consumption=True,
+                norm=heat_norm,
+                marks=marks,
+                also=(item,),
+            ),
+        ),
+    ]
+
+
+def _fuel_heating_norm(
+    norms: Sequence[ConsumptionNorm],
+    city: CityId,
+    row: HouseClass,
+    fuel: Item,
+    column: HeatingType,
+) -> ConsumptionNorm:
+    """What heating takes: a norm of the fuel for this column, else the heat norm.
+
+    The norm of the fuel without a heating type is its everyday use, not heating.
+    """
+
+    chosen = _exact_norm(norms, city, row, fuel, column)
+    return chosen or _need_norm(norms, city, row, Item.heating, column)
 
 
 def _consumption(
@@ -375,11 +419,7 @@ def _consumption(
     if item is Item.sewage and commodity == "m3":
         chosen = _need_norm(norms, city, row, Item.water, None)
     elif item is Item.gas and column is HeatingType.gas_boiler:
-        chosen = _select_norm(norms, city, row, Item.gas, column) or _select_norm(
-            norms, city, row, Item.heating, column
-        )
-        if chosen is None:
-            raise CalculationError("нет нормы расхода")
+        chosen = _fuel_heating_norm(norms, city, row, Item.gas, column)
     elif item is Item.heating:
         chosen = _need_norm(norms, city, row, Item.heating, column)
     else:
@@ -473,7 +513,7 @@ def _line(
             found.add(Mark.llm_extracted)
     for key in (item, *also):
         found.update(marks.get(key, ()))
-    note_parts = [part for part in (closing.note, f"Норма: {norm.source}" if norm else "") if part]
+    note_parts = [part for part in (closing.note, f"Норма: {norm.source}." if norm else "") if part]
     distinct = {id(record) for record in chosen}
     if len(distinct) > 1:
         note_parts.append("Тариф сменился внутри месяца, сумма пропорциональна дням.")
@@ -584,23 +624,32 @@ def _select_norm(
     item: Item,
     heating: HeatingType | None,
 ) -> ConsumptionNorm | None:
-    pool = [
+    """The norm of this heating type, else the one that does not depend on it."""
+
+    chosen = _exact_norm(norms, city, row, item, heating)
+    if chosen is None and heating is not None:
+        chosen = _exact_norm(norms, city, row, item, None)
+    return chosen
+
+
+def _exact_norm(
+    norms: Sequence[ConsumptionNorm],
+    city: CityId,
+    row: HouseClass,
+    item: Item,
+    heating: HeatingType | None,
+) -> ConsumptionNorm | None:
+    found = [
         norm
         for norm in norms
-        if norm.city is city and norm.house_class is row and norm.item is item
+        if norm.city is city
+        and norm.house_class is row
+        and norm.item is item
+        and norm.heating == heating
     ]
-    exact = [norm for norm in pool if norm.heating == heating]
-    if len(exact) > 1:
+    if len(found) > 1:
         raise CalculationError("несколько норм расхода")
-    if len(exact) == 1:
-        return exact[0]
-    if heating is not None:
-        generic = [norm for norm in pool if norm.heating is None]
-        if len(generic) > 1:
-            raise CalculationError("несколько норм расхода")
-        if len(generic) == 1:
-            return generic[0]
-    return None
+    return found[0] if found else None
 
 
 def _parse_price(text: str) -> _PriceUnit:

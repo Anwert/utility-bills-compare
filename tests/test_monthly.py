@@ -8,9 +8,10 @@ from __future__ import annotations
 
 import json
 import lzma
+import re
 import tarfile
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -47,20 +48,17 @@ NOW = datetime(2026, 11, 7, 6, 0, tzinfo=UTC)
 
 
 class NextMonth:
-    """Answers another month's weather and rate with the saved October ones."""
-
-    _DATES = (
-        ("2027-01-01", "2026-10-01"),
-        ("2027-01-31", "2026-10-31"),
-        ("2026-02-01", "2025-11-01"),
-    )
+    """Answers any month's weather and rate with the saved October ones."""
 
     def __init__(self, pages: SavedPages) -> None:
         self._pages = pages
 
     def _october(self, url: str) -> str:
-        for other, october in self._DATES:
-            url = url.replace(other, october)
+        asked = re.findall(r"\d{4}-\d\d-\d\d", url)
+        year = asked and date.fromisoformat(asked[1]) - date.fromisoformat(asked[0])
+        saved = ("2025-11-01" if year and year.days > 31 else "2026-10-01", "2026-10-31")
+        for day, october in zip(asked, saved, strict=False):
+            url = url.replace(day, october)
         return url
 
     def fetch_bytes(self, url: str) -> bytes:
@@ -68,11 +66,17 @@ class NextMonth:
 
     def fetch_text(self, url: str) -> str:
         text = self._pages.fetch_text(self._october(url))
-        if "open-meteo" in url:
-            for other, october in self._DATES:
-                text = text.replace(october, other)
-            text = text.replace('"2026-10-', '"2027-01-')
-        return text
+        if "open-meteo" not in url:
+            return text
+        start, end = map(date.fromisoformat, re.findall(r"\d{4}-\d\d-\d\d", url))
+        body = json.loads(text)
+        days = [start + timedelta(days=n) for n in range((end - start).days + 1)]
+        means = body["daily"]["temperature_2m_mean"]
+        body["daily"] = {
+            "time": [day.isoformat() for day in days],
+            "temperature_2m_mean": [means[n % len(means)] for n in range(len(days))],
+        }
+        return json.dumps(body)
 
     def post_text(self, url: str, body: str, *, headers: dict[str, str] | None = None) -> str:
         return self._pages.post_text(self._october(url), body, headers=headers)
@@ -301,16 +305,16 @@ def test_yerevan_is_billed_by_the_day_price(tmp_path: Path) -> None:
     cell = filled(tmp_path)
     amounts = {item: line["amount_eur"] for item, line in lines(cell).items()}
     # 405.045 AMD/EUR. Electricity: 100 kWh x 46.48 (day), not 36.48 (night).
-    # Gas: 300 m3 x 54.9/2556.6 = 6.4421 m3 x 143.7.
+    # Gas: 300 m3 x 46.4/2296.8 = 6.0606 m3 x 143.7.
     assert amounts == {
         "maintenance": 3.70,
         "electricity": 11.48,
-        "gas": 2.29,
+        "gas": 2.15,
         "water": 0.84,
         "sewage": 0.15,
         "waste": 1.93,
     }
-    assert cell["total_eur"] == 20.39
+    assert cell["total_eur"] == 20.25
 
 
 def test_empty_cells_carry_the_classifier_reason(tmp_path: Path) -> None:
@@ -393,7 +397,7 @@ def test_dead_source_keeps_the_previous_value_as_stale_and_reports_it(tmp_path: 
     run_yerevan(tmp_path, dead=[GAS_PAGE], issues=issues)
 
     gas = lines(filled(tmp_path))["gas"]
-    assert gas["amount_eur"] == 2.29
+    assert gas["amount_eur"] == 2.15
     assert "stale" in gas["marks"]
     assert "показано прошлое значение" in gas["note"]
     assert issues.titles == ["data-alert: Ереван — Газ — yerevan_gas_psrc"]
@@ -539,7 +543,7 @@ def test_one_article_run_takes_the_rest_from_the_saved_state(tmp_path: Path) -> 
     assert ARLIS not in pages.asked
     assert not any("myrealty" in url for url in pages.asked)
     cell = filled(tmp_path)
-    assert cell["total_eur"] == 20.39
+    assert cell["total_eur"] == 20.25
     assert not any("stale" in line["marks"] for line in cell["lines"])
     normalized = published(tmp_path, "normalized/2026-10/yerevan.json")
     assert {"yerevan_waste_arlis", "yerevan_gas_psrc"} <= {
@@ -735,6 +739,36 @@ def test_source_whose_tariff_has_expired_is_reported_and_the_value_is_stale(
     assert [
         alert.detail for alert in report.alerts if alert.source_id == "yerevan_waste_arlis"
     ] == ["тариф источника действует только по 2026-12-31"]
+    # The water decision is copied for 2026 only.
+    (water,) = [line for line in cell.lines if line.item is Item.water]
+    assert water.amount_eur == 0.84
+    assert Mark.stale in water.marks
+    assert "yerevan_water_last_official" in {alert.source_id for alert in report.alerts}
+
+
+@pytest.mark.parametrize("month", ["2026-01", "2026-02", "2026-09"])
+def test_yerevan_months_of_2026_before_october_are_billed_by_the_tariffs_in_force(
+    tmp_path: Path, month: str
+) -> None:
+    issues = Issues()
+    run_yerevan(
+        tmp_path,
+        period=YearMonth.parse(month),
+        issues=issues,
+        fetcher=NextMonth(SavedPages(*YEREVAN_PAGES)),
+    )
+
+    bill = lines(filled(tmp_path, month))
+    assert {item: line["valid_from"] for item, line in bill.items()} == {
+        "maintenance": "2026-01-01",
+        "electricity": "2022-02-01",
+        "gas": "2022-04-01",
+        "water": "2026-01-01",
+        "sewage": "2026-01-01",
+        "waste": "2026-01-01",
+    }
+    assert not any("stale" in line["marks"] for line in bill.values())
+    assert issues.titles == []
 
 
 # Secrets

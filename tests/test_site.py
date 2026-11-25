@@ -51,7 +51,7 @@ def _run_node(script: str) -> subprocess.CompletedProcess[bytes]:
 def _line(
     item: str,
     category: str,
-    amount: int,
+    amount: float,
     url: str,
     kind: str,
     valid_from: str,
@@ -206,9 +206,9 @@ require("./site/app.js");
     assert "Обновлено 24.11.2026" in html
     assert 'class="cell empty"' in html
     assert "дом такого класса с таким отоплением автоматически не найден" in html
-    assert "€30" in html
-    assert "жил. €10" in html
-    assert "ком. €20" in html
+    assert "€30,00" in html
+    assert "жил. €10,00" in html
+    assert "ком. €20,00" in html
     assert 'class="mark">фиксированный платёж' in html
     assert 'class="mark">по норме расхода' in html
     assert 'class="mark">оценка по статистике' in html
@@ -322,9 +322,9 @@ def test_page_renders_every_city_and_month_with_grey_empty_cells() -> None:
     assert "Декабрь 2026" in latest
     assert "Октябрь 2026" in latest
     assert "ПРИМЕР ДАННЫХ" not in latest
-    assert "€41" in latest
-    assert "жил. €15" in latest
-    assert "ком. €26" in latest
+    assert "€41,00" in latest
+    assert "жил. €15,00" in latest
+    assert "ком. €26,00" in latest
     assert "Обновлено 02.12.2026" in latest
 
     clamped = _render(snapshots, {"city": "yerevan", "month": "1999-01"})
@@ -353,9 +353,9 @@ def test_page_renders_every_city_and_month_with_grey_empty_cells() -> None:
             "heating": "gas_boiler",
         },
     )
-    assert "€30" in filled
+    assert "€30,00" in filled
     assert "Итого жилищные" in filled
-    assert "€10" in filled
+    assert "€10,00" in filled
 
     missing = _render(snapshots, {"city": "tbilisi"})
     assert 'data-city="tbilisi" aria-selected="true"' in missing
@@ -366,9 +366,9 @@ def test_page_renders_every_city_and_month_with_grey_empty_cells() -> None:
     belgrade_html = _render(snapshots, {"city": "belgrade"})
     assert "Август 2026" in belgrade_html
     assert "Декабрь 2026" not in belgrade_html
-    assert "€41" in belgrade_html
-    assert "€20" in belgrade_html
-    assert "€6" in belgrade_html
+    assert "€41,00" in belgrade_html
+    assert "€20,00" in belgrade_html
+    assert "€6,00" in belgrade_html
     assert 'class="mark">сторонний сайт' in belgrade_html
     assert 'class="mark">значение не обновилось' in belgrade_html
     assert 'class="mark">извлечено моделью' in belgrade_html
@@ -406,6 +406,46 @@ def test_page_renders_every_city_and_month_with_grey_empty_cells() -> None:
     assert "Нет посчитанных месяцев." in none
     assert "Ереван" in none
     assert "Берлин" in none
+
+
+def _one_line(amount: float, marks: list[str], note: str = "") -> dict:
+    return _document(
+        "lisbon",
+        "2026-05",
+        per_eur=1,
+        source_name="евро",
+        source_url="https://example.test/eur",
+        paid_data_note="точные данные за доплату",
+        updated_at="2026-05-02T00:00:00+00:00",
+        lines=[
+            _line(
+                "water",
+                "utility",
+                amount,
+                "https://example.test/water",
+                "statistics",
+                "2026-01-01",
+                marks,
+                note=note,
+            )
+        ],
+        address="Лиссабон, пример",
+        listing_url="https://example.test/listing/lisbon",
+        empty={},
+    )
+
+
+def test_money_is_always_shown_with_cents() -> None:
+    for amount, shown in ((32.4, "€32,40"), (3.7, "€3,70"), (0, "€0,00"), (101.99, "€101,99")):
+        html = _render([_one_line(amount, ["fixed"])])
+        assert f"<b>{shown}</b>" in html
+        assert f"<span>{shown}</span>" in html
+
+
+def test_paid_data_sentence_already_in_the_note_is_not_repeated() -> None:
+    html = _render([_one_line(5, ["statistics_estimate"], note="Оценка. точные данные за доплату")])
+
+    assert html.count("точные данные за доплату") == 1
 
 
 def test_load_index_rejects_a_path_outside_data() -> None:

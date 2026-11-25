@@ -87,7 +87,9 @@
   }
 
   function formatEur(value) {
-    return "€" + formatPlain(value, 2);
+    var number = Number(value);
+    if (!isFinite(number)) return "";
+    return "€" + (Math.round(number * 100) / 100).toFixed(2).replace(".", ",");
   }
 
   function formatCount(value) {
@@ -284,7 +286,8 @@
       " · " +
       sourceAnchor(line.source_url, hostOf(line.source_url));
     var note = line.note ? '<small class="note">' + escapeHtml(line.note) + "</small>" : "";
-    var paid = hasPaidMark(line.marks)
+    var repeated = String(line.note || "").indexOf(paidNote) !== -1;
+    var paid = hasPaidMark(line.marks) && !repeated
       ? '<p class="paid">' + escapeHtml(paidNote) + "</p>"
       : "";
     return (
