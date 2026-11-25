@@ -74,6 +74,14 @@ def _collect(
     )
 
 
+GAS_EFFECTIVE = {"prices": [143700], "valid_from": "2022-04-01", "basis": "решение 83-Н"}
+ELECTRICITY_EFFECTIVE = {
+    "prices": [46.48, 48.48, 53.48, 36.48, 38.48, 43.48],
+    "valid_from": "2022-02-01",
+    "basis": "решение 478-Н",
+}
+
+
 def test_psrc_gas_is_the_vat_price_per_cubic_metre() -> None:
     output = _collect(
         "yerevan_psrc_gas",
@@ -93,29 +101,83 @@ def test_psrc_gas_is_the_vat_price_per_cubic_metre() -> None:
     assert record.unit == "AMD/m3"
     assert record.currency is not None and record.currency.value == "AMD"
     assert record.tiers == []
-    # The PDF prints no effective date; its creation date stands in.
+    # No recorded effective date: the creation date of the PDF stands in.
     assert record.valid_from.isoformat() == "2026-10-06"
-    assert "2026-10-06" in record.note
+    assert "06.10.2026" in record.note
     assert record.valid_to is None
     assert record.method.value == "regex"
     assert record.reliability is Reliability.official
     assert record.source.kind is SourceKind.official
     assert record.source.url == GAS_PDF
     assert record.source.fetched_at.tzinfo is not None
-    assert "1.2" in record.note
+    assert "строка 5.1" in record.note
 
 
-def test_psrc_gas_keeps_the_pdf_date_when_the_pdf_is_older_than_the_month() -> None:
+def test_psrc_gas_takes_the_recorded_effective_date_of_the_same_price() -> None:
     (record,) = _collect(
         "yerevan_psrc_gas",
         "yerevan_gas_psrc",
         kind=SourceKind.official,
         reliability=Reliability.official,
-        settings={"url": GAS_PAGE},
+        settings={"url": GAS_PAGE, "effective": [GAS_EFFECTIVE]},
+    ).records
+
+    assert record.valid_from.isoformat() == "2022-04-01"
+    assert "решение 83-Н" in record.note
+    assert "01.04.2022" in record.note
+    assert "06.10.2026" not in record.note
+
+
+def test_psrc_gas_at_another_price_does_not_take_the_recorded_date() -> None:
+    (record,) = _collect(
+        "yerevan_psrc_gas",
+        "yerevan_gas_psrc",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": GAS_PAGE, "effective": [GAS_EFFECTIVE | {"prices": [143800]}]},
         period="2026-11",
     ).records
 
     assert record.valid_from.isoformat() == "2026-10-06"
+    assert "решение 83-Н" not in record.note
+
+
+@pytest.mark.parametrize(
+    "effective",
+    [
+        {},
+        [GAS_EFFECTIVE | {"valid_from": "апрель"}],
+        [GAS_EFFECTIVE | {"basis": ""}],
+        [GAS_EFFECTIVE | {"prices": []}],
+        [GAS_EFFECTIVE | {"prices": ["143700"]}],
+        ["2022-04-01"],
+    ],
+)
+def test_psrc_recorded_date_that_cannot_be_read_is_a_failed_source(effective: object) -> None:
+    with pytest.raises(ValueError, match="effective"):
+        _collect(
+            "yerevan_psrc_gas",
+            "yerevan_gas_psrc",
+            kind=SourceKind.official,
+            reliability=Reliability.official,
+            settings={"url": GAS_PAGE, "effective": effective},
+        )
+
+
+def test_yerevan_config_records_when_the_psrc_prices_came_into_force() -> None:
+    for item, valid_from in ((Item.gas, "2022-04-01"), (Item.electricity, "2022-02-01")):
+        (source,) = next(
+            article.sources for article in load_city("yerevan").articles if article.item is item
+        )
+        records = _collect(
+            source.adapter,
+            source.id,
+            kind=source.kind,
+            reliability=source.reliability,
+            settings=source.settings,
+        ).records
+
+        assert {record.valid_from.isoformat() for record in records} == {valid_from}
 
 
 class _GasText(FixtureFetcher):
@@ -144,18 +206,51 @@ def test_psrc_gas_reads_the_same_price_when_xpdf_shifts_the_row_labels() -> None
     assert record.value == 143.7
 
 
+@pytest.mark.parametrize("saved", ["gas.txt", "gas_xpdf.txt"])
+def test_psrc_gas_is_the_row_of_ordinary_consumers_not_of_vulnerable_families(saved: str) -> None:
+    # Row 1.2 (vulnerable families) made cheaper: it is the second pair of the table.
+    text = (FIXTURES / saved).read_text(encoding="utf-8")
+    cheaper = text.replace("119,750.00", "90,000.00", 1).replace("143,700.00", "108,000.00", 1)
+    (record,) = _collect(
+        "yerevan_psrc_gas",
+        "yerevan_gas_psrc",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": GAS_PAGE},
+        fetcher=_GasText(cheaper),
+    ).records
+
+    assert record.value == 143.7
+
+
+_POPPLER = (FIXTURES / "gas.txt").read_text(encoding="utf-8")
+
+
 @pytest.mark.parametrize(
     "text",
     [
-        "1.1 83,333.33 100,000.00\n1.2 194.92 233.90\n",
-        "1.1 83,333.33 100,000.00\n1.2 119,750.00 150,000.00\n",
-        "1.1 83,333.33 100,000.00\n",
-        "1.1 83,333.33 100,000.00\n119,750.00 143,700.00\n",
+        _POPPLER.replace("143,700.00", "233.90").replace("119,750.00", "194.92"),
+        _POPPLER.replace("143,700.00", "150,000.00"),
+        _POPPLER.replace("75.96         91.15", ""),
+        _POPPLER + "\n    5.3        221.51       265.81\n",
+        _POPPLER + "\n               221.51       265.81\n",
+        _POPPLER.replace("5.1 ", "5.9 "),
+        _POPPLER.replace("5.1 ", "    "),
+        "",
     ],
-    ids=["dollars for 1.2", "not 20% VAT", "one row", "no label 1.2"],
+    ids=[
+        "dollars for 5.1",
+        "not 20% VAT",
+        "prices missing",
+        "row added",
+        "prices added",
+        "row renamed",
+        "no label 5.1",
+        "empty",
+    ],
 )
-def test_psrc_gas_refuses_a_table_that_is_not_the_household_one(text: str) -> None:
-    with pytest.raises(ValueError, match="1.2"):
+def test_psrc_gas_refuses_a_table_of_another_shape(text: str) -> None:
+    with pytest.raises(ValueError, match="gas PDF"):
         _collect(
             "yerevan_psrc_gas",
             "yerevan_gas_psrc",
@@ -201,9 +296,25 @@ def test_psrc_electricity_splits_day_and_night_household_steps() -> None:
     assert day.reliability is Reliability.official
     assert day.source.url == ELECTRICITY_PDF
     assert night.source.url == ELECTRICITY_PDF
-    assert day.note.startswith("дневной")
-    assert night.note.startswith("ночной")
-    assert "29.99" in day.note
+    assert day.note.startswith("Дневной")
+    assert night.note.startswith("Ночной")
+    assert "26.01.2026" in day.note
+
+
+def test_psrc_electricity_takes_the_recorded_effective_date_for_day_and_night() -> None:
+    day, night = _collect(
+        "yerevan_psrc_electricity",
+        "yerevan_electricity_psrc",
+        kind=SourceKind.official,
+        reliability=Reliability.official,
+        settings={"url": ELECTRICITY_PAGE, "effective": [ELECTRICITY_EFFECTIVE]},
+    ).records
+
+    assert day.valid_from.isoformat() == night.valid_from.isoformat() == "2022-02-01"
+    for record in (day, night):
+        assert "решение 478-Н" in record.note
+        assert "01.02.2022" in record.note
+        assert "26.01.2026" not in record.note
 
 
 def test_a_cell_is_billed_at_the_day_price_not_the_night_one() -> None:
