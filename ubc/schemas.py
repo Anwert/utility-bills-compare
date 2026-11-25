@@ -124,6 +124,15 @@ class HeatingType(StrEnum):
     electric = "electric"
 
 
+class Amenity(StrEnum):
+    """What a residential complex offers its tenants beyond a yard and a lift."""
+
+    swimming_pool = "swimming_pool"
+    gym = "gym"
+    tennis = "tennis"
+    concierge = "concierge"
+
+
 class Item(StrEnum):
     maintenance = "maintenance"
     heating = "heating"
@@ -486,6 +495,9 @@ class BuildingCandidate(ContractModel):
     set only when the adapter already knows the mapping. ``building_type`` is the
     site's construction word (Panel, MONOLITH), not a house class. ``block_type`` is
     the built form of the whole block from open data (Berlin Umweltatlas).
+    ``amenities`` belong to the complex, not to the neighbourhood; an empty list means
+    the ad names none. ``unfinished`` is a bare shell, so its price says nothing about
+    the building.
     """
 
     id: str = Field(min_length=1, max_length=128)
@@ -502,7 +514,10 @@ class BuildingCandidate(ContractModel):
     building_type: str | None = None
     block_type: str | None = None
     is_newbuild: bool | None = None
+    floor: int | None = None
     floors: int | None = None
+    amenities: list[Amenity] = Field(default_factory=list)
+    unfinished: bool | None = None
     area_m2: float | None = None
     housing_fee: HousingFee | None = None
     price_per_m2: SalePrice | None = None

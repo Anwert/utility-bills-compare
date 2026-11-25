@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from saved_ads import saved_ad
 from ubc.adapter import AdapterOutput, CollectContext, get_adapter
 from ubc.adapters.myrealty import MyrealtyAdapter
 from ubc.adapters.real_estate_am import RealEstateAmAdapter
@@ -295,3 +296,159 @@ def test_every_request_after_the_first_waits(
     adapter(sleep=waits.append).collect(_context(adapter.name, fetcher, pause_seconds=0.5))
 
     assert waits == [0.5] * (len(fetcher.asked) - 1)
+
+
+def _described(text: str) -> tuple[str, str]:
+    """Give 427637, which the site shows with its tags only, a description."""
+
+    start = r"\"propertyActionType\""
+    return (start, rf"\"property\":{{\"descriptionRu\":\"{text}\",{start}")
+
+
+@pytest.mark.parametrize(
+    ("ad", "amenities"),
+    [
+        # Structured tags of both sites, the tennis court is in the Armenian text.
+        ("real-estate-427307", ["swimming_pool", "gym", "tennis"]),
+        ("real-estate-427630", ["swimming_pool"]),
+        ("myrealty-162353", ["swimming_pool", "gym"]),
+        # No tags at all, the pool is in the Armenian text.
+        ("real-estate-427650", ["swimming_pool"]),
+        # A lift, a playground, a park, an alarm are not complex amenities.
+        ("real-estate-426106", []),
+        ("real-estate-425338", []),
+        ("real-estate-427597", []),
+        ("myrealty-162327", []),
+    ],
+)
+def test_ad_amenities_of_the_complex(ad: str, amenities: list[str]) -> None:
+    assert [item.value for item in saved_ad(ad).amenities] == amenities
+
+
+@pytest.mark.parametrize(
+    ("text", "amenities"),
+    [
+        (
+            "В комплексе есть бассейн, тренажёрный зал и консьерж.",
+            ["swimming_pool", "gym", "concierge"],
+        ),
+        ("На территории теннисный корт и круглосуточная охрана.", ["tennis", "concierge"]),
+        (
+            "Residents use the swimming pool, a fitness center and 24/7 security.",
+            ["swimming_pool", "gym", "concierge"],
+        ),
+        (
+            "Համալիրն ունի լողավազան, մարզասրահ և շուրջօրյա անվտանգություն։",
+            ["swimming_pool", "gym", "concierge"],
+        ),
+        # What is in the neighbourhood does not belong to the building.
+        ("Рядом бассейн и фитнес-клуб.", []),
+        ("There is a swimming pool nearby.", []),
+        ("Մոտակայքում կա լողավազան և մարզասրահ։", []),
+        ("В доме нет бассейна.", []),
+        ("Настольный теннис, круглосуточное водоснабжение.", []),
+    ],
+)
+def test_text_amenities_are_the_buildings_own(text: str, amenities: list[str]) -> None:
+    found = saved_ad("real-estate-427637", replace=_described(text))
+
+    assert [item.value for item in found.amenities] == amenities
+
+
+@pytest.mark.parametrize(
+    ("ad", "unfinished"),
+    [
+        ("real-estate-426106", True),
+        ("real-estate-427597", False),
+        ("myrealty-162339", True),
+        ("myrealty-162327", False),
+    ],
+)
+def test_ad_says_whether_the_flat_is_a_bare_shell(ad: str, unfinished: bool) -> None:
+    assert saved_ad(ad).unfinished is unfinished
+
+
+@pytest.mark.parametrize(
+    ("ad", "floor"), [("real-estate-427597", 6), ("myrealty-162327", 6), ("myrealty-162352", 5)]
+)
+def test_ad_floor(ad: str, floor: int) -> None:
+    assert saved_ad(ad).floor == floor
+
+
+@pytest.mark.parametrize(
+    ("ad", "series"),
+    [
+        ("myrealty-161828", "stalinka"),
+        ("real-estate-427448", "stalinka"),
+        ("myrealty-161872", None),
+        ("myrealty-162276", None),
+        ("myrealty-162352", None),
+    ],
+)
+def test_ad_that_names_a_stalin_era_house(ad: str, series: str | None) -> None:
+    assert saved_ad(ad).series == series
+
+
+@pytest.mark.parametrize("text", ["Уютная сталинка в центре.", "Դա ստալինյան շենք է։"])
+def test_stalin_era_wording_in_other_languages(text: str) -> None:
+    assert saved_ad("real-estate-427637", replace=_described(text)).series == "stalinka"
+
+
+@pytest.mark.parametrize(
+    ("ad", "heating"),
+    [
+        # Baxi individual system, and no "gas" among the tags.
+        ("real-estate-427354", "heating | text_gas_boiler | text_individual_heating"),
+        # "Գազի կաթսա", and no tags at all.
+        ("real-estate-427650", "text_gas_boiler"),
+        (
+            "real-estate-425338",
+            "heating | gas | text_individual_heating | text_gas_supply",
+        ),
+        (
+            "real-estate-426106",
+            "heating | gas | text_individual_heating | text_gas_supply",
+        ),
+        # "Heated by both the air conditioner and underfloor heating", gas is for the stove.
+        ("myrealty-159730", "Heating | Gas | text_air_heating | text_floor_heating"),
+        # Fan-coil heating and cooling.
+        ("real-estate-427396", "text_air_heating"),
+        # Only tags: the text does not say how the flat is heated.
+        ("real-estate-427307", "heating | gas"),
+        ("real-estate-427597", "heating | gas"),
+    ],
+)
+def test_ad_heating_evidence(ad: str, heating: str) -> None:
+    assert saved_ad(ad).heating_raw == heating
+
+
+@pytest.mark.parametrize(
+    ("text", "words"),
+    [
+        ("Установлен газовый котёл.", ["text_gas_boiler"]),
+        ("The flat has a gas boiler.", ["text_gas_boiler"]),
+        ("Բնակարանը ջեռուցվում է գազի կաթսայով։", ["text_gas_boiler"]),
+        ("Возможность установки газового котла.", []),
+        ("There is no gas boiler.", []),
+        (
+            "Автономное отопление, дом газифицирован.",
+            ["text_individual_heating", "text_gas_supply"],
+        ),
+        ("Квартира отапливается кондиционером.", ["text_air_heating"]),
+        ("Отопление и охлаждение через фанкойлы.", ["text_air_heating"]),
+        ("Ջեռուցումը օդորակիչով է։", ["text_air_heating"]),
+        ("Отопление тёплым полом.", ["text_floor_heating"]),
+        ("Электрическое отопление.", ["text_electric_heating"]),
+        ("An electric boiler heats the flat.", ["text_electric_heating"]),
+        ("Ջեռուցումը՝ էլեկտրական կաթսա։", ["text_electric_heating"]),
+        # A water floor of a gas boiler and a listed air conditioner prove nothing.
+        ("Отопление тёплым полом от газового котла.", ["text_gas_boiler"]),
+        ("Есть отопление, кондиционер, тёплый пол.", []),
+        ("Electric water boiler, heated floor, air conditioner.", []),
+        ("Газовая плита, электрический бойлер.", []),
+    ],
+)
+def test_text_says_how_the_flat_is_heated(text: str, words: list[str]) -> None:
+    found = saved_ad("real-estate-427637", replace=_described(text)).heating_raw
+
+    assert (found or "").split(" | ") == ["heating", "gas", *words]
