@@ -9,12 +9,13 @@ a recount of a past month still finds it.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
 
-from ubc.load import read_document
+from ubc.load import ConfigError, read_document
 from ubc.policy import ActingValue, load_acting
 from ubc.schemas import (
     CHARGE_ITEMS,
@@ -65,7 +66,11 @@ class ArticleState(ContractModel):
         return self
 
     def acting_value(self) -> ActingValue:
-        return load_acting(self.acting)
+        acting = load_acting(self.acting)
+        if "others" in self.acting:
+            return acting
+        # Saved before the policy compared them: the last published entry has them all.
+        return replace(acting, others=tuple(self.history[-1].records[1:]))
 
     def checked_month(self) -> YearMonth:
         return YearMonth.parse(self.checked)
@@ -93,6 +98,11 @@ class CityHouses(ContractModel):
     houses: list[PinnedHouse] = Field(default_factory=list)
     empty: list[EmptyCell] = Field(default_factory=list)
 
+    @field_validator("period")
+    @classmethod
+    def _month(cls, value: str) -> str:
+        return str(YearMonth.parse(value))
+
     def month(self) -> YearMonth:
         return YearMonth.parse(self.period)
 
@@ -107,9 +117,24 @@ def houses_path(data_root: Path, city: CityId) -> Path:
 
 def load_state(data_root: Path, city: CityId) -> CityState:
     path = state_path(data_root, city)
-    return read_document(path, CityState) if path.is_file() else CityState(city=city)
+    if not path.is_file():
+        return CityState(city=city)
+    state = read_document(path, CityState)
+    _require_city(path, city, state.city)
+    return state
 
 
 def load_houses(data_root: Path, city: CityId) -> CityHouses | None:
     path = houses_path(data_root, city)
-    return read_document(path, CityHouses) if path.is_file() else None
+    if not path.is_file():
+        return None
+    houses = read_document(path, CityHouses)
+    _require_city(path, city, houses.city)
+    return houses
+
+
+def _require_city(path: Path, expected: CityId, found: CityId) -> None:
+    """A file of another city would start the history and the pins over."""
+
+    if found is not expected:
+        raise ConfigError(f"{path}: file is for {expected.value}, document is {found.value}")
