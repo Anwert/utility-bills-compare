@@ -78,7 +78,8 @@ def annual_heating_degree_days(daily_mean_celsius: Iterable[float | None]) -> fl
 _TOO_MANY_REQUESTS = 429
 _WAITS_SECONDS = (65.0, 130.0)
 
-_DAILY = "daily=temperature_2m_mean&timezone=auto"
+# Without ``models`` the archive answers with its best-match model, not ERA5.
+_DAILY = "daily=temperature_2m_mean&timezone=auto&models=era5"
 
 
 class OpenMeteoHddAdapter:

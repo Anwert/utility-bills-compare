@@ -301,16 +301,16 @@ def test_yerevan_is_billed_by_the_day_price(tmp_path: Path) -> None:
     cell = filled(tmp_path)
     amounts = {item: line["amount_eur"] for item, line in lines(cell).items()}
     # 405.045 AMD/EUR. Electricity: 100 kWh x 46.48 (day), not 36.48 (night).
-    # Gas: 300 m3 x 54.9/2556.6 = 6.4421 m3 x 143.7.
+    # Gas: 300 m3 x 46.4/2296.8 = 6.0606 m3 x 143.7.
     assert amounts == {
         "maintenance": 3.70,
         "electricity": 11.48,
-        "gas": 2.29,
+        "gas": 2.15,
         "water": 0.84,
         "sewage": 0.15,
         "waste": 1.93,
     }
-    assert cell["total_eur"] == 20.39
+    assert cell["total_eur"] == 20.25
 
 
 def test_empty_cells_carry_the_classifier_reason(tmp_path: Path) -> None:
@@ -393,7 +393,7 @@ def test_dead_source_keeps_the_previous_value_as_stale_and_reports_it(tmp_path: 
     run_yerevan(tmp_path, dead=[GAS_PAGE], issues=issues)
 
     gas = lines(filled(tmp_path))["gas"]
-    assert gas["amount_eur"] == 2.29
+    assert gas["amount_eur"] == 2.15
     assert "stale" in gas["marks"]
     assert "показано прошлое значение" in gas["note"]
     assert issues.titles == ["data-alert: Ереван — Газ — yerevan_gas_psrc"]
@@ -539,7 +539,7 @@ def test_one_article_run_takes_the_rest_from_the_saved_state(tmp_path: Path) -> 
     assert ARLIS not in pages.asked
     assert not any("myrealty" in url for url in pages.asked)
     cell = filled(tmp_path)
-    assert cell["total_eur"] == 20.39
+    assert cell["total_eur"] == 20.25
     assert not any("stale" in line["marks"] for line in cell["lines"])
     normalized = published(tmp_path, "normalized/2026-10/yerevan.json")
     assert {"yerevan_waste_arlis", "yerevan_gas_psrc"} <= {
