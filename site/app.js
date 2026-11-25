@@ -441,12 +441,16 @@
   function render(snapshots, overrides) {
     var view = viewModel(snapshots, overrides);
     var html = '<div class="page">';
-    if (view.snapshot && view.snapshot.example) {
+    var sources = root.UbcSources;
+    var sourcesState = sources && overrides ? overrides.sources : null;
+    if (view.snapshot && view.snapshot.example && !sourcesState) {
       html += '<p class="example-banner">ПРИМЕР ДАННЫХ — цифры выдуманы</p>';
     }
     html += "<h1>Коммуналка в реальных домах</h1>";
+    if (sources) html += sources.switcher(Boolean(sourcesState));
     html += tabs(view);
     html += '<div class="wrap">';
+    if (sourcesState) return html + sources.render(sourcesState, view.city) + "</div></div>";
     if (!view.any) {
       html += '<p class="nodata">Нет посчитанных месяцев.</p>';
       html += '<p class="meta">Эталонная квартира: 2 комнаты, 60 м², 2 жильца.</p>';
@@ -524,16 +528,49 @@
     });
   }
 
+  /* A redraw replaces every element: keep the keyboard focus and the scrolled city strip. */
+  function redraw(container, html) {
+    var active = root.document ? root.document.activeElement : null;
+    var names = ["data-page", "data-city", "data-cell", "data-month"];
+    var selector = null;
+    for (var i = 0; active && container.contains(active) && i < names.length; i += 1) {
+      if (active.hasAttribute(names[i])) {
+        selector = "[" + names[i] + '="' + active.getAttribute(names[i]) + '"]';
+      }
+    }
+    var strip = container.querySelector(".tabs");
+    var left = strip ? strip.scrollLeft : 0;
+    container.innerHTML = html;
+    strip = container.querySelector(".tabs");
+    if (strip) strip.scrollLeft = left;
+    var again = selector ? container.querySelector(selector) : null;
+    if (again) again.focus({ preventScroll: true });
+  }
+
   function mount(container, options) {
     var settings = options || {};
     var fetchImpl = settings.fetch || function (url) {
       return root.fetch(url);
     };
     var selection = {};
+    var host = settings.window || root;
+    var sources = root.UbcSources;
+    var sourcesState = null;
     loadIndex(fetchImpl, { prefix: settings.prefix, indexUrl: settings.indexUrl })
       .then(function (snapshots) {
         var draw = function () {
-          container.innerHTML = render(snapshots, selection);
+          var overrides = selection;
+          if (sources && host.location && sources.isOpen(host.location.hash)) {
+            if (!sourcesState) {
+              sourcesState = {};
+              sources.load(fetchImpl, settings.prefix).then(function (loaded) {
+                sourcesState = loaded;
+                draw();
+              });
+            }
+            overrides = Object.assign({}, selection, { sources: sourcesState });
+          }
+          redraw(container, render(snapshots, overrides));
           var buttons = container.querySelectorAll("[data-city]");
           for (var i = 0; i < buttons.length; i += 1) {
             buttons[i].addEventListener("click", function (event) {
@@ -572,6 +609,12 @@
           }
         };
         draw();
+        if (sources && host.addEventListener) {
+          host.addEventListener("hashchange", function () {
+            draw();
+            host.scrollTo(0, 0);
+          });
+        }
       })
       .catch(function (error) {
         var raw = error && error.message ? error.message : "";

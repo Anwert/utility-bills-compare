@@ -1,7 +1,8 @@
 """The directory GitHub Pages serves.
 
-Only what the page loads: ``index.html``, ``site/``, the index of months, and the
-months it names. Raw answers, policy state, tests, and Python stay in the repository.
+Only what the page loads: ``index.html``, ``site/``, the index of months, the
+months it names, and the generated ``methodology.json`` of the «Источники» tab.
+Raw answers, policy state, tests, and Python stay in the repository.
 
     python -m ubc.site_bundle _site
 """
@@ -15,6 +16,7 @@ import sys
 from pathlib import Path
 
 from ubc.load import ConfigError
+from ubc.methodology import write_methodology
 from ubc.paths import REPO_ROOT
 
 
@@ -37,6 +39,7 @@ def build_site_bundle(repo_root: Path, out: Path) -> Path:
         target = out / "data" / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(data / name, target)
+    write_methodology(data, out / "data" / "methodology.json")
     return out
 
 
