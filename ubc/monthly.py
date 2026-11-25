@@ -39,6 +39,7 @@ from ubc.schemas import (
     Cell,
     CellStatus,
     CityConfig,
+    CityId,
     CityMonth,
     Currency,
     ExchangeRate,
@@ -214,6 +215,7 @@ class _CityRun:
     listings: list[_ListingReading] = field(default_factory=list)
     alerts: list[DataAlert] = field(default_factory=list)
     raw: dict[str, bytes] = field(default_factory=dict)
+    saved_normalized: dict[str, Any] | None = None
     problems: list[str] = field(default_factory=list)
     houses: CityHouses | None = None
     month: CityMonth | None = None
@@ -290,6 +292,9 @@ class _Run:
             ),
             state=load_state(self.options.data_root, city.id),
             saved_houses=load_houses(self.options.data_root, city.id),
+            saved_normalized=_read_normalized(
+                self.options.data_root / self._normalized_name(city.id)
+            ),
         )
         for article in city.articles:
             previous = run.state.article(article.item)
@@ -360,7 +365,7 @@ class _Run:
             output = get_adapter(source.adapter).collect(
                 CollectContext(city=run.city, period=self.period, fetcher=recorder, source=source)
             )
-            return AttemptStatus.ok, output, ""
+            return AttemptStatus.ok, _checked(output), ""
         except ValidationError as exc:
             return AttemptStatus.invalid, AdapterOutput(), self._detail(exc)
         except Exception as exc:
@@ -467,12 +472,16 @@ class _Run:
     def _pin(self, run: _CityRun) -> PinResult | None:
         saved = run.saved_houses
         if saved is not None and self._houses_are_settled(run):
-            return PinResult(
+            settled = PinResult(
                 houses={(house.house_class, house.heating): house for house in saved.houses},
                 empty_reasons={
                     (cell.house_class, cell.heating): cell.reason for cell in saved.empty
                 },
             )
+            if not _covers_the_grid(settled):
+                run.problems.append("сохранённые дома не покрывают девять ячеек ровно по разу")
+                return None
+            return settled
         recorder = _OpenDataFetcher(
             self.options.fetcher, self.redactor, self.options.open_data_budget_s
         )
@@ -495,9 +504,7 @@ class _Run:
                 self._warn(
                     f"{run.city.id.value}: открытые данные о домах: {self.redactor.text(problem)}"
                 )
-        if set(pins.houses) | set(pins.empty_reasons) != set(_ALL_CELLS) or (
-            set(pins.houses) & set(pins.empty_reasons)
-        ):
+        if not _covers_the_grid(pins):
             run.problems.append("закрепление домов не покрыло девять ячеек ровно по одному разу")
             return None
         run.houses = CityHouses(
@@ -546,9 +553,17 @@ class _Run:
         """A filled cell must not silently lack an article, the rate, or degree-days."""
 
         found: list[str] = []
-        known = {outcome.item for outcome in run.outcomes if outcome.records}
+        outcomes = {outcome.item: outcome for outcome in run.outcomes}
         for article in run.city.articles:
-            if article.item not in known and _has_sources(run.city, article.item):
+            outcome = outcomes.get(article.item)
+            if not _has_sources(run.city, article.item) or (outcome and outcome.records):
+                continue
+            if outcome is not None and outcome.known_from is not None:
+                found.append(
+                    f"статья {article.item.value}: самый ранний известный тариф "
+                    f"действует с {outcome.known_from}, позже месяца {self.period}"
+                )
+            else:
                 found.append(
                     f"статья {article.item.value}: ни один источник не дал тариф на месяц, "
                     "прошлого значения нет"
@@ -569,21 +584,41 @@ class _Run:
         snapshots: dict[str, bytes] = {}
         for run in runs:
             city = run.city.id
+            normalized, outlived = _merge_normalized(run.saved_normalized, self._normalized(run))
+            files[self._normalized_name(city)] = self.redactor.data(_json(normalized))
             for source_id, packed in run.raw.items():
-                files[f"raw/{self.period}/{city.value}/{source_id}.tar.xz"] = packed
-            name = f"normalized/{self.period}/{city.value}.json"
-            normalized = _merge_normalized(root / name, self._normalized(run))
-            files[name] = self.redactor.data(_json(normalized))
+                name = f"raw/{self.period}/{city.value}/{source_id}.tar.xz"
+                if source_id not in outlived or not (root / name).is_file():
+                    files[name] = packed
             state = _next_state(run)
             if state.articles:
-                files[state_path(root, city).relative_to(root).as_posix()] = _json(state)
+                files[state_path(root, city).relative_to(root).as_posix()] = self._stored(state)
             if run.houses is not None:
-                files[houses_path(root, city).relative_to(root).as_posix()] = _json(run.houses)
+                files[houses_path(root, city).relative_to(root).as_posix()] = self._stored(
+                    run.houses
+                )
             if run.month is not None:
-                snapshots[f"{city.value}-{self.period}.json"] = _json(run.month)
+                snapshots[f"{city.value}-{self.period}.json"] = self._stored(run.month)
         files.update(snapshots)
         files["site-index.json"] = _json(_index_with(root, snapshots))
         return files
+
+    def _normalized_name(self, city: CityId) -> str:
+        return f"normalized/{self.period}/{city.value}.json"
+
+    def _stored(self, document: BaseModel) -> bytes:
+        """The file without secrets. A secret that is also ordinary data damages it."""
+
+        body = _json(document)
+        hidden = self.redactor.data(body)
+        if hidden != body:
+            try:
+                type(document).model_validate_json(hidden)
+            except ValidationError as exc:
+                raise PublicationError(
+                    ["секрет совпадает с обычными данными: файл без него не читается"]
+                ) from exc
+        return hidden
 
     def _normalized(self, run: _CityRun) -> dict[str, Any]:
         return {
@@ -722,16 +757,70 @@ def _next_state(run: _CityRun) -> CityState:
     return CityState(city=run.city.id, articles=articles)
 
 
-def _merge_normalized(path: Path, fresh: dict[str, Any]) -> dict[str, Any]:
-    """A one-article run keeps what an earlier run of the same month collected."""
+_NORMALIZED_GROUPS = (("sources", "source_id"), ("listings", "site_id"))
 
+
+def _checked(output: object) -> AdapterOutput:
+    """The adapter's answer, read again as the contract: a copy may skip validation."""
+
+    if not isinstance(output, AdapterOutput):
+        raise TypeError(f"адаптер вернул {type(output).__name__}, а не AdapterOutput")
+    return AdapterOutput(
+        records=[
+            NormalizedRecord.model_validate(record.model_dump(warnings=False))
+            for record in output.records
+        ],
+        candidates=[
+            BuildingCandidate.model_validate(candidate.model_dump(warnings=False))
+            for candidate in output.candidates
+        ],
+    )
+
+
+def _covers_the_grid(pins: PinResult) -> bool:
+    return set(pins.houses) | set(pins.empty_reasons) == set(_ALL_CELLS) and not (
+        set(pins.houses) & set(pins.empty_reasons)
+    )
+
+
+def _read_normalized(path: Path) -> dict[str, Any] | None:
     if not path.is_file():
-        return fresh
-    saved = json.loads(path.read_text(encoding="utf-8"))
-    for group, key in (("sources", "source_id"), ("listings", "site_id")):
-        known = {entry[key] for entry in fresh[group]}
-        fresh[group].extend(entry for entry in saved.get(group, []) if entry[key] not in known)
-    return fresh
+        return None
+    try:
+        saved = json.loads(path.read_text(encoding="utf-8"))
+        for group, key in _NORMALIZED_GROUPS:
+            if not all(isinstance(entry[key], str) for entry in saved.get(group, [])):
+                raise ValueError(f"{group}: {key} is not a string")
+    except (OSError, ValueError, AttributeError, KeyError, TypeError) as exc:
+        raise ConfigError(f"{path}: {exc!r}") from exc
+    return saved
+
+
+def _merge_normalized(
+    saved: dict[str, Any] | None, fresh: dict[str, Any]
+) -> tuple[dict[str, Any], set[str]]:
+    """Keep what an earlier run of the same month collected and this one did not.
+
+    The ids of sources that answered then and failed now come second: the saved
+    answer outlives the failure, which is noted in ``detail``.
+    """
+
+    outlived: set[str] = set()
+    if saved is None:
+        return fresh, outlived
+    for group, key in _NORMALIZED_GROUPS:
+        before = {entry[key]: entry for entry in saved.get(group, [])}
+        merged = []
+        for entry in fresh[group]:
+            old = before.pop(entry[key], None)
+            if old is None or old.get("status") != "ok" or entry["status"] == "ok":
+                merged.append(entry)
+                continue
+            outlived.add(entry[key])
+            failure = f"повторный сбор не удался: {entry['detail'] or entry['status']}"
+            merged.append({**old, "detail": failure})
+        fresh[group] = [*merged, *before.values()]
+    return fresh, outlived
 
 
 def _index_with(root: Path, snapshots: Mapping[str, bytes]) -> dict[str, object]:
@@ -745,7 +834,19 @@ def _index_with(root: Path, snapshots: Mapping[str, bytes]) -> dict[str, object]
             shutil.copytree(root / "examples", staged / "examples")
         for name, body in snapshots.items():
             (staged / name).write_bytes(body)
-        return build_site_index(staged)
+        try:
+            return build_site_index(staged)
+        except UnicodeDecodeError as exc:
+            broken = [path.name for path in staged.glob("*.json") if not _is_utf8(path)]
+            raise ConfigError(f"{', '.join(broken)}: {exc}") from exc
+
+
+def _is_utf8(path: Path) -> bool:
+    try:
+        path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return False
+    return True
 
 
 def _json(document: BaseModel | Mapping[str, object]) -> bytes:
@@ -754,9 +855,13 @@ def _json(document: BaseModel | Mapping[str, object]) -> bytes:
 
 
 def _write_all(root: Path, files: Mapping[str, bytes]) -> None:
-    """Write every file next to its target first, then move them all into place."""
+    """Write every file next to its target first, then move them all into place.
+
+    A failure puts the files already moved back as they were.
+    """
 
     staged: list[tuple[Path, Path]] = []
+    moved: list[tuple[Path, bytes | None]] = []
     try:
         for name, body in files.items():
             target = root / name
@@ -764,9 +869,16 @@ def _write_all(root: Path, files: Mapping[str, bytes]) -> None:
             part = target.with_name(f"{target.name}.part")
             staged.append((part, target))
             part.write_bytes(body)
-    except OSError:
+        for part, target in staged:
+            before = target.read_bytes() if target.is_file() else None
+            part.replace(target)
+            moved.append((target, before))
+    except OSError as exc:
+        for target, before in moved:
+            if before is None:
+                target.unlink(missing_ok=True)
+            else:
+                target.write_bytes(before)
         for part, _target in staged:
             part.unlink(missing_ok=True)
-        raise
-    for part, target in staged:
-        part.replace(target)
+        raise PublicationError([f"файлы не записаны: {exc}"]) from exc
