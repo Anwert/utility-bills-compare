@@ -128,6 +128,9 @@
   "fx_sources": [
     {
       "id": "fx_pln_ecb",
+      "title_ru": "Европейский центральный банк",
+      "page_url": "https://data.ecb.europa.eu/data/datasets/EXR/EXR.M.PLN.EUR.SP00.A",
+      "reading": "api",
       "adapter": "fx_ecb",
       "kind": "official",
       "priority": 0,
@@ -142,6 +145,9 @@
   "hdd_sources": [
     {
       "id": "hdd_open_meteo",
+      "title_ru": "Open-Meteo: архив погоды ERA5",
+      "page_url": "https://open-meteo.com/en/docs/historical-weather-api",
+      "reading": "api",
       "adapter": "open_meteo_hdd",
       "kind": "third_party",
       "priority": 0,

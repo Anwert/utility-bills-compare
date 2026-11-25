@@ -251,3 +251,101 @@ select:focus-visible {
   .cell b { font-size: 1.25rem; }
   .hd, .rh { font-size: 0.8rem; }
 }
+
+/* The «Источники» tab: site/sources.js. */
+.pages {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 8px;
+}
+
+.page-link {
+  padding: 8px 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.page-link[aria-current] {
+  background: #065f46;
+  border-color: #065f46;
+  color: #fff;
+}
+
+.page-link:focus-visible,
+.sources a:focus-visible,
+.sources summary:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.sources { overflow-wrap: anywhere; }
+
+.sources p { margin: 6px 0; }
+
+.sources a { color: #065f46; }
+
+.src-title {
+  font-size: 1.15rem;
+  line-height: 1.3;
+  margin: 28px 0 8px;
+}
+
+.src-title:first-child { margin-top: 4px; }
+
+.src-h {
+  margin: 18px 0 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #065f46;
+}
+
+.src-article {
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.src-article p { color: #4b5563; font-size: 0.92rem; }
+
+.src-list {
+  margin: 4px 0;
+  padding-left: 1.1rem;
+}
+
+.src-list li { margin: 4px 0; }
+
+.src-list small {
+  display: block;
+  color: #4b5563;
+  font-size: 0.8rem;
+}
+
+.src.off { color: #6b7280; }
+
+.src.off a { color: #6b7280; }
+
+.src-notice {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff3cd;
+  color: #7a5a00;
+}
+
+.sources details { margin: 4px 0; }
+
+.sources summary {
+  padding: 6px 0;
+  color: #065f46;
+  cursor: pointer;
+}
+
+.src-list summary { padding: 2px 0; font-size: 0.85rem; }
+
+.sources details p, .sources details li { font-size: 0.9rem; }
+
+.src-repo { padding-top: 12px; }

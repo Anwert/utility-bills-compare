@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from ubc.load import ConfigError
+from ubc.methodology import build_methodology
 from ubc.paths import REPO_ROOT
 from ubc.site_bundle import build_site_bundle
 
@@ -16,7 +17,7 @@ def _files(root: Path) -> set[str]:
     return {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file()}
 
 
-def test_bundle_is_the_page_its_assets_and_every_indexed_month(tmp_path: Path) -> None:
+def test_bundle_is_the_page_its_assets_and_the_data_it_loads(tmp_path: Path) -> None:
     out = tmp_path / "site"
     build_site_bundle(REPO_ROOT, out)
 
@@ -26,6 +27,8 @@ def test_bundle_is_the_page_its_assets_and_every_indexed_month(tmp_path: Path) -
         "index.html",
         "site/app.css",
         "site/app.js",
+        "site/sources.js",
+        "data/methodology.json",
         "data/site-index.json",
         *(f"data/{file['path']}" for file in index["files"]),
     }
@@ -44,3 +47,10 @@ def test_bundle_refuses_an_index_that_names_a_missing_month(tmp_path: Path) -> N
 
     with pytest.raises(ConfigError, match="yerevan-2026-10.json"):
         build_site_bundle(repo, tmp_path / "out")
+
+
+def test_bundle_generates_the_methodology_from_the_city_files(tmp_path: Path) -> None:
+    out = build_site_bundle(REPO_ROOT, tmp_path / "site")
+
+    published = json.loads((out / "data/methodology.json").read_text(encoding="utf-8"))
+    assert published == build_methodology(REPO_ROOT / "data")
