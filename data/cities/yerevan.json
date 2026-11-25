@@ -89,9 +89,9 @@
           }
         },
         {
-          "id": "yerevan_water_last_official",
           "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): решение №397-Н, питьевая вода",
           "reading": "manual",
+          "id": "yerevan_water_last_official",
           "adapter": "yerevan_water_stat",
           "kind": "statistics",
           "priority": 0,
@@ -125,9 +125,9 @@
           }
         },
         {
-          "id": "yerevan_sewage_last_official",
           "title_ru": "Комиссия по регулированию общественных услуг Армении (КРОУ): решение №397-Н, водоотведение",
           "reading": "manual",
+          "id": "yerevan_sewage_last_official",
           "adapter": "yerevan_water_stat",
           "kind": "statistics",
           "priority": 0,

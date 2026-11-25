@@ -175,7 +175,7 @@ def test_an_article_without_a_source_explains_itself(data_root: Path) -> None:
 
     heating = _article(yerevan, "heating")
     assert heating["sources"] == []
-    assert "«Газ»" in heating["note"]
+    assert "по цене газа" in heating["note"]
     assert _article(yerevan, "gas")["note"] is None
 
 
