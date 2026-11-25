@@ -248,8 +248,8 @@ def _issue_text(alert: DataAlert) -> tuple[str, str]:
         reason = "значение изменилось больше чем на 30%"
     else:
         reason = "источник не отдал данные"
-        if alert.detail:
-            reason = f"{reason}: {alert.detail}"
+    if alert.detail:
+        reason = f"{reason}: {alert.detail}"
     body = "\n".join(
         [
             f"<!-- ubc-data-alert key={_alert_key(alert)} -->",
