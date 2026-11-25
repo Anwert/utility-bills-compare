@@ -51,6 +51,12 @@
     third_party: true,
     llm_extracted: true,
   };
+  /* ``field`` is the rate in data/display-rates.json. Euro is what the data is in. */
+  var CURRENCIES = [
+    { code: "EUR", sign: "€", name: "Евро", legend: "в евро", of: "евро", field: null },
+    { code: "AMD", sign: "֏", name: "Драмы", legend: "в драмах", of: "драма", field: "amd_per_eur" },
+    { code: "RUB", sign: "₽", name: "Рубли", legend: "в рублях", of: "рубля", field: "rub_per_eur" },
+  ];
   var MONTHS = [
     "январь",
     "февраль",
@@ -90,6 +96,68 @@
     var number = Number(value);
     if (!isFinite(number)) return "";
     return "€" + (Math.round(number * 100) / 100).toFixed(2).replace(".", ",");
+  }
+
+  function currencyOf(view) {
+    for (var i = 0; i < CURRENCIES.length; i += 1) {
+      if (CURRENCIES[i].code === view.currency) return CURRENCIES[i];
+    }
+    return CURRENCIES[0];
+  }
+
+  /* The rate of the shown month, or null: a neighbouring month's rate is not a substitute. */
+  function rateOf(view, currency) {
+    var list = view.rates && Array.isArray(view.rates.rates) ? view.rates.rates : [];
+    for (var i = 0; i < list.length; i += 1) {
+      if (list[i].month !== view.month) continue;
+      var value = Number(list[i][currency.field]);
+      return value > 0 && isFinite(value) ? { value: value, rate: list[i] } : null;
+    }
+    return null;
+  }
+
+  function grouped(whole) {
+    return String(whole).replace(/\B(?=(\d{3})+$)/g, " ");
+  }
+
+  /* Amounts of one drawing. Other currencies are whole units, and every sum adds up
+     the rounded lines, so a column of figures always matches its total. */
+  function moneyOf(view) {
+    var currency = currencyOf(view);
+    var found = currency.field ? rateOf(view, currency) : null;
+    if (!found) {
+      return {
+        currency: CURRENCIES[0],
+        wanted: currency,
+        missing: Boolean(currency.field),
+        line: function (line) {
+          return formatEur(line.amount_eur);
+        },
+        sum: function (lines, eur) {
+          return formatEur(eur);
+        },
+      };
+    }
+    var convert = function (eur) {
+      return Math.round(Number(eur) * found.value);
+    };
+    var show = function (whole) {
+      return isFinite(whole) ? grouped(whole) + " " + currency.sign : "";
+    };
+    return {
+      currency: currency,
+      wanted: currency,
+      missing: false,
+      found: found,
+      line: function (line) {
+        return show(convert(line.amount_eur));
+      },
+      sum: function (lines) {
+        var total = 0;
+        for (var i = 0; i < lines.length; i += 1) total += convert(lines[i].amount_eur);
+        return show(total);
+      },
+    };
   }
 
   function formatCount(value) {
@@ -211,7 +279,37 @@
       snapshot: snapshot,
       houseClass: houseClass,
       heating: heating,
+      currency: options.currency,
+      rates: options.rates,
     };
+  }
+
+  function currencySwitch(money) {
+    var html = '<div class="currencies" role="group" aria-label="Валюта">';
+    for (var i = 0; i < CURRENCIES.length; i += 1) {
+      var one = CURRENCIES[i];
+      var on = one.code === money.wanted.code;
+      html +=
+        '<button type="button" class="' +
+        (on ? "currency on" : "currency") +
+        '" data-currency="' +
+        one.code +
+        '" aria-pressed="' +
+        (on ? "true" : "false") +
+        '">' +
+        one.sign +
+        " " +
+        one.name +
+        "</button>";
+    }
+    html += "</div>";
+    if (money.missing) {
+      html +=
+        '<p class="rate-missing">Курса ' +
+        money.wanted.of +
+        " за этот месяц нет — суммы показаны в евро.</p>";
+    }
+    return html;
   }
 
   function tabs(view) {
@@ -279,7 +377,7 @@
     return false;
   }
 
-  function lineHtml(line, paidNote) {
+  function lineHtml(line, paidNote, money) {
     var bits =
       "тариф с " +
       escapeHtml(formatDate(line.valid_from)) +
@@ -300,19 +398,19 @@
       note +
       paid +
       '</div><b>' +
-      formatEur(line.amount_eur) +
+      money.line(line) +
       "</b></div>"
     );
   }
 
-  function sectionHtml(title, lines, subtotalLabel, subtotal, paidNote) {
+  function sectionHtml(title, lines, subtotalLabel, subtotal, paidNote, money) {
     var html = '<h3 class="sec">' + title + "</h3>";
-    for (var i = 0; i < lines.length; i += 1) html += lineHtml(lines[i], paidNote);
+    for (var i = 0; i < lines.length; i += 1) html += lineHtml(lines[i], paidNote, money);
     html +=
       '<div class="sum"><span>' +
       subtotalLabel +
       "</span><span>" +
-      formatEur(subtotal) +
+      money.sum(lines, subtotal) +
       "</span></div>";
     return html;
   }
@@ -335,8 +433,21 @@
     return "<p>" + escapeHtml(building.address || "") + "</p>";
   }
 
-  function rateHtml(snapshot) {
+  function rateHtml(snapshot, money) {
     var rate = snapshot.exchange_rate;
+    var shown = "";
+    if (money.found && money.currency.code !== rate.currency) {
+      shown =
+        "<p>" +
+        formatPlain(money.found.value, 4) +
+        " " +
+        money.currency.code +
+        " за 1 €, " +
+        escapeHtml(formatMonth(money.found.rate.month).toLowerCase()) +
+        ", источник " +
+        sourceAnchor(money.found.rate.source_url, money.found.rate.source_name) +
+        "</p>";
+    }
     return (
       "<p>" +
       formatPlain(rate.per_eur, 4) +
@@ -346,11 +457,12 @@
       escapeHtml(formatMonth(rate.month).toLowerCase()) +
       ", источник " +
       sourceAnchor(rate.source_url, rate.source_name) +
-      "</p>"
+      "</p>" +
+      shown
     );
   }
 
-  function sheet(view) {
+  function sheet(view, money) {
     var snapshot = view.snapshot;
     var map = indexCells(snapshot);
     var key = view.houseClass + ":" + view.heating;
@@ -378,23 +490,31 @@
       '<section class="sheet"><div class="sh">' +
       title +
       buildingHtml(cell.building) +
-      rateHtml(snapshot) +
+      rateHtml(snapshot, money) +
       "</div>" +
-      sectionHtml("Жилищные услуги", housing, "Итого жилищные", cell.housing_eur, snapshot.paid_data_note) +
+      sectionHtml(
+        "Жилищные услуги",
+        housing,
+        "Итого жилищные",
+        cell.housing_eur,
+        snapshot.paid_data_note,
+        money
+      ) +
       sectionHtml(
         "Коммунальные услуги",
         utility,
         "Итого коммунальные",
         cell.utility_eur,
-        snapshot.paid_data_note
+        snapshot.paid_data_note,
+        money
       ) +
       '<div class="sum grand"><span>Итого</span><span>' +
-      formatEur(cell.total_eur) +
+      money.sum(cell.lines, cell.total_eur) +
       "</span></div></section>"
     );
   }
 
-  function grid(view) {
+  function grid(view, money) {
     var map = indexCells(view.snapshot);
     var html = '<div class="grid"><div class="corner"></div>';
     var heat;
@@ -418,11 +538,11 @@
         } else {
           body =
             "<b>" +
-            formatEur(cell.total_eur) +
+            money.sum(cell.lines, cell.total_eur) +
             '</b><span class="parts">жил. ' +
-            formatEur(cell.housing_eur) +
+            money.sum(linesFor(cell, "housing"), cell.housing_eur) +
             "<br>ком. " +
-            formatEur(cell.utility_eur) +
+            money.sum(linesFor(cell, "utility"), cell.utility_eur) +
             "</span>";
         }
         html +=
@@ -482,10 +602,14 @@
         "</option>";
     }
     html += "</select>";
+    var money = moneyOf(view);
+    html += currencySwitch(money);
     html +=
-      '<p class="legend">Итого в евро за месяц для эталонной квартиры. Нажмите на ячейку — внизу разбивка.</p>';
-    html += grid(view);
-    html += sheet(view);
+      '<p class="legend">Итого ' +
+      money.currency.legend +
+      " за месяц для эталонной квартиры. Нажмите на ячейку — внизу разбивка.</p>";
+    html += grid(view, money);
+    html += sheet(view, money);
     html += "</div></div>";
     return html;
   }
@@ -531,10 +655,40 @@
     });
   }
 
+  /* Rates are optional: without them the page stays in euros. */
+  function loadRates(fetchImpl, prefix) {
+    return Promise.resolve()
+      .then(function () {
+        return fetchImpl((prefix || "data/") + "display-rates.json");
+      })
+      .then(function (response) {
+        return response && response.ok ? response.json() : null;
+      })
+      .catch(function () {
+        return null;
+      });
+  }
+
+  function savedCurrency(host) {
+    try {
+      return host.localStorage.getItem("ubc-currency");
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function saveCurrency(host, code) {
+    try {
+      host.localStorage.setItem("ubc-currency", code);
+    } catch (err) {
+      /* The choice then lasts until the page is closed. */
+    }
+  }
+
   /* A redraw replaces every element: keep the keyboard focus and the scrolled city strip. */
   function redraw(container, html) {
     var active = root.document ? root.document.activeElement : null;
-    var names = ["data-page", "data-city", "data-cell", "data-month"];
+    var names = ["data-page", "data-city", "data-cell", "data-month", "data-currency"];
     var selector = null;
     for (var i = 0; active && container.contains(active) && i < names.length; i += 1) {
       if (active.hasAttribute(names[i])) {
@@ -559,10 +713,18 @@
     var host = settings.window || root;
     var sources = root.UbcSources;
     var sourcesState = null;
-    loadIndex(fetchImpl, { prefix: settings.prefix, indexUrl: settings.indexUrl })
-      .then(function (snapshots) {
+    var currency = savedCurrency(host);
+    Promise.all([
+      loadIndex(fetchImpl, { prefix: settings.prefix, indexUrl: settings.indexUrl }),
+      loadRates(fetchImpl, settings.prefix),
+    ])
+      .then(function (loadedData) {
+        var snapshots = loadedData[0];
         var draw = function () {
-          var overrides = selection;
+          var overrides = Object.assign({}, selection, {
+            currency: currency,
+            rates: loadedData[1],
+          });
           if (sources && host.location && sources.isOpen(host.location.hash)) {
             if (!sourcesState) {
               sourcesState = {};
@@ -571,7 +733,7 @@
                 draw();
               });
             }
-            overrides = Object.assign({}, selection, { sources: sourcesState });
+            overrides.sources = sourcesState;
           }
           redraw(container, render(snapshots, overrides));
           var buttons = container.querySelectorAll("[data-city]");
@@ -590,6 +752,14 @@
                 houseClass: selection.houseClass,
                 heating: selection.heating,
               };
+              draw();
+            });
+          }
+          var currencies = container.querySelectorAll("[data-currency]");
+          for (var k = 0; k < currencies.length; k += 1) {
+            currencies[k].addEventListener("click", function (event) {
+              currency = event.currentTarget.getAttribute("data-currency");
+              saveCurrency(host, currency);
               draw();
             });
           }

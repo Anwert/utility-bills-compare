@@ -102,8 +102,8 @@ def _yerevan_lines(house_class: str, heating: str) -> dict[Item, float]:
 
 @pytest.mark.parametrize(
     ("house_class", "heating_eur"),
-    # 22.5, 12.1 and 10.1 m3/m2 x 60 m2 x 10% of the year x 143.7 AMD / 400.
-    [("soviet_panel", 48.50), ("typical_newbuild", 26.08), ("business", 21.77)],
+    # 8.2, 4.4 and 3.7 m3/m2 x 60 m2 x 10% of the year x 143.7 AMD / 400.
+    [("soviet_panel", 17.68), ("typical_newbuild", 9.48), ("business", 7.98)],
 )
 def test_yerevan_gas_boiler_cell_has_every_norm_it_needs(
     house_class: str, heating_eur: float
@@ -133,7 +133,7 @@ def test_yerevan_electric_cell_has_every_norm_it_needs(house_class: str) -> None
 @pytest.mark.parametrize(
     ("house_class", "caveat"),
     [
-        ("soviet_panel", "по счетам в Ереване заметно ниже"),
+        ("soviet_panel", "Разбивки по типам домов нет"),
         ("typical_newbuild", "допущение"),
         ("business", "допущение"),
     ],

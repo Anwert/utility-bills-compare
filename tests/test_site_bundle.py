@@ -28,6 +28,7 @@ def test_bundle_is_the_page_its_assets_and_the_data_it_loads(tmp_path: Path) -> 
         "site/app.css",
         "site/app.js",
         "site/sources.js",
+        "data/display-rates.json",
         "data/methodology.json",
         "data/site-index.json",
         *(f"data/{file['path']}" for file in index["files"]),

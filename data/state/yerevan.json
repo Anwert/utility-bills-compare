@@ -18,7 +18,7 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-25T02:44:18.153637Z",
+            "fetched_at": "2026-11-25T07:42:34.206277Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 
 from ubc.paths import REPO_ROOT, example_city_month_path
@@ -440,6 +441,71 @@ def test_money_is_always_shown_with_cents() -> None:
         html = _render([_one_line(amount, ["fixed"])])
         assert f"<b>{shown}</b>" in html
         assert f"<span>{shown}</span>" in html
+
+
+_RATES = {
+    "schema_version": 1,
+    "rates": [
+        {
+            "month": "2026-05",
+            "amd_per_eur": 405.045,
+            "rub_per_eur": 90.5,
+            "source_url": "https://www.cba.am/",
+            "source_name": "Центральный банк Армении",
+        }
+    ],
+}
+
+
+def _pressed(html: str) -> list[str]:
+    return re.findall(r'data-currency="(\w+)" aria-pressed="true"', html)
+
+
+def test_currency_switch_converts_every_amount_and_keeps_columns_adding_up() -> None:
+    document = _one_line(32.4, ["fixed"])
+    drams = _render([document], {"currency": "AMD", "rates": _RATES})
+    roubles = _render([document], {"currency": "RUB", "rates": _RATES})
+
+    assert _pressed(drams) == ["AMD"]
+    assert "Итого в драмах за месяц" in drams
+    assert "13\u00a0123\u00a0֏" in drams  # 32.40 x 405.045
+    assert "€32,40" not in drams
+    assert _pressed(roubles) == ["RUB"]
+    assert "2\u00a0932\u00a0₽" in roubles  # 32.40 x 90.5
+    assert "90,5 RUB за 1 €" in roubles
+    assert 'href="https://www.cba.am/"' in roubles
+
+
+def test_converted_totals_are_the_sum_of_the_shown_lines() -> None:
+    example = json.loads(example_city_month_path().read_text(encoding="utf-8"))
+    rates = {"rates": [{**_RATES["rates"][0], "month": example["month"]}]}
+    html = _render([example], {"currency": "RUB", "rates": rates})
+    sheet = html[html.index('class="sheet"') :]
+
+    def whole(text: str) -> int:
+        return int(text.replace("\u00a0", "").rstrip("₽"))
+
+    lines = [whole(text) for text in re.findall(r"<b>([\d\u00a0]+₽)</b>", sheet)]
+    sums = [whole(text) for text in re.findall(r"<span>([\d\u00a0]+₽)</span>", sheet)]
+    assert len(lines) == 2
+    assert sums[0] + sums[1] == sums[2] == sum(lines)
+
+
+def test_euro_is_the_default_and_the_fallback_without_a_rate() -> None:
+    document = _one_line(32.4, ["fixed"])
+
+    for overrides in ({}, {"currency": "GBP", "rates": _RATES}, {"currency": None}):
+        html = _render([document], overrides)
+        assert _pressed(html) == ["EUR"]
+        assert "€32,40" in html
+        assert "rate-missing" not in html
+    other_month = {"rates": [{**_RATES["rates"][0], "month": "2026-04"}]}
+    for rates in (None, {}, other_month):
+        html = _render([document], {"currency": "RUB", "rates": rates})
+        assert _pressed(html) == ["RUB"]
+        assert "Курса рубля за этот месяц нет — суммы показаны в евро." in html
+        assert "€32,40" in html
+        assert "Итого в евро за месяц" in html
 
 
 def test_paid_data_sentence_already_in_the_note_is_not_repeated() -> None:

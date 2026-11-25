@@ -1,7 +1,8 @@
 """The directory GitHub Pages serves.
 
 Only what the page loads: ``index.html``, ``site/``, the index of months, the
-months it names, and the generated ``methodology.json`` of the «Источники» tab.
+months it names, the rates it converts euros with, and the generated
+``methodology.json`` of the «Источники» tab.
 Raw answers, policy state, tests, and Python stay in the repository.
 
     python -m ubc.site_bundle _site
@@ -15,6 +16,7 @@ import shutil
 import sys
 from pathlib import Path
 
+from ubc.display_rates import FILE_NAME, load_display_rates
 from ubc.load import ConfigError
 from ubc.methodology import write_methodology
 from ubc.paths import REPO_ROOT
@@ -31,6 +33,9 @@ def build_site_bundle(repo_root: Path, out: Path) -> Path:
     for name in names:
         if not (data / name).is_file():
             raise ConfigError(f"data/site-index.json names a missing file {name}")
+    load_display_rates(data)
+    if (data / FILE_NAME).is_file():
+        names.append(FILE_NAME)
     out.mkdir(parents=True, exist_ok=True)
     for name in ("index.html", ".nojekyll"):
         shutil.copyfile(repo_root / name, out / name)

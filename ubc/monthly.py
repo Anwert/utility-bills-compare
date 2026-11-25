@@ -27,6 +27,8 @@ from ubc.adapter import AdapterOutput, CollectContext, get_adapter
 from ubc.alerts import AlertDeliveryError, GitHubIssues, sync_alerts
 from ubc.articles import ArticleOutcome, Reading, decide_article, keep_article
 from ubc.calculate import CalculationError, calculate_cell
+from ubc.display_rates import FILE_NAME as DISPLAY_RATES_NAME
+from ubc.display_rates import DisplayRate, load_display_rates
 from ubc.fetch import ContentFetcher, FetchError
 from ubc.houses import CellKey, PinResult, enrich_candidates, pin_houses
 from ubc.load import ConfigError
@@ -162,7 +164,8 @@ class MonthOptions:
     ``issues`` is ``None`` when alerts are not to be sent. ``dry_run`` calculates
     everything, sends nothing, and writes nothing. ``open_data_budget_s`` caps the
     time one city spends on open data about houses. ``hide`` adds secret values
-    to blank in stored answers on top of the ones in ``secrets``.
+    to blank in stored answers on top of the ones in ``secrets``. ``display_rate``
+    gives the dram and rouble rates the site converts euros with; ``None`` skips them.
     """
 
     period: YearMonth
@@ -176,6 +179,7 @@ class MonthOptions:
     transport: ProxyTransport | None = None
     house_step: HouseStep = enrich_and_pin
     open_data_budget_s: float = 300.0
+    display_rate: Callable[[YearMonth, ContentFetcher], DisplayRate] | None = None
     dry_run: bool = False
     now: datetime | None = None
     hide: Sequence[str] = ()
@@ -257,6 +261,7 @@ class _Run:
         if problems:
             raise PublicationError(problems)
         files = self._files(runs)
+        files.update(self._display_rates())
         if not self.options.dry_run:
             _write_all(self.options.data_root, files)
         return MonthReport(
@@ -602,6 +607,19 @@ class _Run:
         files.update(snapshots)
         files["site-index.json"] = _json(_index_with(root, snapshots))
         return files
+
+    def _display_rates(self) -> dict[str, bytes]:
+        """The rates file with this month. Euros stay on the site whatever happens here."""
+
+        if self.options.display_rate is None:
+            return {}
+        saved = load_display_rates(self.options.data_root)
+        try:
+            rate = self.options.display_rate(self.period, self.options.fetcher)
+        except Exception as exc:
+            self._warn(f"курсы для показа в других валютах не обновлены: {self._detail(exc)}")
+            return {}
+        return {DISPLAY_RATES_NAME: _json(saved.with_rate(rate))}
 
     def _normalized_name(self, city: CityId) -> str:
         return f"normalized/{self.period}/{city.value}.json"

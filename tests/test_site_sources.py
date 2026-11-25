@@ -265,9 +265,9 @@ const settle = async () => { for (let i = 0; i < 20; i += 1) await null; };
 def test_the_document_is_fetched_once_and_only_when_the_tab_opens() -> None:
     seen = json.loads(_node(_MOUNT, {"hash": "", "ok": True, "methodology": _methodology()}))
 
-    assert seen["before"] == ["data/site-index.json"]
+    assert seen["before"] == ["data/site-index.json", "data/display-rates.json"]
     assert "Откуда данные" not in seen["closed"]
-    assert seen["calls"] == ["data/site-index.json", "data/methodology.json"]
+    assert seen["calls"] == [*seen["before"], "data/methodology.json"]
     assert "Откуда данные: Ереван" in seen["open"]
 
 
