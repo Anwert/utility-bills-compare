@@ -2,7 +2,7 @@
   "schema_version": 1,
   "city": "yerevan",
   "period": "2026-09",
-  "collected_at": "2026-11-25T02:38:05.744546+00:00",
+  "collected_at": "2026-11-25T07:42:31.236876+00:00",
   "sources": [
     {
       "source_id": "yerevan_maintenance_arlis",
@@ -23,12 +23,88 @@
           "source": {
             "kind": "official",
             "url": "https://www.arlis.am/hy/acts/219208",
-            "fetched_at": "2026-11-25T02:38:05.936037Z",
+            "fetched_at": "2026-11-25T07:42:31.455163Z",
             "name": "yerevan_maintenance_arlis"
           },
           "method": "regex",
           "reliability": "official",
           "note": "25 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 22. Это ставка домов под управлением мэрии, то есть минимум: в домах с другим управляющим, а это большинство новостроек, обычно платят больше."
+        }
+      ]
+    },
+    {
+      "source_id": "fx_amd_cba",
+      "item": "fx",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "all",
+          "item": "fx",
+          "category": "context",
+          "value": 418.6076,
+          "unit": "AMD/EUR",
+          "currency": "AMD",
+          "tiers": [],
+          "valid_from": "2026-09-01",
+          "valid_to": null,
+          "source": {
+            "kind": "official",
+            "url": "https://api.cba.am/exchangerates.asmx",
+            "fetched_at": "2026-11-25T07:42:31.590038Z",
+            "name": "Central Bank of Armenia"
+          },
+          "method": "api",
+          "reliability": "official",
+          "note": "CBA mean of 21 daily rates"
+        }
+      ]
+    },
+    {
+      "source_id": "hdd_open_meteo",
+      "item": "hdd",
+      "status": "ok",
+      "detail": "",
+      "records": [
+        {
+          "city": "yerevan",
+          "item": "hdd",
+          "category": "context",
+          "value": 0.0,
+          "unit": "K*day",
+          "currency": null,
+          "tiers": [],
+          "valid_from": "2026-09-01",
+          "valid_to": "2026-09-30",
+          "source": {
+            "kind": "third_party",
+            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-09-01&end_date=2026-09-30&daily=temperature_2m_mean&timezone=auto&models=era5",
+            "fetched_at": "2026-11-25T07:42:31.596812Z",
+            "name": "Open-Meteo ERA5"
+          },
+          "method": "api",
+          "reliability": "third_party",
+          "note": "30 days"
+        },
+        {
+          "city": "yerevan",
+          "item": "hdd_annual",
+          "category": "context",
+          "value": 2331.7,
+          "unit": "K*day",
+          "currency": null,
+          "tiers": [],
+          "valid_from": "2026-09-01",
+          "valid_to": "2026-09-30",
+          "source": {
+            "kind": "third_party",
+            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-10-01&end_date=2026-09-30&daily=temperature_2m_mean&timezone=auto&models=era5",
+            "fetched_at": "2026-11-25T07:42:31.596812Z",
+            "name": "Open-Meteo ERA5"
+          },
+          "method": "api",
+          "reliability": "third_party",
+          "note": "365 days, 2025-10-01..2026-09-30"
         }
       ]
     },
@@ -227,82 +303,6 @@
           "method": "regex",
           "reliability": "official",
           "note": "13 AMD за м² жилья в месяц — решение Совета старейшин Еревана о местных платежах на 2026 год, пункт 20. Периода в решении нет, плата считается помесячно по закону о вывозе мусора HO-237-N (статьи 15 и 18)."
-        }
-      ]
-    },
-    {
-      "source_id": "fx_amd_cba",
-      "item": "fx",
-      "status": "ok",
-      "detail": "",
-      "records": [
-        {
-          "city": "all",
-          "item": "fx",
-          "category": "context",
-          "value": 418.6076,
-          "unit": "AMD/EUR",
-          "currency": "AMD",
-          "tiers": [],
-          "valid_from": "2026-09-01",
-          "valid_to": null,
-          "source": {
-            "kind": "official",
-            "url": "https://api.cba.am/exchangerates.asmx",
-            "fetched_at": "2026-11-25T02:38:19.160687Z",
-            "name": "Central Bank of Armenia"
-          },
-          "method": "api",
-          "reliability": "official",
-          "note": "CBA mean of 21 daily rates"
-        }
-      ]
-    },
-    {
-      "source_id": "hdd_open_meteo",
-      "item": "hdd",
-      "status": "ok",
-      "detail": "",
-      "records": [
-        {
-          "city": "yerevan",
-          "item": "hdd",
-          "category": "context",
-          "value": 0.0,
-          "unit": "K*day",
-          "currency": null,
-          "tiers": [],
-          "valid_from": "2026-09-01",
-          "valid_to": "2026-09-30",
-          "source": {
-            "kind": "third_party",
-            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2026-09-01&end_date=2026-09-30&daily=temperature_2m_mean&timezone=auto&models=era5",
-            "fetched_at": "2026-11-25T02:38:19.169997Z",
-            "name": "Open-Meteo ERA5"
-          },
-          "method": "api",
-          "reliability": "third_party",
-          "note": "30 days"
-        },
-        {
-          "city": "yerevan",
-          "item": "hdd_annual",
-          "category": "context",
-          "value": 2331.7,
-          "unit": "K*day",
-          "currency": null,
-          "tiers": [],
-          "valid_from": "2026-09-01",
-          "valid_to": "2026-09-30",
-          "source": {
-            "kind": "third_party",
-            "url": "https://archive-api.open-meteo.com/v1/archive?latitude=40.18&longitude=44.51&start_date=2025-10-01&end_date=2026-09-30&daily=temperature_2m_mean&timezone=auto&models=era5",
-            "fetched_at": "2026-11-25T02:38:19.169997Z",
-            "name": "Open-Meteo ERA5"
-          },
-          "method": "api",
-          "reliability": "third_party",
-          "note": "365 days, 2025-10-01..2026-09-30"
         }
       ]
     }
